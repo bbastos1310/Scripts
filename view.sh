@@ -123,9 +123,7 @@
             4) handleBias;;
             5) handleMask;;
             6) handleCoregister;;
-            7) handleRF;;
-            8) handleFod;;
-            9) handleRaw;;
+            7) handleRaw;;
             *) echo invalid response;;
             esac
             
@@ -142,15 +140,19 @@
       2)
       while [ $FLAG_CONTINUE -eq 1 ]; do    
           echo "Deseja visualizar a imagem de qual dos processos:"\
-          $'\n'"1.Mask GM/WM"\
-          $'\n'"2.Streamlines"\
-          $'\n'"3.Streamlines filtering (SIFT)"
+          $'\n'"1.Response function"\
+          $'\n'"2.Fiber orientation distribution"\
+          $'\n'"3.Mask GM/WM"\
+          $'\n'"4.Streamlines"\
+          $'\n'"5.Streamlines filtering (SIFT)"
           read -p "Opção: " tract
           
             case $tract in
-            1) handleFringe;;
-            2) handleStreamlines;;
-            3) handleSift;;
+            1) handleRF;;
+            2) handleFod;;
+            3) handleFringe;;
+            4) handleStreamlines;;
+            5) handleSift;;
             esac
             
       read -p "Deseja visualizar mais imagens do preprocessing (y/n)? " option
