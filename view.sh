@@ -64,7 +64,7 @@
       
       case $rf in
       1) shview wm.txt & shview gm.txt & shview csf.txt ;;
-      2) mrview voxels.mif -overlay.load dwi_den_unr_preproc_unb_reg.mif;;
+      2) mrview dwi_den_unr_preproc_unb_reg.mif -overlay.load voxels.mif;;
       esac
     }
 
@@ -111,9 +111,7 @@
           $'\n'"4.Bias correction"\
           $'\n'"5.Brain mask"\
           $'\n'"6.Coregister"\
-          $'\n'"7.Response function"\
-          $'\n'"8.Fiber orientation distribution"\
-          $'\n'"9.Raw files"
+          $'\n'"7.Raw files"
           read -p "Opção: " process
           
             case $process in

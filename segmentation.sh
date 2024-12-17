@@ -39,8 +39,8 @@
       
     handleAnnot2Patient() {
         if [ $EXIST -eq 1 ]; then
-          mri_surf2surf --srcsubject fsaverage --trgsubject "$PAT_NUM" --hemi lh --sval-annot $SUBJECTS_DIR/fsaverage/label/lh.HCPMMP1.annot  --tval $SUBJECTS_DIR/"$PAT_NUM"/label/lh.hcpmmp1.annot
-          mri_surf2surf --srcsubject fsaverage --trgsubject "$PAT_NUM" --hemi rh --sval-annot $SUBJECTS_DIR/fsaverage/label/rh.HCPMMP1.annot  --tval $SUBJECTS_DIR/"$PAT_NUM"/label/rh.hcpmmp1.annot
+          mri_surf2surf --srcsubject fsaverage --trgsubject "$PAT_NUM" --hemi lh --sval-annot $SUBJECTS_DIR/fsaverage/label/lh.Julich.annot  --tval $SUBJECTS_DIR/"$PAT_NUM"/label/lh.Julich_pat.annot  
+	  mri_surf2surf --srcsubject fsaverage --trgsubject "$PAT_NUM" --hemi rh --sval-annot $SUBJECTS_DIR/fsaverage/label/rh.Julich.annot  --tval $SUBJECTS_DIR/"$PAT_NUM"/label/rh.Julich_pat.annot  
         else
           exit
         fi
@@ -48,9 +48,16 @@
       
     handleLabel2Image() {
         if [ $EXIST -eq 1 ]; then
-          mri_aparc2aseg --old-ribbon --s "$PAT_NUM" --annot hcpmmp1 --o hcpmmp1.mgz
-          mrconvert -datatype uint32 hcpmmp1.mgz hcpmmp1.mif -force
-          labelconvert hcpmmp1.mif "$BASE_DIR/hcpmmp1_original.txt" "$BASE_DIR/hcpmmp1_ordered.txt" hcpmmp1_parcels.mif -force
+          mri_convert "$SUBJECTS_DIR/fsaverage/mri/T1.mgz" "$OUT_PRE/T1_fsaverage.nii.gz"
+          flirt -in "$OUT_PRE/T1_fsaverage.nii.gz" -ref "$OUT_PRE/T1_raw.nii.gz" -dof 6 -omat fsaveragetoT1.mat
+          flirt -in "$BASE_DIR/Atlas/Julich_fsaverage.nii.gz" -ref T1_raw.nii.gz -applyxfm -init fsaveragetoT1.mat -out Julich_fsaverage_coreg.nii.gz -interp nearestneighbour
+          mri_convert "$OUT_PRE/Julich_fsaverage_coreg.nii.gz" "$OUT_PRE/Julich_fsaverage_coreg.mgz"
+          #flirt -in "$BASE_DIR"/Atlas/Julich_fsaverage.nii.gz -ref T1_raw.nii.gz -out  Julich_fsaverage_coreg.nii.gz -omat transform_atlas2T1.mat -interp nearestneighbour -dof 6
+          #mri_convert T1_raw.nii.gz T1_raw.mgz
+          #mri_vol2vol --mov "$BASE_DIR"/Julich_fsaverage.mgz --targ T1_raw.mgz --o Julich_fsaverage_coreg.mgz --regheader --interp nearest
+          mri_aparc2aseg --s "$PAT_NUM" --old-ribbon --aseg Julich_fsaverage_coreg.mgz --annot Julich_pat --annot-table "$BASE_DIR/JulichLUT_freesurfer.txt" --o output_freesurfer.mgz
+          mrconvert -datatype uint32 output_freesurfer.mgz Julich_parcels.mif -force
+          #labelconvert hcpmmp1.mif "$BASE_DIR/hcpmmp1_original.txt" "$BASE_DIR/hcpmmp1_ordered.txt" hcpmmp1_parcels.mif -force
         else
           exit
         fi
