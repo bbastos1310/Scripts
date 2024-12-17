@@ -95,11 +95,30 @@
     # 3.Streamlines filtering
     handleSift() { mrview dwi_den_unr_preproc_unb_reg.mif -tractography.load smallerTracks_200k.tck & mrview dwi_den_unr_preproc_unb_reg.mif -tractography.load smallerTracks_200k.tck; }
 
+    # FUNCTIONS SEGMENTATION
+    
+    # 1. Coregister of T1 and T2 to fsaverage
+    handleFsavcoregister() { freeview -v "$OUT_PRE/T1_raw_fsaverage.nii.gz" -v "$OUT_PRE/T2_raw_fsaverage.nii.gz" -v "$OUT_PRE/brain_fsaverage.nii.gz"; }   
+    
+    # 2. Create annotation files
+    handleAnnot() { freeview -f "$SUBJECTS_DIR/$PAT_NUM/surf/lh.pial":annot="$SUBJECTS_DIR/$PAT_NUM/label/lh.Julich_pat.annot" \
+    -f "$SUBJECTS_DIR/$PAT_NUM/surf/rh.pial":annot="$SUBJECTS_DIR/$PAT_NUM/label/rh.Julich_pat.annot"; }   
+    
+    # 3. Segmentation on freesurfer
+    handleFreesurferseg() { freeview -v output_freesurfer.mgz:colormap=LUT:lut="$BASE_DIR/Atlas/JulichLUT_freesurfer.txt"; }   
+    
+    # 4. Segmentation on mrview
+    handleMrviewseg() { mrview Julich_parcels_ordered.mif; }   
+    
+    # 5. Coregister of T1 and Julich_parcels_ordered.mif
+    handleT1coregister() { mrview T1_raw.mif -overlay.load Julich_parcels_ordered.mif; }   
+        
     # MAIN FUNCTION
             
       echo "Deseja visualizar a imagem de qual etapa? "\
       $'\n'"1.Preprocessing"\
-      $'\n'"2.Tractography"
+      $'\n'"2.Tractography"\
+      $'\n'"3.Segmentation"
       read -p "Etapa: " option
       case $option in
       1)
@@ -151,6 +170,40 @@
             3) handleFringe;;
             4) handleStreamlines;;
             5) handleSift;;
+            esac
+            
+      read -p "Deseja visualizar mais imagens da tractografia (y/n)? " option
+          
+            case $option in 
+            [Yy]) FLAG_CONTINUE=1;;
+            [nN]) FLAG_CONTINUE=0;;
+            *)  FLAG_CONTINUE=0;;
+            esac
+      done
+      ;;
+      
+      3)
+      export FREESURFER_HOME="/usr/local/freesurfer/7.4.1"
+      export SUBJECTS_DIR="$SUBJECTS_DIR"
+      source "$FREESURFER_HOME/SetUpFreeSurfer.sh"
+      
+      cd "$OUT_PRE"
+      
+      while [ $FLAG_CONTINUE -eq 1 ]; do    
+          echo "Deseja visualizar a imagem de qual dos processos:"\
+          $'\n'"1.Coregistro das imagens T1 e T2 ao espaço fsaverage"\
+          $'\n'"2.Annotation files"\
+          $'\n'"3.Imagem segmentada no freesurfer"\
+          $'\n'"4.Imagem segmentada no mrview"\
+          $'\n'"5.Corregistro da imagem segmentada e a imagem T1 no mrview"
+          read -p "Opção: " segmentation
+          
+            case $segmentation in
+            1) handleFsavcoregister;;
+            2) handleAnnot;;
+            3) handleFreesurferseg;;
+            4) handleMrviewseg;;
+            5) handleT1coregister;;
             esac
             
       read -p "Deseja visualizar mais imagens do preprocessing (y/n)? " option

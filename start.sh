@@ -1,5 +1,6 @@
     BASE_DIR="/home/brunobastos/Mestrado/Dados"
     SCRIPT_DIR="/home/brunobastos/Mestrado/Scripts"
+    SUBJECTS_DIR="$BASE_DIR/fs_subjects"
 
     # Files 
     FILE_1="rename_data.sh"
@@ -163,16 +164,16 @@
         $'\n'"    Mask GM/WM"\
         $'\n'"    Streamlines creation"\
         $'\n'"    Streamlines weighting"\
-      $'\n'"3.Analysis"\
-      $'\n'"4.Freesurfer"\
+      $'\n'"3.Freesurfer"\
         $'\n'"    Reconstruction"\
         $'\n'"    Segmentation"\
         $'\n'"    Labeling"\
         $'\n'"    Connectivity matrix"\
-      $'\n'"5.View"\
+      $'\n'"4.View"\
         $'\n'"    Results of preprocessing"\
         $'\n'"    Results of tractography"\
-        $'\n'"    Results of analysis"
+        $'\n'"    Results of analysis"\
+      $'\n'"5.Analysis"
       
       read -p "Opção: " script
         case $script in
@@ -184,13 +185,13 @@
         . "$SCRIPT_DIR/tract.sh";;
         
         3)
-        . "$SCRIPT_DIR/analysis.sh";;
-        
-        4)
         . "$SCRIPT_DIR/segmentation.sh";;
         
-        5)
+        4)
         . "$SCRIPT_DIR/view.sh";;
+        
+        5)
+        . "$SCRIPT_DIR/analysis.sh";;
                  
         *)
         echo "invalid response"
