@@ -4,6 +4,7 @@
     FILE_3="hcpmmp1_parcels.mif"
     FILE_4="hcpmmp1.csv"
     FLAG=0
+    FLAG_CONTINUE=1
     
     
     # Existing file (Check if the output file already exists and, if it does, if the user wants to convert it)
@@ -57,7 +58,7 @@
           #mri_vol2vol --mov "$BASE_DIR"/Julich_fsaverage.mgz --targ T1_raw.mgz --o Julich_fsaverage_coreg.mgz --regheader --interp nearest
           mri_aparc2aseg --s "$PAT_NUM" --old-ribbon --aseg Julich_fsaverage_coreg.mgz --annot Julich_pat --annot-table "$BASE_DIR/JulichLUT_freesurfer.txt" --o output_freesurfer.mgz
           mrconvert -datatype uint32 output_freesurfer.mgz Julich_parcels.mif -force
-          #labelconvert hcpmmp1.mif "$BASE_DIR/hcpmmp1_original.txt" "$BASE_DIR/hcpmmp1_ordered.txt" hcpmmp1_parcels.mif -force
+          labelconvert Julich_parcels.mif "$BASE_DIR/Atlas/JulichLUT_freesurfer.txt" "$BASE_DIR/Atlas/JulichLUT_mrtrix.txt" Julich_parcels_ordered.mif -force
         else
           exit
         fi
@@ -66,12 +67,12 @@
     handleTck2Connectome() {
         if [ $EXIST -eq 1 ]; then
           echo "Pat_PRE"
-          tck2connectome -symmetric -zero_diagonal -scale_invnodevol -tck_weights_in sift_weights.txt tracks_10mio.tck hcpmmp1_parcels.mif hcpmmp1.csv -out_assignment assignments_hcpmmp1.csv -force
+          tck2connectome -symmetric -zero_diagonal -scale_invnodevol -tck_weights_in sift_weights.txt tracks_10mio.tck "$OUT_PRE/Julich_parcels_ordered.mif" Julich.csv -out_assignment assignments_Julich.csv -force
           if [ -a "$OUT_24/sift_weights.txt" ]; then
-            cp hcpmmp1_parcels.mif "$OUT_24"
+            cp Julich_parcels.mif "$OUT_24"
             echo "Pat_24"
             cd "$OUT_24"
-            tck2connectome -symmetric -zero_diagonal -scale_invnodevol -tck_weights_in sift_weights.txt tracks_10mio.tck hcpmmp1_parcels.mif hcpmmp1.csv -out_assignment assignments_hcpmmp1.csv -force
+            tck2connectome -symmetric -zero_diagonal -scale_invnodevol -tck_weights_in sift_weights.txt tracks_10mio.tck "$OUT_PRE/Julich_parcels_ordered.mif" Julich.csv -out_assignment assignments_Julich.csv -force
           fi
         else
           exit
@@ -152,39 +153,49 @@
       
       break;;
       
-      # One step of the preprocessing
+        # One step of the preprocessing
       [Nn])
-      echo "Deseja realizar qual das etapas?"\
-      $'\n'"1.Reconstruction"\
-      $'\n'"2.Segmentation"\
-      $'\n'"3.Labeling"\
-      $'\n'"4.Connectivity matrix"
-      read -p "Opção: " step
+      while [ $FLAG_CONTINUE -eq 1 ]; do   
+        echo "Deseja realizar qual das etapas?"\
+        $'\n'"1.Reconstruction"\
+        $'\n'"2.Create annotation file"\
+        $'\n'"3.Labeling"\
+        $'\n'"4.Connectivity matrix"
+        read -p "Opção: " step
         
-        case $step in
-        1)
-        FILE=$FILE_1
-        fileExistence
-        handleReconstruction;;
+          case $step in
+          1)
+          FILE=$FILE_1
+          fileExistence
+          handleReconstruction;;
         
-        2)
-        FILE=$FILE_2
-        fileExistence
-        handleAnnot2Patient;;
+          2)
+          FILE=$FILE_2
+          fileExistence
+          handleAnnot2Patient;;
         
-        3)
-        FILE=$FILE_3
-        fileExistence
-        handleLabel2Image;;
+          3)
+          FILE=$FILE_3
+          fileExistence
+          handleLabel2Image;;
         
-        4)
-        FILE=$FILE_4
-        fileExistence
-        handleTck2Connectome;;
+          4)
+          FILE=$FILE_4
+          fileExistence
+          handleTck2Connectome;;
         
-        *)
-        echo invalid response;;
-        esac
+          *)
+          echo invalid response;;
+          esac
+          
+          read -p "Deseja realizar outra etapa da segmentação (y/n)? " option
+          
+          case $option in 
+          [Yy]) FLAG_CONTINUE=1;;
+          [nN]) FLAG_CONTINUE=0;;
+          *)  FLAG_CONTINUE=0;;
+          esac
+      done
       exit;;
       
       * )

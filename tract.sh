@@ -5,6 +5,7 @@
     FILE_4="tracks_10mio.tck"
     FILE_5="sift_weights.txt"
     FLAG=0
+    FLAG_CONTINUE=1
 
     # FUNCTIONS
 
@@ -108,43 +109,53 @@
         ;;
         
         [Nn])
-        echo "Deseja realizar qual das etapas?"\
-        $'\n'"1.Response function"\
-        $'\n'"2.Fiber orientation distribution"\
-        $'\n'"3.Mask GM/WM"\
-        $'\n'"4.Streamlines creation"\
-        $'\n'"5.Streamlines filtering"
-        read -p "Opção: " step
+        while [ $FLAG_CONTINUE -eq 1 ]; do
+          echo "Deseja realizar qual das etapas?"\
+          $'\n'"1.Response function"\
+          $'\n'"2.Fiber orientation distribution"\
+          $'\n'"3.Mask GM/WM"\
+          $'\n'"4.Streamlines creation"\
+          $'\n'"5.Streamlines filtering"
+          read -p "Opção: " step
           
-          case $step in
-          1)
-          FILE=$FILE_1
-          fileExistence
-          handleFunction;;
+            case $step in
+            1)
+            FILE=$FILE_1
+            fileExistence
+            handleFunction;;
           
-          2)
-          FILE=$FILE_2
-          fileExistence
-          handleFod;;          
+            2)
+            FILE=$FILE_2
+            fileExistence
+            handleFod;;          
           
-          3)
-          FILE=$FILE_3
-          fileExistence
-          handleFringe;;
+            3)
+            FILE=$FILE_3
+            fileExistence
+            handleFringe;;
           
-          4)
-          FILE=$FILE_4
-          fileExistence
-          handleStreamlines;;
+            4)
+            FILE=$FILE_4
+            fileExistence
+            handleStreamlines;;
           
-          5)
-          FILE=$FILE_5
-          fileExistence
-          handleSift;;
+            5)
+            FILE=$FILE_5
+            fileExistence
+            handleSift;;
           
-          *) echo invalid response;;
+            *) echo invalid response;;
+          	
+            esac
+            
+            read -p "Deseja realizar outra etapa da tractografia (y/n)? " option
           
-          esac
+            case $option in 
+            [Yy]) FLAG_CONTINUE=1;;
+            [nN]) FLAG_CONTINUE=0;;
+            *)  FLAG_CONTINUE=0;;
+            esac
+          done
           exit;;
         
         *) echo invalid response;;

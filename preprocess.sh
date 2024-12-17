@@ -7,6 +7,7 @@
       FILE_5="dwi_mask.mif"
       FILE_6="dwi_den_unr_preproc_unb_reg.mif"
       FLAG=0
+      FLAG_CONTINUE=1
       
       # FUNCTIONS
 
@@ -165,48 +166,58 @@
           
           # One step of the preprocessing
           [Nn])
-          echo "Deseja realizar qual das etapas?"\
-          $'\n'"1.Denoising"\
-          $'\n'"2.Unringing"\
-          $'\n'"3.Motion correction"\
-          $'\n'"4.Bias correction"\
-          $'\n'"5.Brain mask"\
-          $'\n'"6.Coregister"
-          read -p "Opção: " step
-            case $step in
-            1)
-            FILE=$FILE_1
-            fileExistence
-            handleDenoise;;
+          while [ $FLAG_CONTINUE -eq 1 ]; do
+            echo "Deseja realizar qual das etapas?"\
+            $'\n'"1.Denoising"\
+            $'\n'"2.Unringing"\
+            $'\n'"3.Motion correction"\
+            $'\n'"4.Bias correction"\
+            $'\n'"5.Brain mask"\
+            $'\n'"6.Coregister"
+            read -p "Opção: " step
+              case $step in
+              1)
+              FILE=$FILE_1
+              fileExistence
+              handleDenoise;;
             
-            2)
-            FILE=$FILE_2
-            fileExistence
-            handleUnring;;
+              2)
+              FILE=$FILE_2
+              fileExistence
+              handleUnring;;
             
-            3)
-            FILE=$FILE_3
-            fileExistence
-            handleMotion;;
+              3)
+              FILE=$FILE_3
+              fileExistence
+              handleMotion;;
             
-            4)
-            FILE=$FILE_4
-            fileExistence
-            handleBias;;
+              4)
+              FILE=$FILE_4
+              fileExistence
+              handleBias;;
             
-            5)
-            FILE=$FILE_5
-            fileExistence
-            handleMask;;
+              5)
+              FILE=$FILE_5
+              fileExistence
+              handleMask;;
             
-            6)
-            FILE=$FILE_6
-            fileExistence
-            handleCoregister;;
+              6)
+              FILE=$FILE_6
+              fileExistence
+              handleCoregister;;
                         
-            *)
-            echo invalid response;;
-            esac
+              *)
+              echo invalid response;;
+              esac
+              
+              read -p "Deseja realizar outra etapa do pré-processamento (y/n)? " option
+          
+              case $option in 
+              [Yy]) FLAG_CONTINUE=1;;
+              [nN]) FLAG_CONTINUE=0;;
+              *)  FLAG_CONTINUE=0;;
+              esac
+          done    
           exit;;
           
           * )
