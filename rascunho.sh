@@ -11,8 +11,18 @@ flirt -in T1_raw.nii.gz -ref brain_fsaverage.nii.gz -applyxfm -init T1tofsaverag
 convert_xfm -omat t2tofsaverage.mat -concat T1tofsaverage.mat t22t1.mat
 flirt -in T2_raw_coreg.nii.gz -ref brain_fsaverage.nii.gz -applyxfm -init t2tofsaverage.mat -out T2_raw_fsaverage.nii.gz -interp trilinear
 
-flirt -in T2_raw_coreg.nii.gz -ref T1_raw_fsaverage.nii.gz -dof 6 -omat T2coregtofsaverage.mat -out T2_raw_fsaverage.nii.gz
-
 recon-all -s Pat548_fsav -i T1_raw_fsaverage.nii.gz -T2 T2_raw_fsaverage.nii.gz -all
-mri_aparc2aseg --s Pat548_fsav --new-ribbon --aseg Julich_fsaverage.mgz --annot Julich --annot-table /home/brunobastos/Mestrado/Dados/Atlas/JulichLUT_freesurfer.txt --o output_freesurfer_teste.mgz
+
+mri_surf2surf --srcsubject fsaverage --trgsubject Pat548_fsav --hemi lh --sval-annot $SUBJECTS_DIR/fsaverage/label/lh.Julich.annot  --tval $SUBJECTS_DIR/Pat548_fsav/label/lh.Julich_pat.annot
+mri_surf2surf --srcsubject fsaverage --trgsubject Pat548_fsav --hemi rh --sval-annot $SUBJECTS_DIR/fsaverage/label/rh.Julich.annot  --tval $SUBJECTS_DIR/Pat548_fsav/label/rh.Julich_pat.annot
+
+#mri_vol2vol --mov $SUBJECTS_DIR/fsaverage/mri/Julich_fsaverage.nii.gz --targ T1_raw_fsaverage.nii.gz --regheader --o Julich_fsaverage_pat.nii.gz
+flirt -in $SUBJECTS_DIR/fsaverage/mri/Julich_fsaverage.nii.gz -ref T1_raw_fsaverage.nii.gz -omat template_to_T1.mat -dof 12
+fnirt --in=$SUBJECTS_DIR/fsaverage/mri/Julich_fsaverage.nii.gz --ref=T1_raw_fsaverage.nii.gz --aff=template_to_T1.mat --cout=template_to_T1_nonlinear_coeff
+applywarp --in=in=$SUBJECTS_DIR/fsaverage/mri/Julich_fsaverage.nii.gz --ref=T1_raw_fsaverage.nii.gz --warp=template_to_T1_nonlinear_coeff --interp=nn --out=Julich_fsaverage_pat.nii.gz
+ 
+
+
+
+mri_aparc2aseg --s Pat548_fsav --old-ribbon --aseg Julich_fsaverage.mgz --annot Julich --annot-table /home/brunobastos/Mestrado/Dados/Atlas/JulichLUT_freesurfer.txt --o output_freesurfer_teste.mgz
 mrconvert -datatype uint32 output_freesurfer.mgz Julich_parcels.mif -force 

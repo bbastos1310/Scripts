@@ -169,15 +169,14 @@
         $'\n'"    Segmentation"\
         $'\n'"    Labeling"\
         $'\n'"    Connectivity matrix"\
-      $'\n'"4.View"\
+      $'\n'"4.Analysis"\
+      $'\n'"5.View"\
         $'\n'"    Results of preprocessing"\
         $'\n'"    Results of tractography"\
-        $'\n'"    Results of analysis"\
-      $'\n'"5.Analysis"
-      
-      read -p "Opção: " script
-        case $script in
-               
+        $'\n'"    Results of segmentation"
+       read -p "Opção: " script
+       
+        case $script in               
         1)
         . "$SCRIPT_DIR/preprocess.sh";;
         
@@ -188,10 +187,10 @@
         . "$SCRIPT_DIR/segmentation.sh";;
         
         4)
-        . "$SCRIPT_DIR/view.sh";;
+        . "$SCRIPT_DIR/analysis.sh";;
         
         5)
-        . "$SCRIPT_DIR/analysis.sh";;
+        . "$SCRIPT_DIR/view.sh";;
                  
         *)
         echo "invalid response"

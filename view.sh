@@ -206,7 +206,67 @@
             5) handleT1coregister;;
             esac
             
-      read -p "Deseja visualizar mais imagens do preprocessing (y/n)? " option
+      read -p "Deseja visualizar mais imagens da segmentação (y/n)? " option
+          
+            case $option in 
+            [Yy]) FLAG_CONTINUE=1;;
+            [nN]) FLAG_CONTINUE=0;;
+            *)  FLAG_CONTINUE=0;;
+            esac
+      done
+      ;;
+      
+      4)      
+      while [ $FLAG_CONTINUE -eq 1 ]; do    
+          echo "Deseja visualizar a imagem de qual dos resultados:"\
+          $'\n'"1.Tracts"\
+          $'\n'"2.Maps"\
+          $'\n'"3.Connectivity matrix"
+          read -p "Opção: " analysis
+          
+            case $analysis in
+            1) 
+            echo "Deseja visualizar qual trato:"\
+              $'\n'"1.Corticospinal tract (CST)"\
+              $'\n'"2.Decussating Dentatorubrothalamic Tract (DRTT)"\
+              $'\n'"3.Non-Decussating Dentatorubrothalamic Tract (ndDRTT)"\
+              $'\n'"Medial lemniscus (ML)"\
+              $'\n'"All"
+              read -p "Opção: " tract
+              
+              case $tract in
+              1) handleCst;;
+              2) handleDrtt;;
+              3) handleNddrtt;;
+              4) handleMl;;
+              5) handleAlltracts;;
+            ;;
+            
+            2) 
+            echo "Deseja visualizar qual mapa:"\
+              $'\n'"1.ADC"\
+              $'\n'"2.FA"\
+              $'\n'"3.CL"\
+              $'\n'"4.CS"\
+              $'\n'"5.CP"\
+              $'\n'"6.AD"\
+              $'\n'"7.RD"
+              read -p "Opção: " maps
+              
+              case $maps in
+              1) handleADCmap;;
+              2) handleFAmap;;
+              3) handleCLmap;;
+              4) handleCSmap;;
+              5) handleCPmap;;
+              6) handleADmap;;
+              7) handleRDmap;;              
+            ;;
+            
+            3) handleConnectivitymatrix;;
+            esac
+            
+      read -p "Deseja visualizar mais imagens dos resultados (y/n)? " option
           
             case $option in 
             [Yy]) FLAG_CONTINUE=1;;
