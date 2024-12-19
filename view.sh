@@ -240,6 +240,7 @@
               3) handleNddrtt;;
               4) handleMl;;
               5) handleAlltracts;;
+              esac
             ;;
             
             2) 
@@ -260,7 +261,8 @@
               4) handleCSmap;;
               5) handleCPmap;;
               6) handleADmap;;
-              7) handleRDmap;;              
+              7) handleRDmap;;   
+              esac           
             ;;
             
             3) handleConnectivitymatrix;;

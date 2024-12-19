@@ -31,8 +31,7 @@
           tensor2metric tensor.mif -vec fa_map.mif -adc adc_map.mif -cl cl_map.mif -cs cs_map.mif -cp cp_map.mif -ad ad_map.mif -rd rd_map.mif -force
           mrcalc fa_map.mif -abs fa_map_abs.mif -force
           cp -f fa_map_abs.mif adc_map.mif cl_map.mif cs_map.mif cp_map.mif ad_map.mif rd_map.mif "$ANALYSIS_DIR"
-          cp hcpmmp1.csv "$ANALYSIS_DIR/hcpmmp1.csv"
-          cp hcpmmp1_parcels.mif "$ANALYSIS_DIR/hcpmmp1_parcels.mif"
+          cp Julich_parcels_ordered.mif "$ANALYSIS_DIR/Julich_parcels_ordered.mif"
           cp dwi_mask_up_reg.mif "$ANALYSIS_DIR/dwi_mask_up_reg.mif"
           
           # Create maps (24H)
@@ -41,7 +40,6 @@
           tensor2metric tensor_24.mif -vec fa_map_24.mif -adc adc_map_24.mif -cl cl_map_24.mif -cs cs_map_24.mif -cp cp_map_24.mif -ad ad_map_24.mif -rd rd_map_24.mif -force
           mrcalc fa_map_24.mif -abs fa_map_24_abs.mif -force
           cp -f fa_map_24_abs.mif adc_map_24.mif cl_map_24.mif cs_map_24.mif cp_map_24.mif ad_map_24.mif rd_map_24.mif "$ANALYSIS_DIR"
-          cp hcpmmp1.csv "$ANALYSIS_DIR/hcpmmp1_24.csv"
         else
           exit
         fi
@@ -56,6 +54,7 @@
           
           # Conversion (PRE)
           cd "$OUT_PRE"
+          cp Julich.csv "$ANALYSIS_DIR/Nifti/Julich.csv"
           mrconvert fa_map_abs.mif -stride 1,2,3,4 "$ANALYSIS_DIR/Nifti/fa_map_abs.nii.gz" -force
           mrconvert adc_map.mif -stride 1,2,3 "$ANALYSIS_DIR/Nifti/adc_map.nii.gz" -force
           mrconvert cl_map.mif -stride 1,2,3 "$ANALYSIS_DIR/Nifti/cl_map.nii.gz" -force
@@ -64,10 +63,11 @@
           mrconvert ad_map.mif -stride 1,2,3 "$ANALYSIS_DIR/Nifti/ad_map.nii.gz" -force
           mrconvert rd_map.mif -stride 1,2,3 "$ANALYSIS_DIR/Nifti/rd_map.nii.gz" -force
           mrconvert T1_raw.mif -stride 1,2,3 "$ANALYSIS_DIR/Nifti/T1.nii.gz" -force
-          mrconvert hcpmmp1_parcels.mif -stride 1,2,3 "$ANALYSIS_DIR/Nifti/hcpmmp1_parcels.nii.gz" -force
+          mrconvert Julich_parcels_ordered.mif -stride 1,2,3 "$ANALYSIS_DIR/Nifti/Julich_parcels_ordered.nii.gz" -force
           mrconvert dwi_mask_up_reg.mif -stride 1,2,3 "$ANALYSIS_DIR/Nifti/dwi_mask_up_reg.nii.gz" -force
           
           cd "$OUT_24"
+          cp Julich.csv "$ANALYSIS_DIR/Nifti/Julich_24.csv"
           # Coregister T1_raw_24 with T1_raw
           mrconvert T1_raw_24.mif T1_raw_24.nii.gz -force
           flirt -in T1_raw_24.nii.gz -ref T1_raw.nii.gz -dof 6 -omat t12t1.mat
@@ -97,13 +97,18 @@
         fi
       }
       
-    #handleScript() {
-    #    if [ $EXIST -eq 1 ]; then
-    #      
-    #    else
-    #      exit
-    #    fi
-    #  } 
+    handleScript() {
+        if [ $EXIST -eq 1 ]; then
+          cd "$ANALYSIS_DIR"
+          if [ ! -d "$ANALYSIS_DIR/Results" ] ; then
+              mkdir Results
+          fi
+          cd "$ANALYSIS_DIR/Nifti"
+          python "$SCRIPT_DIR/Python/main.py"
+        else
+          exit
+        fi
+      } 
       
     # MAIN FUNCTION
       # Create analysis folder
