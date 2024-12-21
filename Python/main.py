@@ -54,7 +54,7 @@ data_mask = mask_image.get_fdata()
 print("2.Dados extraídos")
 
 # Run lesion detection
-# lesion_coordinates = lesionDetection.handleLesionmask(data_T1, data_T1_24, T1_raw)
-# maps.handleMaps(data_adcmap, adc_map, data_adcmap24, adc_map_24, data_mask, "ADCmap")
+lesion_coordinates = lesionDetection.handleLesionmask(data_T1, data_T1_24, T1_raw)
+maps.handleMaps(data_adcmap, adc_map, data_adcmap24, adc_map_24, data_mask, "ADCmap")
 matrix.handleMatrixcreation(matrix_PRE, matrix_24)
 		

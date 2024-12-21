@@ -30,7 +30,7 @@
           flirt -in "$OUT_PRE/T2_raw.nii.gz" -ref "$OUT_PRE/T1_raw.nii.gz" -dof 6 -omat t22t1.mat
           transformconvert t22t1.mat T2_raw.nii.gz T1_raw.nii.gz flirt_import t22t1_mrtrix.txt -force
           mrtransform T2_raw.mif -linear t22t1_mrtrix.txt T2_raw_coreg.mif -force
-          mrconvert T2_raw_coreg.mif T2_raw_coreg.nii.gz
+          mrconvert T2_raw_coreg.mif T2_raw_coreg.nii.gz -force
           # Reconstruction
           recon-all -s "$PAT_NUM" -i "$OUT_PRE/T1_raw.nii.gz" -T2 "$OUT_PRE/T2_raw_coreg.nii.gz" -all
         else

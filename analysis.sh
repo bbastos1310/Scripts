@@ -151,7 +151,7 @@
         esac
       fi
       
-      break;;
+      ;;
       
         # One step of the preprocessing
       [Nn])
