@@ -54,8 +54,27 @@
       4) mrview T1_raw.mif -overlay.load 5tt_coreg.mif -overlay.colourmap 2;;
       esac
     }
-
-    # 7.Response function
+     
+    # 7.Raw files
+    handleRaw() {
+      echo "Qual das imagens deseja visualizar?:"$'\n'\
+      "1.Dwi"$'\n'\
+      "2.T1"$'\n'\
+      "3.T2"$'\n'\
+      "4.Contrast"$'\n'      
+      read -p "Opção: " raw
+      
+      case $raw in
+      1) mrview dwi_raw.mif;;
+      2) mrview T1_raw.mif;;
+      3) mrview T2_raw.mif;;
+      4) mrview Contrast_raw.mif;;
+      esac
+    } 
+     
+    # FUNCTIONS TRACTOGRAPHY
+    
+    # 1.Response function
     handleRF() {
       echo "Qual das imagens deseja visualizar?:"$'\n'\
       "1.WM, GM and CSF response function"$'\n'\
@@ -68,31 +87,16 @@
       esac
     }
 
-    # 8.Fiber orientation distribution(FOD)
+    # 2.Fiber orientation distribution(FOD)
     handleFod() { mrview vf.mif -odf.load_sh wmfod.mif; }
 
-    # 9.Raw files
-    handleRaw() {
-      echo "Qual das imagens deseja visualizar?:"$'\n'\
-      "1.Dwi"$'\n'\
-      "2.T1"$'\n'
-      read -p "Opção: " raw
-      
-      case $raw in
-      1) mrview dwi_raw.mif;;
-      2) mrview T1_raw.mif;;
-      esac
-    }
-
-    # FUNCTIONS TRACTOGRAPHY
-
-    # 1.Mask between GM/WM
+    # 3.Mask between GM/WM
     handleFringe() { mrview dwi_den_unr_preproc_unb_reg.mif -overlay.load gmwmSeed_coreg.mif; }
 
-    # 2.Streamline creation
+    # 4.Streamline creation
     handleStreamlines() { mrview dwi_den_unr_preproc_unb_reg.mif -tractography.load smallerTracks_200k.tck; }
 
-    # 3.Streamlines filtering
+    # 5.Streamlines filtering
     handleSift() { mrview dwi_den_unr_preproc_unb_reg.mif -tractography.load smallerTracks_200k.tck & mrview dwi_den_unr_preproc_unb_reg.mif -tractography.load smallerTracks_200k.tck; }
 
     # FUNCTIONS SEGMENTATION

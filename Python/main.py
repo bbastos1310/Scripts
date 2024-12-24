@@ -28,9 +28,11 @@ T1_raw = nib.load("T1.nii.gz")
 T1_raw_24 = nib.load("T1_24_coreg.nii.gz")
 T1_seg = nib.load("Julich_parcels_ordered.nii.gz")
 mask_image = nib.load("dwi_mask_up_reg.nii.gz")
+Contrast = nib.load("Contrast_coreg_resampled.nii.gz")
+Contrast_24 = nib.load("Contrast_24_coreg_resampled.nii.gz")
 matrix_PRE = pd.read_csv("Julich.csv", header = None, sep = " ")
 matrix_24 = pd.read_csv("Julich_24.csv", header = None, sep = " ")
-print("1.Arquivos carregados")
+print("-Arquivos carregados")
 
 # Extract data
 data_adcmap = adc_map.get_fdata()
@@ -51,10 +53,12 @@ data_T1 = T1_raw.get_fdata()
 data_T1_24 = T1_raw_24.get_fdata()
 data_T1seg = T1_seg.get_fdata()
 data_mask = mask_image.get_fdata()
-print("2.Dados extraídos")
+data_contrast = Contrast.get_fdata()
+data_contrast_24 = Contrast_24.get_fdata () 
+print("-Dados extraídos")
 
 # Run lesion detection
-lesion_coordinates = lesionDetection.handleLesionmask(data_T1, data_T1_24, T1_raw)
+lesion_coordinates = lesionDetection.handleLesionmask(data_contrast, data_contrast_24, Contrast)
 maps.handleMaps(data_adcmap, adc_map, data_adcmap24, adc_map_24, data_mask, "ADCmap")
 matrix.handleMatrixcreation(matrix_PRE, matrix_24)
 		

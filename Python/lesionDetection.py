@@ -9,24 +9,24 @@ from skimage.morphology import square, closing
 from scipy.ndimage import center_of_mass
 
 
-def handleLesionmask(data_T1, data_T1_24, T1_raw):
+def handleLesionmask(data_contrast, data_contrast_24, Contrast):
 	# Normalização
-	data_preNorm = data_T1/np.abs(data_T1).max()
-	data_24Norm = data_T1_24/np.abs(data_T1_24).max()
+	data_preNorm = data_contrast/np.abs(data_contrast).max()
+	data_24Norm = data_contrast_24/np.abs(data_contrast_24).max()
 	
 	# Diferença entre as imagens
-	data = data_preNorm - data_24Norm
+	data = data_24Norm - data_preNorm
 	
 	# Salvar a subtração das imagens
-	functions.saveImage(data, T1_raw, "../Results/T1_difference")
-	print("3.Imagem T1_difference.nii.gz salva")
+	functions.saveImage(data, Contrast, "../Results/Contrast_difference")
+	print("-Imagem Contrast_difference.nii.gz salva")
 	
 	# Inicializa uma máscara binária com zeros
 	mask = np.zeros(np.abs(data).shape, dtype=np.float32)
 	
 	# Verifica o contorno para cada corte a partir de um limiar
 	for x in range(data.shape[0]):
-	  contornos = measure.find_contours(np.abs(data[x,:,:]), level=0.07)
+	  contornos = measure.find_contours(np.abs(data[x,:,:]), level=0.3)
 	  # Itera sobre cada contorno encontrado
 	  for contorno in contornos:
 		  # Obter as coordenadas dos contornos
@@ -34,12 +34,12 @@ def handleLesionmask(data_T1, data_T1_24, T1_raw):
 		  c = contorno[:, 1].astype(int)
 		  mask[x, r, c] = 1
   
-	plt.imshow(mask[:,:,92], cmap='gray')
+	plt.imshow(mask[:,113,:], cmap='gray')
 	# Salvar a imagem em um arquivo
 	plt.savefig("../Results/mask_contour.png")  # Salva como arquivo PNG
 	# Fechar o plot para liberar memória
 	plt.close()
-	print("4.Imagem mask_contour.png salva")
+	print("-Imagem mask_contour.png salva")
 	
 	# Closing
 	mask_closed = np.zeros(data.shape)
@@ -50,7 +50,7 @@ def handleLesionmask(data_T1, data_T1_24, T1_raw):
 	label_mask, num_labels = measure.label(mask_closed,connectivity=1 ,return_num=True)
 	
 	# Define o limite mínimo de voxels para manter os labels
-	min_voxels = 150  # Ajuste este valor conforme necessário
+	min_voxels = 250  # Ajuste este valor conforme necessário
 	
 	# Itera sobre os labels e calcula as propriedades dos objetos rotulados
 	labels_filtered = np.zeros_like(label_mask)
@@ -58,17 +58,17 @@ def handleLesionmask(data_T1, data_T1_24, T1_raw):
 		if region.area >= min_voxels:  # `area` retorna o número de voxels
 			labels_filtered[label_mask == region.label] = region.label
 	
-	plt.imshow(color.label2rgb(labels_filtered[:,:,92], bg_label=0))
+	plt.imshow(color.label2rgb(labels_filtered[:,113,:], bg_label=0))
 	plt.savefig("../Results/filtered_labels.png")  # Salva como arquivo PNG
 	plt.close
-	print("5.Imagem filtered_labels.png salva")
+	print("-Imagem filtered_labels.png salva")
 	
 	# Lesion selection
 	center_image = np.array(labels_filtered.shape) / 2
 	closest_label = None
 	min_distance = float('inf')
 	
-	print("6.Cálculo do label mais próximo do centro, esse comando é um pouco demorado")
+	print("-Cálculo do label mais próximo do centro, esse comando é um pouco demorado")
 	# Calcular o centro de massa de cada label
 	for label in range(1, num_labels + 1):  # Começa do label 1 até o número total de labels
 		actual_label = (labels_filtered == label)  # Cria uma máscara para o label atual
@@ -99,7 +99,7 @@ def handleLesionmask(data_T1, data_T1_24, T1_raw):
 	lesion_data = np.zeros(data.shape)
 	for point in range(num_points):
 	  lesion_data[lesion_coordinates[point][0],lesion_coordinates[point][1],lesion_coordinates[point][2]] = 1
-	functions.saveImage(lesion_data, T1_raw, "../Results/mask_lesion")
-	print("7.Imagem mask_lesion.nii.gz salva")
+	functions.saveImage(lesion_data, Contrast, "../Results/mask_lesion")
+	print("-Imagem mask_lesion.nii.gz salva")
 	
 	return lesion_coordinates

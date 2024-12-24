@@ -40,8 +40,8 @@
       
     handleAnnot2Patient() {
         if [ $EXIST -eq 1 ]; then
-          mri_surf2surf --srcsubject fsaverage --trgsubject "$PAT_NUM" --hemi lh --sval-annot $SUBJECTS_DIR/fsaverage/label/lh.Julich.annot  --tval $SUBJECTS_DIR/"$PAT_NUM"/label/lh.Julich_pat.annot  
-	  mri_surf2surf --srcsubject fsaverage --trgsubject "$PAT_NUM" --hemi rh --sval-annot $SUBJECTS_DIR/fsaverage/label/rh.Julich.annot  --tval $SUBJECTS_DIR/"$PAT_NUM"/label/rh.Julich_pat.annot  
+          mri_surf2surf --srcsubject fsaverage --trgsubject "$PAT_NUM" --hemi lh --sval-annot $SUBJECTS_DIR/fsaverage/label/lh.Julich.annot  --tval $SUBJECTS_DIR/"$PAT_NUM"/label/lh.JULICH.annot  
+	  mri_surf2surf --srcsubject fsaverage --trgsubject "$PAT_NUM" --hemi rh --sval-annot $SUBJECTS_DIR/fsaverage/label/rh.Julich.annot  --tval $SUBJECTS_DIR/"$PAT_NUM"/label/rh.JULICH.annot  
         else
           exit
         fi
@@ -49,16 +49,9 @@
       
     handleLabel2Image() {
         if [ $EXIST -eq 1 ]; then
-          mri_convert "$SUBJECTS_DIR/fsaverage/mri/T1.mgz" "$OUT_PRE/T1_fsaverage.nii.gz"
-          flirt -in "$OUT_PRE/T1_fsaverage.nii.gz" -ref "$OUT_PRE/T1_raw.nii.gz" -dof 6 -omat fsaveragetoT1.mat
-          flirt -in "$BASE_DIR/Atlas/Julich_fsaverage.nii.gz" -ref T1_raw.nii.gz -applyxfm -init fsaveragetoT1.mat -out Julich_fsaverage_coreg.nii.gz -interp nearestneighbour
-          mri_convert "$OUT_PRE/Julich_fsaverage_coreg.nii.gz" "$OUT_PRE/Julich_fsaverage_coreg.mgz"
-          #flirt -in "$BASE_DIR"/Atlas/Julich_fsaverage.nii.gz -ref T1_raw.nii.gz -out  Julich_fsaverage_coreg.nii.gz -omat transform_atlas2T1.mat -interp nearestneighbour -dof 6
-          #mri_convert T1_raw.nii.gz T1_raw.mgz
-          #mri_vol2vol --mov "$BASE_DIR"/Julich_fsaverage.mgz --targ T1_raw.mgz --o Julich_fsaverage_coreg.mgz --regheader --interp nearest
-          mri_aparc2aseg --s "$PAT_NUM" --old-ribbon --aseg Julich_fsaverage_coreg.mgz --annot Julich_pat --annot-table "$BASE_DIR/JulichLUT_freesurfer.txt" --o output_freesurfer.mgz
+          mri_aparc2aseg --new-ribbon --s "$PAT_NUM" --annot JULICH --o output_freesurfer.mgz
           mrconvert -datatype uint32 output_freesurfer.mgz Julich_parcels.mif -force
-          labelconvert Julich_parcels.mif "$BASE_DIR/Atlas/JulichLUT_freesurfer.txt" "$BASE_DIR/Atlas/JulichLUT_mrtrix.txt" Julich_parcels_ordered.mif -force
+          #labelconvert Julich_parcels.mif "$BASE_DIR/Atlas/JulichLUT_freesurfer.txt" "$BASE_DIR/Atlas/JulichLUT_mrtrix.txt" Julich_parcels_ordered.mif -force
         else
           exit
         fi
