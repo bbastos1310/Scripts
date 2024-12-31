@@ -33,6 +33,7 @@
           mrconvert T2_raw_coreg.mif T2_raw_coreg.nii.gz -force
           # Reconstruction
           recon-all -s "$PAT_NUM" -i "$OUT_PRE/T1_raw.nii.gz" -T2 "$OUT_PRE/T2_raw_coreg.nii.gz" -all
+          mrconvert $SUBJECTS_DIR/"$PAT_NUM"/mri/T1.mgz T1_resampled.mif
         else
           exit
         fi
@@ -49,8 +50,9 @@
       
     handleLabel2Image() {
         if [ $EXIST -eq 1 ]; then
-          mri_aparc2aseg --new-ribbon --s "$PAT_NUM" --annot JULICH --o output_freesurfer.mgz
-          mrconvert -datatype uint32 output_freesurfer.mgz Julich_parcels.mif -force
+          python "$SCRIPT_DIR/mask_extraction.py"
+          #mri_aparc2aseg --new-ribbon --s "$PAT_NUM" --annot JULICH --o output_freesurfer.mgz
+          #mrconvert -datatype uint32 output_freesurfer.mgz Julich_parcels.mif -force
           #labelconvert Julich_parcels.mif "$BASE_DIR/Atlas/JulichLUT_freesurfer.txt" "$BASE_DIR/Atlas/JulichLUT_mrtrix.txt" Julich_parcels_ordered.mif -force
         else
           exit

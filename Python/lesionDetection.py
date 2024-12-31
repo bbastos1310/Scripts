@@ -3,7 +3,7 @@ import functions
 
 #external libraries
 import numpy as np
-from skimage import color, measure
+# from skimage import color, measure
 import matplotlib.pyplot as plt
 from skimage.morphology import square, closing
 from scipy.ndimage import center_of_mass

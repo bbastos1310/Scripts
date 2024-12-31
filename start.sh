@@ -1,6 +1,7 @@
     BASE_DIR="/home/brunobastos/Mestrado/Dados"
     SCRIPT_DIR="/home/brunobastos/Mestrado/Scripts"
     SUBJECTS_DIR="$BASE_DIR/fs_subjects"
+    ATLAS_DIR="$BASE_DIR/Atlas"    
 
     # Files 
     FILE_1="rename_data.sh"

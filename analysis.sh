@@ -125,7 +125,7 @@
               mkdir Results
           fi
           cd "$ANALYSIS_DIR/Nifti"
-          python "$SCRIPT_DIR/Python/main.py"
+          python "$SCRIPT_DIR/Python/main_analysis.py"
         else
           exit
         fi

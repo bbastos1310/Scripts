@@ -1,263 +1,267 @@
-TRANSFORMAÇÃO DO ATLAS (TEMPLATE T1 -> ESPAÇO T1 DO PACIENTE)
+BASE_DIR="/home/brunobastos/Mestrado/Dados"
+SCRIPT_DIR="/home/brunobastos/Mestrado/Scripts"
+SUBJECTS_DIR="$BASE_DIR/fs_subjects"
+ATLAS_DIR="$BASE_DIR/Atlas" 
 
-# Converter o arquivo T1 da pasta mri do peciente no freesurfer (resolução de 256x256x256)
-mri_convert ~/Mestrado/Dados/fs_subjects/Pat548/mri/T1.mgz T1_resampled.nii.gz
 
-# Converter o arquivo T1 do template do atlas para nii.gz
-mrconvert ~/Mestrado/Dados/Atlas/mni_icbm152_t1_tal_nlin_asym_09c.nii mni15209c.nii.gz -force
+## Corregistro da imagem T2 do atlas com T2 do paciente
+#echo "Corregistro da imagem T2 do atlas com a imagem T2 no espaço nativo do paciente..."
+#flirt -in $ATLAS_DIR/T2_mni_resampled.nii.gz -ref T2_resampled.nii.gz -dof 6 -omat atlas2T2.mat
+#transformconvert atlas2T2.mat $ATLAS_DIR/T2_mni_resampled.nii.gz T2_resampled.nii.gz flirt_import atlas2T2_mrtrix.txt -force
+#mrconvert $ATLAS_DIR/T2_mni_resampled.nii.gz T2_mni_resampled.mif -force
+#mrtransform T2_mni_resampled.mif -linear atlas2T2_mrtrix.txt T2_mni_resampled_coreg.mif -force
+#mrconvert T2_mni_resampled_coreg.mif T2_mni_resampled_coreg.nii.gz -force
+#echo "Corregistro da imagem T2 do atlas com T2 do paciente finalizado"
 
-# Corregistrar a imagem do template à imagem T1 do paciente usando flirt e mrtrix
-flirt -in mni15209c.nii.gz -ref T1_resampled.nii.gz -dof 6 -omat atlas2T1.mat
-transformconvert atlas2T1.mat mni15209c.nii.gz T1_resampled.nii.gz flirt_import atlas2T1_mrtrix.txt -force
-mrconvert ~/Mestrado/Dados/Atlas/mni_icbm152_t1_tal_nlin_asym_09c.nii mni15209c.mif -force
-mrtransform mni15209c.mif -linear atlas2T1_mrtrix.txt mni15209c_coreg.mif -force
-mrconvert mni15209c_coreg.mif mni15209c_coreg.nii.gz -force
+## Corregistro dos labels no espaço mni para o espaço do paciente
+#mrconvert $ATLAS_DIR/output_freesurfer.nii.gz output_mni_freesurfer.mif -force
+#mrtransform output_mni_freesurfer.mif -interp nearest -datatype uint32 -linear atlas2T2_mrtrix.txt output_mni_freesurfer_coreg.mif -force
+#mrconvert output_mni_freesurfer_coreg.mif -datatype uint32 output_mni_freesurfer_coreg.nii.gz -force
 
-# Aplicar transformação não linear no template para se ajustar ao paciente
-antsRegistration \
-    --dimensionality 3 \
-    --float 0 \
-    --output [ T1Atlas_to_T1Raw_, T1Atlas_warped.nii.gz ] \
-    --interpolation Linear \
-    --use-histogram-matching 0 \
-    --initial-moving-transform [ T1_resampled.nii.gz,mni15209c_coreg.nii.gz, 1 ] \
-    --transform Rigid[ 0.1 ] \
-    --metric MI[ T1_resampled.nii.gz,mni15209c_coreg.nii.gz, 1, 32, Regular, 0.25] \
-    --convergence [ 1000x500x250x100, 1e-6, 10] \
-    --shrink-factors 8x4x2x1 \
-    --smoothing-sigmas 3x2x1x0vox \
-    --transform Affine[ 0.1 ] \
-    --metric MI[ T1_resampled.nii.gz,mni15209c_coreg.nii.gz, 1, 32, Regular, 0.25 ] \
-    --convergence [ 1000x500x250x100, 1e-6 , 10 ] \
-    --shrink-factors 8x4x2x1 \
-    --smoothing-sigmas 3x2x1x0vox \
-    --transform SyN[ 0.1, 3, 0] \
-    --metric CC[ T1_resampled.nii.gz,mni15209c_coreg.nii.gz, 1, 4] \
-    --convergence [ 100x70x50x20, 1e-6, 10] \
-    --shrink-factors 8x4x2x1 \
-    --smoothing-sigmas 3x2x1x0vox \
-    --verbose 1
+## Criação das máscaras com as regiões de interesse
+#python $SCRIPT_DIR/Python/mask_extraction.py
 
-# Corregistrar o atlas ao paciente a partir da matriz de transformação obtida na etapa anterior
-mrconvert /home/brunobastos/Mestrado/Dados/Atlas/Julich_aseg.nii.gz Julich_aseg.mif -force
-mrtransform Julich_aseg.mif -linear atlas2T1_mrtrix.txt Julich_aseg_coreg.mif -force
-mrconvert Julich_aseg_coreg.mif Julich_aseg_coreg.nii.gz -force
+## Corregistro com peso no diencéfalo
+#echo "Corregistro linear ponderado do diencéfalo ..."
+#flirt -in T2_mni_resampled_coreg.nii.gz \
+ #-ref T2_resampled.nii.gz -out midbrain_flirt.nii.gz \
+ #-inweight mask_midbrain_coreg.nii.gz \
+ #-refweight mask_midbrain.nii.gz \
+ #-dof 6 \
+ #-omat atlas2T2_midbrain.mat
+#echo "Corregistro linear ponderado do diencéfalo finalizado"
 
-# Aplicar a transformação não linear ao atlas a partir das matrizes de transformação obtidas anteriormente
+##Corregistro não linear do diencéfalo
+#antsRegistration --dimensionality 3 \
+  #--float 1 \
+  #--output [midbrain_to_T2_,atlas_warped.nii.gz] \
+  #--transform Rigid[0.1] \
+  #--metric MI[T2_resampled.nii.gz,midbrain_flirt.nii.gz,1,32,Regular,0.25] \
+  #--convergence [1000x500x250,1e-6,10] \
+  #--shrink-factors 8x4x2 \
+  #--smoothing-sigmas 3x2x1vox \
+  #--transform Affine[0.1] \
+  #--metric MI[T2_resampled.nii.gz,midbrain_flirt.nii.gz,1,32,Regular,0.25] \
+  #--convergence [1000x500x250,1e-6,10] \
+  #--shrink-factors 8x4x2 \
+  #--smoothing-sigmas 3x2x1vox \
+  #--transform SyN[0.1,3,0] \
+  #--metric CC[T2_resampled.nii.gz,midbrain_flirt.nii.gz,1,4] \
+  #--convergence [100x70x50x20,1e-6,10] \
+  #--shrink-factors 8x4x2x1 \
+  #--smoothing-sigmas 3x2x1x0vox \
+  #--x [mask_midbrain.nii.gz,mask_midbrain_coreg.nii.gz] \
+  #--verbose 1
+  
+## Apply the transformations to the atlas red nucleus and substantia nigra
+## Corregister
+#mrconvert $ATLAS_DIR/Midbrain-NRp_lh_MNI152.nii.gz NRp_lh.mif -force
+#mrtransform NRp_lh.mif -linear atlas2T2_mrtrix.txt NRp_lh_coreg.mif -force
+#mrconvert $ATLAS_DIR/Midbrain-NRp_rh_MNI152.nii.gz NRp_rh.mif -force
+#mrtransform NRp_rh.mif -linear atlas2T2_mrtrix.txt NRp_rh_coreg.mif -force
+mrconvert $ATLAS_DIR/Midbrain-NRm_lh_MNI152.nii.gz NRm_lh.mif -force
+mrtransform NRm_lh.mif -linear atlas2T2_mrtrix.txt NRm_lh_coreg.mif -force
+mrconvert $ATLAS_DIR/Midbrain-NRm_rh_MNI152.nii.gz NRm_rh.mif -force
+mrtransform NRm_rh.mif -linear atlas2T2_mrtrix.txt NRm_rh_coreg.mif -force
+#mrconvert $ATLAS_DIR/Midbrain-SNC_lh_MNI152.nii.gz SNc_lh.mif -force
+#mrtransform SNc_lh.mif -linear atlas2T2_mrtrix.txt SNc_lh_coreg.mif -force
+#mrconvert $ATLAS_DIR/Midbrain-SNC_rh_MNI152.nii.gz SNc_rh.mif -force
+#mrtransform SNc_rh.mif -linear atlas2T2_mrtrix.txt SNc_rh_coreg.mif -force
+#mrconvert $ATLAS_DIR/Midbrain-SNR_lh_MNI152.nii.gz SNr_lh.mif -force
+#mrtransform SNr_lh.mif -linear atlas2T2_mrtrix.txt SNr_lh_coreg.mif -force
+#mrconvert $ATLAS_DIR/Midbrain-SNR_rh_MNI152.nii.gz SNr_rh.mif -force
+#mrtransform SNr_rh.mif -linear atlas2T2_mrtrix.txt SNr_rh_coreg.mif -force
+
+
+## Corregister (weighted)
+#transformconvert atlas2T2_midbrain.mat T2_mni_resampled_coreg.nii.gz T2_resampled.nii.gz flirt_import atlas2T2_midbrain_mrtrix.txt -force
+#mrtransform NRp_lh_coreg.mif -linear atlas2T2_midbrain_mrtrix.txt NRp_lh_coreg_weighted.mif -force
+#mrconvert NRp_lh_coreg_weighted.mif NRp_lh_coreg_weighted.nii.gz -force
+#mrtransform NRp_rh_coreg.mif -linear atlas2T2_midbrain_mrtrix.txt NRp_rh_coreg_weighted.mif -force
+#mrconvert NRp_rh_coreg_weighted.mif NRp_rh_coreg_weighted.nii.gz -force
+mrtransform NRm_lh_coreg.mif -linear atlas2T2_midbrain_mrtrix.txt NRm_lh_coreg_weighted.mif -force
+mrconvert NRm_lh_coreg_weighted.mif NRm_lh_coreg_weighted.nii.gz -force
+mrtransform NRm_rh_coreg.mif -linear atlas2T2_midbrain_mrtrix.txt NRm_rh_coreg_weighted.mif -force
+mrconvert NRm_rh_coreg_weighted.mif NRm_rh_coreg_weighted.nii.gz -force
+#mrtransform SNc_lh_coreg.mif -linear atlas2T2_midbrain_mrtrix.txt SNc_lh_coreg_weighted.mif -force
+#mrconvert SNc_lh_coreg_weighted.mif SNc_lh_coreg_weighted.nii.gz -force
+#mrtransform SNc_rh_coreg.mif -linear atlas2T2_midbrain_mrtrix.txt SNc_rh_coreg_weighted.mif -force
+#mrconvert SNc_rh_coreg_weighted.mif SNc_rh_coreg_weighted.nii.gz -force
+#mrtransform SNr_lh_coreg.mif -linear atlas2T2_midbrain_mrtrix.txt SNr_lh_coreg_weighted.mif -force
+#mrconvert SNr_lh_coreg_weighted.mif SNr_lh_coreg_weighted.nii.gz -force
+#mrtransform SNr_rh_coreg.mif -linear atlas2T2_midbrain_mrtrix.txt SNr_rh_coreg_weighted.mif -force
+#mrconvert SNr_rh_coreg_weighted.mif SNr_rh_coreg_weighted.nii.gz -force
+
+## Transform
+#antsApplyTransforms \
+    #-d 3 \
+    #-i NRp_lh_coreg_weighted.nii.gz \
+    #-r T2_resampled.nii.gz \
+    #-o NRp_lh_coreg_weighted_transformed.nii.gz \
+    #-n Linear \
+    #-t midbrain_to_T2_1Warp.nii.gz \
+    #-t [midbrain_to_T2_0GenericAffine.mat,1] 
+
+#antsApplyTransforms \
+    #-d 3 \
+    #-i NRp_rh_coreg_weighted.nii.gz \
+    #-r T2_resampled.nii.gz \
+    #-o NRp_rh_coreg_weighted_transformed.nii.gz \
+    #-n Linear \
+    #-t midbrain_to_T2_1Warp.nii.gz \
+    #-t [midbrain_to_T2_0GenericAffine.mat,1] 
+
 antsApplyTransforms \
     -d 3 \
-    -i Julich_aseg_coreg.nii.gz \
-    -r T1_raw.nii.gz \
-    -o Julich_aseg_coreg_transformed.nii.gz \
-    -n NearestNeighbor \
-    -t T1Atlas_to_T1Raw_1Warp.nii.gz \
-    -t [T1Atlas_to_T1Raw_0GenericAffine.mat,1] 
-
-mri_convert Julich_aseg_coreg_transformed.nii.gz Julich_aseg_coreg_transformed.mgz
-
-TRANSFORMAÇÃO DO ATLAS (TEMPLATE WM -> ESPAÇO T1 DO PACIENTE USANDO WM)
-
-# Converter o arquivo T1 da pasta mri do peciente no freesurfer (resolução de 256x256x256)
-mri_convert ~/Mestrado/Dados/fs_subjects/Pat548/mri/T1.mgz T1_resampled.nii.gz
-
-# Converter o arquivo T1 do template do atlas para nii.gz
-mrconvert ~/Mestrado/Dados/Atlas/mni_icbm152_t1_tal_nlin_asym_09c.nii mni15209c.nii.gz -force
-
-# Corregistrar a imagem do template à imagem T1 do paciente usando flirt e mrtrix
-flirt -in mni15209c.nii.gz -ref T1_resampled.nii.gz -dof 6 -omat atlas2T1.mat
-transformconvert atlas2T1.mat mni15209c.nii.gz T1_resampled.nii.gz flirt_import atlas2T1_mrtrix.txt -force
-mrconvert ~/Mestrado/Dados/Atlas/mni_icbm152_t1_tal_nlin_asym_09c.nii mni15209c.mif -force
-mrtransform mni15209c.mif -linear atlas2T1_mrtrix.txt mni15209c_coreg.mif -force
-mrconvert mni15209c_coreg.mif mni15209c_coreg.nii.gz -force
-
-# Aplicar transformação não linear no template para se ajustar ao paciente usando T1
-antsRegistration \
-    --dimensionality 3 \
-    --float 0 \
-    --output [ T1Atlas_to_T1Raw_, T1Atlas_warped.nii.gz ] \
-    --interpolation Linear \
-    --use-histogram-matching 0 \
-    --initial-moving-transform [ T1_resampled.nii.gz,mni15209c_coreg.nii.gz, 1 ] \
-    --transform Rigid[ 0.1 ] \
-    --metric MI[ T1_resampled.nii.gz,mni15209c_coreg.nii.gz, 1, 32, Regular, 0.25] \
-    --convergence [ 1000x500x250x100, 1e-6, 10] \
-    --shrink-factors 8x4x2x1 \
-    --smoothing-sigmas 3x2x1x0vox \
-    --transform Affine[ 0.1 ] \
-    --metric MI[ T1_resampled.nii.gz,mni15209c_coreg.nii.gz, 1, 32, Regular, 0.25 ] \
-    --convergence [ 1000x500x250x100, 1e-6 , 10 ] \
-    --shrink-factors 8x4x2x1 \
-    --smoothing-sigmas 3x2x1x0vox \
-    --transform SyN[ 0.1, 3, 0] \
-    --metric CC[ T1_resampled.nii.gz,mni15209c_coreg.nii.gz, 1, 4] \
-    --convergence [ 100x70x50x20, 1e-6, 10] \
-    --shrink-factors 8x4x2x1 \
-    --smoothing-sigmas 3x2x1x0vox \
-    --verbose 1
-
-# Corregistrar o atlas ao paciente a partir da matriz de transformação obtida na etapa anterior
-mrconvert /home/brunobastos/Mestrado/Dados/Atlas/Julich_aseg.nii.gz Julich_aseg.mif -force
-mrtransform Julich_aseg.mif -linear atlas2T1_mrtrix.txt Julich_aseg_coreg.mif -force
-mrconvert Julich_aseg_coreg.mif Julich_aseg_coreg.nii.gz -force
-
-# Aplicar a transformação não linear ao atlas a partir das matrizes de transformação obtidas anteriormente
-antsApplyTransforms \
-    -d 3 \
-    -i Julich_aseg_coreg.nii.gz \
-    -r T1_raw.nii.gz \
-    -o Julich_aseg_coreg_transformed.nii.gz \
-    -n NearestNeighbor \
-    -t T1Atlas_to_T1Raw_1Warp.nii.gz \
-    -t [T1Atlas_to_T1Raw_0GenericAffine.mat,1] 
-
-mri_convert Julich_aseg_coreg_transformed.nii.gz Julich_aseg_coreg_transformed.mgz
-
-
-
-ATRIBUIÇÃO DE LABELS USANDO FREESURFER
-
-# Atribuição dos labels corticais a partir dos arquivos .annot e dos labels subcorticais a partir do atlas 
-mri_surf2surf --srcsubject fsaverage --trgsubject Pat548 --hemi lh --sval-annot $SUBJECTS_DIR/fsaverage/label/lh.Julich.annot  --tval $SUBJECTS_DIR/Pat548/label/lh.Julich_pat.annot
-mri_surf2surf --srcsubject fsaverage --trgsubject Pat548 --hemi rh --sval-annot $SUBJECTS_DIR/fsaverage/label/rh.Julich.annot  --tval $SUBJECTS_DIR/Pat548/label/rh.Julich_pat.annot
-mri_convert Julich_mni152_transformed.nii.gz Julich_mni152_transformed.mgz
-mri_aparc2aseg --new-ribbon --s Pat548 --annot JULICH --o output_freesurfer.mgz
-mrconvert -datatype uint32 output_freesurfer.mgz output_freesurfer.nii.gz -force
-
-# ajustes da segmentação subcortical
-labelsgmfix nodes.mif T1w_acpc_dc_restore_brain.nii.gz BN_Atlas_246_default.txt nodes_fixsgm.mif -premasked
-
-
-
-mris_convert --annot rh.JulichBrainAtlas_3.1_colin27.label.gii \
-             /home/users/llewis/freesurfer/subjects/fsaverage/surf/fsavg.R.sphere.native \
-             rh.JulichBrainAtlas_3.1_colin27.annot
-
-mris_info $SUBJECTS_DIR/Pat548/label/lh.Julich_pat.annot
-
-# Conversão de label.gii para .annot (Esse comando gera o arquivo diretamente na pasta surf de fsaverage
-mris_convert --annot lh.JulichBrainAtlas_3.1.label.gii "$SUBJECTS_DIR/fsaverage/surf/lh.sphere" lh.Julich.annot
-mris_convert --annot rh.JulichBrainAtlas_3.1.label.gii "$SUBJECTS_DIR/fsaverage/surf/rh.sphere" rh.Julich.annot
-
-mri_convert Julich_transformed_updated.nii.gz Julich_transformed_updated.mgz
-
-mris_anatomical_stats -a Julich_pat.annot -f output_stats.txt Pat548 lh
-
-
-run_first_all -i input_T1.nii -o output_first
-
-# Corregistrar a região de interesse ao paciente a partir da matriz de transformação obtida na etapa anterior
-mrconvert Midbrain-NRp_lh_MNI152.nii.gz Midbrain-NRp_lh_MNI152.mif -force
-mrtransform Midbrain-NRp_lh_MNI152.mif -linear atlas2T1_mrtrix.txt NRp_coreg.mif -force
-mrconvert NRp_coreg.mif NRp_coreg.nii.gz -force
-
-# Aplicar a transformação não linear ao atlas a partir das matrizes de transformação obtidas anteriormente
-antsApplyTransforms \
-    -d 3 \
-    -i NRp_coreg.nii.gz \
-    -r T1_raw.nii.gz \
-    -o NRp_coreg_transformed.nii.gz \
+    -i NRm_lh_coreg_weighted.nii.gz \
+    -r T2_resampled.nii.gz \
+    -o NRm_lh_coreg_weighted_transformed.nii.gz \
     -n Linear \
-    -t T1Atlas_to_T1Raw_1Warp.nii.gz \
-    -t [T2Atlas_to_T2Raw_0GenericAffine.mat,1] 
-
-flirt -in 021_raw_24.nii.gz -ref T1_raw.nii.gz -dof 6 -omat wmn2t1.mat
-transformconvert wmn2t1.mat 021_raw.nii.gz T1_raw.nii.gz flirt_import wmn2t1_mrtrix.txt -force
-mrtransform 021_raw.mif -linear wmn2t1_mrtrix.txt 021_raw_coreg.mif -force
-mrconvert 021_raw_coreg.mif 021_raw_coreg.nii.gz -force
-
-mrconvert 021_raw_24.mif 021_raw_24.nii.gz -force    
-flirt -in 021_raw_24.nii.gz -ref T1_raw.nii.gz -dof 6 -omat mprage2t1.mat
-transformconvert mprage2t1.mat 021_raw_24.nii.gz T1_raw.nii.gz flirt_import mprage2t1_mrtrix.txt -force
-mrtransform 021_raw_24.mif -linear mprage2t1_mrtrix.txt 021_raw_24_coreg_temp.mif -force
-mrgrid 021_raw_24_coreg_temp.mif regrid -template 021_raw_coreg.mif 021_raw_24_coreg.mif -force
-mrconvert 021_raw_24_coreg.mif 021_raw_24_coreg.nii.gz -force
-
-
-# Converter o arquivo T2 do template do atlas para nii.gz
-mrconvert ~/Mestrado/Dados/Atlas/mni_icbm152_t2_tal_nlin_asym_09c.nii mni152_T2.nii.gz -force
-
-# Corregistrar a imagem do template à imagem T2 do paciente usando flirt e mrtrix
-flirt -in mni152_T2.nii.gz -ref T2_raw_coreg.nii.gz -dof 6 -omat atlas2T2.mat
-transformconvert atlas2T2.mat mni152_T2.nii.gz T2_raw_coreg.nii.gz flirt_import atlas2T2_mrtrix.txt -force
-mrconvert ~/Mestrado/Dados/Atlas/mni_icbm152_t2_tal_nlin_asym_09c.nii mni152_T2.mif -force
-mrtransform mni152_T2.mif -linear atlas2T2_mrtrix.txt mni152_T2_coreg.mif -force
-mrconvert mni152_T2_coreg.mif mni152_T2_coreg.nii.gz -force
-
-# Aplicar transformação não linear no template para se ajustar ao paciente usando T1
-antsRegistration \
-    --dimensionality 3 \
-    --float 0 \
-    --output [ T2Atlas_to_T2Raw_, T2Atlas_warped.nii.gz ] \
-    --interpolation Linear \
-    --use-histogram-matching 0 \
-    --initial-moving-transform [ T2_raw_coreg.nii.gz,mni152_T2_coreg.nii.gz, 1 ] \
-    --transform Rigid[ 0.1 ] \
-    --metric MI[ T2_raw_coreg.nii.gz,mni152_T2_coreg.nii.gz, 1, 32, Regular, 0.25] \
-    --convergence [ 1000x500x250x100, 1e-6, 10] \
-    --shrink-factors 8x4x2x1 \
-    --smoothing-sigmas 3x2x1x0vox \
-    --transform Affine[ 0.1 ] \
-    --metric MI[ T2_raw_coreg.nii.gz,mni152_T2_coreg.nii.gz, 1, 32, Regular, 0.25 ] \
-    --convergence [ 1000x500x250x100, 1e-6 , 10 ] \
-    --shrink-factors 8x4x2x1 \
-    --smoothing-sigmas 3x2x1x0vox \
-    --transform SyN[ 0.1, 3, 0] \
-    --metric CC[ T2_raw_coreg.nii.gz,mni152_T2_coreg.nii.gz, 1, 4] \
-    --convergence [ 100x70x50x20, 1e-6, 10] \
-    --shrink-factors 8x4x2x1 \
-    --smoothing-sigmas 3x2x1x0vox \
-    --verbose 1
-
-
-# Exemplo de máscara para transformação não linear de uma região de interesse
-mrconvert ~/Mestrado/Dados/Atlas/mni_icbm152_t1_tal_nlin_asym_09c_mask.nii mni152_mask.mif -force
-mrtransform mni152_mask.mif -linear atlas2T2_mrtrix.txt mni152_mask_coreg.mif -force
-mrconvert mni152_mask_coreg.mif mni152_mask_coreg.nii.gz -force
-
-mrgrid T2_raw_coreg.mif regrid -template T1_resampled.mif T2_raw_coreg_resampled.mif -force
-mrconvert T2_raw_coreg_resampled.mif T2_raw_coreg_resampled.nii.gz -force
-mrconvert mni152_T2_coreg.nii.gz mni152_T2_coreg.mif -force
-mrgrid mni152_T2_coreg.mif regrid -template T1_resampled.mif mni152_T2_coreg_resampled.mif -force
-mrconvert mni152_T2_coreg_resampled.mif mni152_T2_coreg_resampled.nii.gz -force
-mrconvert NRp_coreg.nii.gz NRp_coreg.mif -force
-mrgrid NRp_coreg.mif regrid -template T1_resampled.mif NRp_coreg_resampled.mif -force
-mrconvert NRp_coreg_resampled.mif NRp_coreg_resampled.nii.gz -force
-
-
-
-antsRegistration \
-    --dimensionality 3 \
-    --float 0 \
-    --output [ ROI_to_T2Raw_, ROI_warped.nii.gz ] \
-    --interpolation Linear \
-    --use-histogram-matching 0 \
-    --initial-moving-transform [ T2_raw_coreg_resampled.nii.gz, mni152_T2_coreg_resampled.nii.gz, 1 ] \
-    --transform Rigid[ 0.1 ] \
-    --metric MI[ T2_raw_coreg_resampled.nii.gz, mni152_T2_coreg_resampled.nii.gz, 1, 32, Regular, 0.25] \
-    --convergence [ 1000x500x250x100, 1e-6, 10] \
-    --shrink-factors 8x4x2x1 \
-    --smoothing-sigmas 3x2x1x0vox \
-    --transform Affine[ 0.1 ] \
-    --metric MI[ T2_raw_coreg_resampled.nii.gz, mni152_T2_coreg_resampled.nii.gz, 1, 32, Regular, 0.25 ] \
-    --convergence [ 1000x500x250x100, 1e-6 , 10 ] \
-    --shrink-factors 8x4x2x1 \
-    --smoothing-sigmas 3x2x1x0vox \
-    --transform SyN[ 0.1, 3, 0] \
-    --metric CC[ T2_raw_coreg_resampled.nii.gz, mni152_T2_coreg_resampled.nii.gz, 1, 4] \
-    --convergence [ 100x70x50x20, 1e-6, 10] \
-    --shrink-factors 8x4x2x1 \
-    --smoothing-sigmas 3x2x1x0vox \
-    --masks [mask_transform.nii.gz, mask_transform.nii.gz] \
-    --verbose 1
+    -t midbrain_to_T2_1Warp.nii.gz \
+    -t [midbrain_to_T2_0GenericAffine.mat,1] 
 
 antsApplyTransforms \
     -d 3 \
-    -i NRp_coreg_resampled.nii.gz \
-    -r T2_raw_coreg.nii.gz \
-    -o NRp_coreg_resampled_transformed.nii.gz \
+    -i NRm_rh_coreg_weighted.nii.gz \
+    -r T2_resampled.nii.gz \
+    -o NRm_rh_coreg_weighted_transformed.nii.gz \
     -n Linear \
-    -t ROI_to_T2Raw_1Warp.nii.gz \
-    -t [ROI_to_T2Raw_0GenericAffine.mat,1] 
+    -t midbrain_to_T2_1Warp.nii.gz \
+    -t [midbrain_to_T2_0GenericAffine.mat,1] 
+
+#antsApplyTransforms \
+    #-d 3 \
+    #-i SNc_lh_coreg_weighted.nii.gz \
+    #-r T2_resampled.nii.gz \
+    #-o SNc_lh_coreg_weighted_transformed.nii.gz \
+    #-n Linear \
+    #-t midbrain_to_T2_1Warp.nii.gz \
+    #-t [midbrain_to_T2_0GenericAffine.mat,1] 
+
+#antsApplyTransforms \
+    #-d 3 \
+    #-i SNc_rh_coreg_weighted.nii.gz \
+    #-r T2_resampled.nii.gz \
+    #-o SNc_rh_coreg_weighted_transformed.nii.gz \
+    #-n Linear \
+    #-t midbrain_to_T2_1Warp.nii.gz \
+    #-t [midbrain_to_T2_0GenericAffine.mat,1] 
+
+#antsApplyTransforms \
+    #-d 3 \
+    #-i SNr_lh_coreg_weighted.nii.gz \
+    #-r T2_resampled.nii.gz \
+    #-o SNr_lh_coreg_weighted_transformed.nii.gz \
+    #-n Linear \
+    #-t midbrain_to_T2_1Warp.nii.gz \
+    #-t [midbrain_to_T2_0GenericAffine.mat,1] 
+
+#antsApplyTransforms \
+    #-d 3 \
+    #-i SNr_rh_coreg_weighted.nii.gz \
+    #-r T2_resampled.nii.gz \
+    #-o SNr_rh_coreg_weighted_transformed.nii.gz \
+    #-n Linear \
+    #-t midbrain_to_T2_1Warp.nii.gz \
+    #-t [midbrain_to_T2_0GenericAffine.mat,1] 
     
+## Corregistro com peso no quarto ventrículo 
+#echo "Corregistro linear ponderado do quarto ventrículo ..."
+#flirt -in T2_mni_resampled_coreg.nii.gz \
+ #-ref T2_resampled.nii.gz -out ventricle_flirt.nii.gz \
+ #-inweight mask_ventricle_coreg.nii.gz \
+ #-refweight mask_ventricle.nii.gz \
+ #-dof 6 \
+ #-omat atlas2T2_ventricle.mat
+#echo "Corregistro linear ponderado do quarto ventrículo finalizado"
+ 
+#antsRegistration --dimensionality 3 \
+  #--float 1 \
+  #--output [ventricle_to_T2_,ventricle_warped.nii.gz] \
+  #--transform Rigid[0.1] \
+  #--metric MI[T2_resampled.nii.gz,ventricle_flirt.nii.gz,1,32,Regular,0.25] \
+  #--convergence [1000x500x250,1e-6,10] \
+  #--shrink-factors 8x4x2 \
+  #--smoothing-sigmas 3x2x1vox \
+  #--transform Affine[0.1] \
+  #--metric MI[T2_resampled.nii.gz,ventricle_flirt.nii.gz,1,32,Regular,0.25] \
+  #--convergence [1000x500x250,1e-6,10] \
+  #--shrink-factors 8x4x2 \
+  #--smoothing-sigmas 3x2x1vox \
+  #--transform SyN[0.1,3,0] \
+  #--metric CC[T2_resampled.nii.gz,ventricle_flirt.nii.gz,1,4] \
+  #--convergence [100x70x50x20,1e-6,10] \
+  #--shrink-factors 8x4x2x1 \
+  #--smoothing-sigmas 3x2x1x0vox \
+  #--x [mask_ventricle.nii.gz, mask_ventricle_coreg.nii.gz] \
+  #--verbose 1
+
+## Apply the transformations to the atlas dentate nucleus
+## Corregister
+#mrconvert $ATLAS_DIR/Cerebellum-Ndentd_lh_MNI152.nii.gz DNd_lh.mif -force
+#mrtransform DNd_lh.mif -linear atlas2T2_mrtrix.txt DNd_lh_coreg.mif -force
+#mrconvert $ATLAS_DIR/Cerebellum-Ndentd_rh_MNI152.nii.gz DNd_rh.mif -force
+#mrtransform DNd_rh.mif -linear atlas2T2_mrtrix.txt DNd_rh_coreg.mif -force
+
+## Corregister (weighted)
+#transformconvert atlas2T2_ventricle.mat T2_mni_resampled_coreg.nii.gz T2_resampled.nii.gz flirt_import atlas2T2_ventricle_mrtrix.txt -force
+#mrtransform DNd_lh_coreg.mif -linear atlas2T2_ventricle_mrtrix.txt DNd_lh_coreg_weighted.mif -force
+#mrconvert DNd_lh_coreg_weighted.mif DNd_lh_coreg_weighted.nii.gz -force
+#mrtransform DNd_rh_coreg.mif -linear atlas2T2_ventricle_mrtrix.txt DNd_rh_coreg_weighted.mif -force
+#mrconvert DNd_rh_coreg_weighted.mif DNd_rh_coreg_weighted.nii.gz -force
+
+##Transform
+#antsApplyTransforms \
+    #-d 3 \
+    #-i DNd_lh_coreg_weighted.nii.gz \
+    #-r T2_resampled.nii.gz \
+    #-o DNd_lh_coreg_weighted_transformed.nii.gz \
+    #-n Linear \
+    #-t ventricle_to_T2_1Warp.nii.gz \
+    #-t [ventricle_to_T2_0GenericAffine.mat,1] 
+
+#antsApplyTransforms \
+    #-d 3 \
+    #-i DNd_rh_coreg_weighted.nii.gz \
+    #-r T2_resampled.nii.gz \
+    #-o DNd_rh_coreg_weighted_transformed.nii.gz \
+    #-n Linear \
+    #-t ventricle_to_T2_1Warp.nii.gz \
+    #-t [ventricle_to_T2_0GenericAffine.mat,1] 
     
-  recon-all -s Pat_mni -i /home/brunobastos/Downloads/mni_icbm152_nlin_asym_09c_nifti/mni_icbm152_nlin_asym_09c/mni_icbm152_t1_tal_nlin_asym_09c.nii -T2 /home/brunobastos/Downloads/mni_icbm152_nlin_asym_09c_nifti/mni_icbm152_nlin_asym_09c/mni_icbm152_t2_tal_nlin_asym_09c.nii -all
+## Apply the transformations to the atlas dentate nucleus
+## Corregister
+#mrconvert $ATLAS_DIR/Cerebellum-Ndentv_lh_MNI152.nii.gz DNv_lh.mif -force
+#mrtransform DNv_lh.mif -linear atlas2T2_mrtrix.txt DNv_lh_coreg.mif -force
+#mrconvert $ATLAS_DIR/Cerebellum-Ndentv_rh_MNI152.nii.gz DNv_rh.mif -force
+#mrtransform DNv_rh.mif -linear atlas2T2_mrtrix.txt DNv_rh_coreg.mif -force
+
+## Corregister (weighted)
+#mrtransform DNv_lh_coreg.mif -linear atlas2T2_ventricle_mrtrix.txt DNv_lh_coreg_weighted.mif -force
+#mrconvert DNv_lh_coreg_weighted.mif DNv_lh_coreg_weighted.nii.gz -force
+#mrtransform DNv_rh_coreg.mif -linear atlas2T2_ventricle_mrtrix.txt DNv_rh_coreg_weighted.mif -force
+#mrconvert DNv_rh_coreg_weighted.mif DNv_rh_coreg_weighted.nii.gz -force
+
+##Transform
+#antsApplyTransforms \
+    #-d 3 \
+    #-i DNv_lh_coreg_weighted.nii.gz \
+    #-r T2_resampled.nii.gz \
+    #-o DNv_lh_coreg_weighted_transformed.nii.gz \
+    #-n Linear \
+    #-t ventricle_to_T2_1Warp.nii.gz \
+    #-t [ventricle_to_T2_0GenericAffine.mat,1] 
+
+#antsApplyTransforms \
+    #-d 3 \
+    #-i DNv_rh_coreg_weighted.nii.gz \
+    #-r T2_resampled.nii.gz \
+    #-o DNv_rh_coreg_weighted_transformed.nii.gz \
+    #-n Linear \
+    #-t ventricle_to_T2_1Warp.nii.gz \
+    #-t [ventricle_to_T2_0GenericAffine.mat,1] 
+    
+
+				 
+
+

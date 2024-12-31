@@ -125,6 +125,8 @@
       $'\n'"3.Segmentation"
       read -p "Etapa: " option
       case $option in
+      
+      # PREPROCESSING
       1)
       while [ $FLAG_CONTINUE -eq 1 ]; do
           echo "Deseja visualizar a imagem de qual dos processos:"\
@@ -158,6 +160,7 @@
       done
       ;;
       
+      # TRACTOGRAPHY
       2)
       while [ $FLAG_CONTINUE -eq 1 ]; do    
           echo "Deseja visualizar a imagem de qual dos processos:"\
@@ -186,6 +189,7 @@
       done
       ;;
       
+      # SEGMENTATION
       3)
       export FREESURFER_HOME="/usr/local/freesurfer/7.4.1"
       export SUBJECTS_DIR="$SUBJECTS_DIR"
@@ -195,9 +199,12 @@
       
       while [ $FLAG_CONTINUE -eq 1 ]; do    
           echo "Deseja visualizar a imagem de qual dos processos:"\
-          $'\n'"1.Coregistro das imagens T1 e T2 ao espaço fsaverage"\
+          $'\n'"1.Imagem T1 com as superfícies pial e wm"\
           $'\n'"2.Annotation files"\
           $'\n'"3.Imagem segmentada no freesurfer"\
+          $'\n'".Corregistro do diencéfalo do atlas com o espaço nativo do paciente"\
+          $'\n'".Transformação não linear do diencéfalo do atlas no espaço nativo do paciente"\
+          $'\n'".Núcleo rubro no espaço nativo do paciente"\
           $'\n'"4.Imagem segmentada no mrview"\
           $'\n'"5.Corregistro da imagem segmentada e a imagem T1 no mrview"
           read -p "Opção: " segmentation
