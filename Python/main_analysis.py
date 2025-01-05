@@ -60,5 +60,12 @@ print("-Dados extraídos")
 # Run lesion detection
 lesion_coordinates = lesionDetection.handleLesionmask(data_contrast, data_contrast_24, Contrast)
 maps.handleMaps(data_adcmap, adc_map, data_adcmap24, adc_map_24, data_mask, "ADCmap")
+maps.handleMaps(data_admap, ad_map, data_admap24, ad_map_24, data_mask, "ADmap")
+maps.handleMaps(data_clmap, cl_map, data_clmap24, cl_map_24, data_mask, "CLmap")
+maps.handleMaps(data_cpmap, cp_map, data_cpmap24, cp_map_24, data_mask, "CPmap")
+maps.handleMaps(data_csmap, cs_map, data_csmap24, cs_map_24, data_mask, "CSmap")
+#maps.handleMaps(data_famap, fa_map, data_famap24, fa_map_24, data_mask, "FAmap")
+maps.handleMaps(data_rdmap, rd_map, data_rdmap24, rd_map_24, data_mask, "RDmap")
+
 matrix.handleMatrixcreation(matrix_PRE, matrix_24)
 		

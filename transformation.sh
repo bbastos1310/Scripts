@@ -1,9 +1,3 @@
-BASE_DIR="/home/brunobastos/Mestrado/Dados"
-SCRIPT_DIR="/home/brunobastos/Mestrado/Scripts"
-SUBJECTS_DIR="$BASE_DIR/fs_subjects"
-ATLAS_DIR="$BASE_DIR/Atlas" 
-
-
 # Corregistro da imagem T2 do atlas com T2 do paciente
 echo "Corregistro da imagem T2 do atlas com a imagem T2 no espaço nativo do paciente..."
 flirt -in $ATLAS_DIR/T2_mni_resampled.nii.gz -ref T2_resampled.nii.gz -dof 6 -omat atlas2T2.mat

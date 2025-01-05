@@ -3,7 +3,7 @@ import functions
 
 #external libraries
 import numpy as np
-# from skimage import color, measure
+from skimage import color, measure
 import matplotlib.pyplot as plt
 from skimage.morphology import square, closing
 from scipy.ndimage import center_of_mass
@@ -50,7 +50,7 @@ def handleLesionmask(data_contrast, data_contrast_24, Contrast):
 	label_mask, num_labels = measure.label(mask_closed,connectivity=1 ,return_num=True)
 	
 	# Define o limite mínimo de voxels para manter os labels
-	min_voxels = 250  # Ajuste este valor conforme necessário
+	min_voxels = 200  # Ajuste este valor conforme necessário
 	
 	# Itera sobre os labels e calcula as propriedades dos objetos rotulados
 	labels_filtered = np.zeros_like(label_mask)

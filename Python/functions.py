@@ -76,3 +76,12 @@ def plotMaps(data_PRE, data_24, name):
 
   plt.tight_layout()
   plt.close
+  
+def linearfunctionPoints(x1,y1,x2,y2):
+	a = (y1-y2)/(x1-x2)
+	b = y1 - a*x1
+	return a,b
+
+def linearfunctionCoeficient(a,x1,y1):
+	b = y1 - a*x1
+	return b

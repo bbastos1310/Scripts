@@ -31,7 +31,7 @@
           tensor2metric tensor.mif -vec fa_map.mif -adc adc_map.mif -cl cl_map.mif -cs cs_map.mif -cp cp_map.mif -ad ad_map.mif -rd rd_map.mif -force
           mrcalc fa_map.mif -abs fa_map_abs.mif -force
           cp -f fa_map_abs.mif adc_map.mif cl_map.mif cs_map.mif cp_map.mif ad_map.mif rd_map.mif "$ANALYSIS_DIR"
-          cp Julich_parcels_ordered.mif "$ANALYSIS_DIR/Julich_parcels_ordered.mif"
+          cp Julich_parcels_mrtrix.mif "$ANALYSIS_DIR/Julich_parcels_mrtrix.mif"
           cp dwi_mask_up_reg.mif "$ANALYSIS_DIR/dwi_mask_up_reg.mif"
           
           # Create maps (24H)
@@ -53,7 +53,7 @@
           fi
           # Convert the T1 image from freesurfer to mif
           mrconvert "$SUBJECTS_DIR/$PAT_NUM/mri/T1.mgz" "$OUT_PRE/T1_resampled.mif" -force
-          mrconvert T1_resampled.mif -stride 1,2,3 "$ANALYSIS_DIR/Nifti/T1_resampled.nii.gz" -force
+          mrconvert "$OUT_PRE/T1_resampled.mif" -stride 1,2,3 "$ANALYSIS_DIR/Nifti/T1_resampled.nii.gz" -force
                     
           # Conversion (PRE)
           cd "$OUT_PRE"
@@ -66,7 +66,7 @@
           mrconvert ad_map.mif -stride 1,2,3 "$ANALYSIS_DIR/Nifti/ad_map.nii.gz" -force
           mrconvert rd_map.mif -stride 1,2,3 "$ANALYSIS_DIR/Nifti/rd_map.nii.gz" -force
           #mrconvert T1_raw.mif -stride 1,2,3 "$ANALYSIS_DIR/Nifti/T1.nii.gz" -force
-          mrconvert Julich_parcels_ordered.mif -stride 1,2,3 "$ANALYSIS_DIR/Nifti/Julich_parcels_ordered.nii.gz" -force
+          mrconvert Julich_parcels_mrtrix.mif -stride 1,2,3 "$ANALYSIS_DIR/Nifti/Julich_parcels_mrtrix.nii.gz" -force
           mrconvert dwi_mask_up_reg.mif -stride 1,2,3 "$ANALYSIS_DIR/Nifti/dwi_mask_up_reg.nii.gz" -force   
           
           # Coregister and resample Contrast with T1's freesurfer
@@ -111,7 +111,7 @@
           flirt -in Contrast.nii.gz -ref "$ANALYSIS_DIR/Nifti/T1_resampled.nii.gz" -dof 6 -omat contrast2t1.mat
           transformconvert contrast2t1.mat Contrast.nii.gz "$ANALYSIS_DIR/Nifti/T1_resampled.nii.gz" flirt_import contrast2t1_mrtrix.txt -force
           mrtransform Contrast.mif -linear contrast2t1_mrtrix.txt Contrast_coreg.mif -force
-          mrgrid Contrast_coreg.mif regrid -template T1_resampled.mif Contrast_coreg_resampled.mif -force
+          mrgrid Contrast_coreg.mif regrid -template "$OUT_PRE/T1_resampled.mif" Contrast_coreg_resampled.mif -force
           mrconvert Contrast_coreg_resampled.mif -stride 1,2,3 "$ANALYSIS_DIR/Nifti/Contrast_24_coreg_resampled.nii.gz" -force
         else
           exit

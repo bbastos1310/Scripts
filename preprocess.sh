@@ -110,14 +110,14 @@
           elif [ "$moment" -eq 2 ]; then
             MEAN1=$(mrinfo "$OUT_PRE/dwi_mask_up_reg.mif" -size)
             MEAN2=$(mrinfo "$OUT_24/dwi_den_unr_preproc_unb_up.mif" -size)
-	        if [ "$MEAN1" != "$MEAN2" ]; then
-	          echo "Os arquivos dwi_PRE e dwi_24 possuem um número diferente de cortes, será feito um resample do arquivo dwi_24 para que fiquem com o mesmo número de cortes. Isso é necessário para que a comparação entre as duas imagens tenha a mesma referência, confira o arquivo de saída."
-		      mrtransform dwi_den_unr_preproc_unb_up.mif -linear matrix_dwi2t1.txt dwi_den_unr_preproc_unb_reg_temp.mif -force
-		      mrtransform dwi_mask_up.mif -linear matrix_dwi2t1.txt dwi_mask_up_reg_24.mif -force
-		      mrgrid dwi_den_unr_preproc_unb_reg_temp.mif regrid -template "$OUT_PRE/dwi_mask_up_reg.mif" dwi_den_unr_preproc_unb_reg.mif -force
+	    if [ "$MEAN1" != "$MEAN2" ]; then
+	    	echo "Os arquivos dwi_PRE e dwi_24 possuem um número diferente de cortes, será feito um resample do arquivo dwi_24 para que fiquem com o mesmo número de cortes. Isso é necessário para que a comparação entre as duas imagens tenha a mesma referência, confira o arquivo de saída."
+		mrtransform dwi_den_unr_preproc_unb_up.mif -linear matrix_dwi2t1.txt dwi_den_unr_preproc_unb_reg_temp.mif -force
+		mrtransform dwi_mask_up.mif -linear matrix_dwi2t1.txt dwi_mask_up_reg_24.mif -force
+		mrgrid dwi_den_unr_preproc_unb_reg_temp.mif regrid -template "$OUT_PRE/dwi_mask_up_reg.mif" dwi_den_unr_preproc_unb_reg.mif -force
             else     
-              mrtransform dwi_den_unr_preproc_unb_up.mif -linear matrix_dwi2t1.txt dwi_den_unr_preproc_unb_reg.mif -force
-              mrtransform dwi_mask_up.mif -linear matrix_dwi2t1.txt dwi_mask_up_reg_24.mif -force
+            	mrtransform dwi_den_unr_preproc_unb_up.mif -linear matrix_dwi2t1.txt dwi_den_unr_preproc_unb_reg.mif -force
+            	mrtransform dwi_mask_up.mif -linear matrix_dwi2t1.txt dwi_mask_up_reg_24.mif -force
             fi
           fi           
       else

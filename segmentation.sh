@@ -1,4 +1,5 @@
     SUBJECTS_DIR="$BASE_DIR/fs_subjects"
+    ATLAS_DIR="$BASE_DIR/Atlas" 
     FILE_1="$SUBJECTS_DIR/$PAT_NUM/scripts/recon-all.done"
     FILE_2="$SUBJECTS_DIR/$PAT_NUM/label/rh.hcpmmp1.annot"
     FILE_3="hcpmmp1_parcels.mif"
@@ -51,9 +52,12 @@
     handleLabel2Image() {
         if [ $EXIST -eq 1 ]; then
           python "$SCRIPT_DIR/mask_extraction.py"
-          #mri_aparc2aseg --new-ribbon --s "$PAT_NUM" --annot JULICH --o output_freesurfer.mgz
-          #mrconvert -datatype uint32 output_freesurfer.mgz Julich_parcels.mif -force
-          #labelconvert Julich_parcels.mif "$BASE_DIR/Atlas/JulichLUT_freesurfer.txt" "$BASE_DIR/Atlas/JulichLUT_mrtrix.txt" Julich_parcels_ordered.mif -force
+          . "$SCRIPT_DIR/transformation.sh"
+          mri_aparc2aseg --new-ribbon --s "$PAT_NUM" --annot JULICH --o output_freesurfer.mgz
+          mrconvert output_freesurfer.mgz output_freesurfer.nii.gz -force
+          python "$SCRIPT_DIR/Python/main_segmentation.py"
+          mrconvert -datatype uint32 Julich_parcels_freesurfer.nii.gz Julich_parcels_freesurfer.mif -force
+          labelconvert Julich_parcels_freesurfer.mif "$ATLAS_DIR/JulichLUT_complete.txt" "$ATLAS_DIR/JulichLUT_mrtrix.txt" Julich_parcels_mrtrix.mif -force
         else
           exit
         fi
@@ -62,12 +66,11 @@
     handleTck2Connectome() {
         if [ $EXIST -eq 1 ]; then
           echo "Pat_PRE"
-          tck2connectome -symmetric -zero_diagonal -scale_invnodevol -tck_weights_in sift_weights.txt tracks_10mio.tck "$OUT_PRE/Julich_parcels_ordered.mif" Julich.csv -out_assignment assignments_Julich.csv -force
+          tck2connectome -symmetric -zero_diagonal -scale_invnodevol -tck_weights_in sift_weights.txt tracks_10mio.tck "$OUT_PRE/Julich_parcels_mrtrix.mif" Julich.csv -out_assignment assignments_Julich.csv -force
           if [ -a "$OUT_24/sift_weights.txt" ]; then
-            cp Julich_parcels.mif "$OUT_24"
             echo "Pat_24"
             cd "$OUT_24"
-            tck2connectome -symmetric -zero_diagonal -scale_invnodevol -tck_weights_in sift_weights.txt tracks_10mio.tck "$OUT_PRE/Julich_parcels_ordered.mif" Julich.csv -out_assignment assignments_Julich.csv -force
+            tck2connectome -symmetric -zero_diagonal -scale_invnodevol -tck_weights_in sift_weights.txt tracks_10mio.tck "$OUT_PRE/Julich_parcels_mrtrix.mif" Julich.csv -out_assignment assignments_Julich.csv -force
           fi
         else
           exit
