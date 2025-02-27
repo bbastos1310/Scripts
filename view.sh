@@ -1,3 +1,4 @@
+    ANALYSIS_DIR="$PAT_DIR/Analysis"
     FLAG_CONTINUE=1
  
     # FUNCTIONS: PRE PROCESSING
@@ -11,12 +12,12 @@
       
       case $denoising in
       1) mrview dwi_den.mif;;
-      2) mrview noise.mif residual.mif;;
+      2) mrview noise.mif;;
       esac
     }
 
     # 2.Unringing
-    handleUnringing() { mrview dwi_den_unr.mif residualUnringed.mif; }
+    handleUnringing() { mrview dwi_den_unr.mif -overlay.load residualUnringed.mif -overlay.opacity 0.7; }
 
     # 3.Motion correction
     handleMotion() {
@@ -26,32 +27,30 @@
       read -p "Opção: " motion
       
       case $motion in
-      1) mrview dwi_den_unr_preproc.mif;;
-      2) mrview mean_b0_AP.mif -overlay.load mean_b0_PA.mif;;
+      1) mrview dwi_den_unr_preproc.mif -overlay.load dwi_den_unr.mif -overlay.opacity 0.5;;
+      2) mrview mean_b0_AP.mif -overlay.load mean_b0_PA.mif -overlay.opacity 0.5;;
       esac
     }
 
     # 4.Bias correction
 
-    handleBias() { mrview bias.mif -colourmap 2; }
+    handleBias() { mrview bias.mif -colourmap 2 -overlay.load dwi_den_unr_preproc_unbiased.mif -overlay.opacity 0.5 -overlay.colourmap 0 ; }
 
     # 5.Brain mask
-    handleMask() { mrview dwi_den_unr_preproc_unbiased.mif -overlay.load dwi_mask.mif; }
+    handleMask() { mrview dwi_den_unr_preproc_unbiased.mif -overlay.load dwi_mask.mif -overlay.opacity 0.5; }
     
     # 6.Coregister
     handleCoregister() {
       echo "Qual das imagens deseja visualizar?:"\
       $'\n'"1.Tissues"\
       $'\n'"2.Alignment T1 and dwi"\
-      $'\n'"3.Alignment dwi and tissues"\
-      $'\n'"4.Alignment T1 and tissues"
+      $'\n'"3.Alignment dwi and tissues"
       read -p "Opção: " coreg
       
       case $coreg in
-      1) mrview 5tt_coreg.mif;;
-      2) mrview dwi_den_unr_preproc_unb_reg.mif -overlay.load T1_raw.mif;;
-      3) mrview dwi_den_unr_preproc_unb_reg.mif -overlay.load 5tt_coreg.mif -overlay.colourmap 2;;
-      4) mrview T1_raw.mif -overlay.load 5tt_coreg.mif -overlay.colourmap 2;;
+      1) mrview 5tt_coreg.mif -overlay.load T1_raw.mif -overlay.opacity 0.5;;
+      2) mrview dwi_den_unr_preproc_unb_reg.mif -overlay.load T1_raw.mif -overlay.opacity 0.3;;
+      3) mrview dwi_den_unr_preproc_unb_reg.mif -overlay.load 5tt_coreg.mif -overlay.colourmap 2 -overlay.opacity 0.3;;
       esac
     }
      
@@ -83,7 +82,7 @@
       
       case $rf in
       1) shview wm.txt & shview gm.txt & shview csf.txt ;;
-      2) mrview dwi_den_unr_preproc_unb_reg.mif -overlay.load voxels.mif;;
+      2) mrview dwi_den_unr_preproc_unb_reg.mif -overlay.load voxels.mif -overlay.opacity 0.5;;
       esac
     }
 
@@ -91,38 +90,111 @@
     handleFod() { mrview vf.mif -odf.load_sh wmfod.mif; }
 
     # 3.Mask between GM/WM
-    handleFringe() { mrview dwi_den_unr_preproc_unb_reg.mif -overlay.load gmwmSeed_coreg.mif; }
+    handleFringe() { mrview dwi_den_unr_preproc_unb_reg.mif -overlay.load gmwmSeed_coreg.mif -overlay.opacity 0.3; }
 
     # 4.Streamline creation
     handleStreamlines() { mrview dwi_den_unr_preproc_unb_reg.mif -tractography.load smallerTracks_200k.tck; }
 
-    # 5.Streamlines filtering
-    handleSift() { mrview dwi_den_unr_preproc_unb_reg.mif -tractography.load smallerTracks_200k.tck & mrview dwi_den_unr_preproc_unb_reg.mif -tractography.load smallerTracks_200k.tck; }
 
     # FUNCTIONS SEGMENTATION
     
     # 1. Coregister of T1 and T2 to fsaverage
-    handleFsavcoregister() { freeview -v "$OUT_PRE/T1_raw_fsaverage.nii.gz" -v "$OUT_PRE/T2_raw_fsaverage.nii.gz" -v "$OUT_PRE/brain_fsaverage.nii.gz"; }   
+    handleFsavcoregister() { freeview -v "$OUT_PRE/T1_resampled.nii.gz" -v "$OUT_PRE/T2_resampled.nii.gz"; }   
     
     # 2. Create annotation files
-    handleAnnot() { freeview -f "$SUBJECTS_DIR/$PAT_NUM/surf/lh.pial":annot="$SUBJECTS_DIR/$PAT_NUM/label/lh.Julich_pat.annot" \
-    -f "$SUBJECTS_DIR/$PAT_NUM/surf/rh.pial":annot="$SUBJECTS_DIR/$PAT_NUM/label/rh.Julich_pat.annot"; }   
+    handleAnnot() { freeview -v T2_resampled.nii.gz -f "$SUBJECTS_DIR/$PAT_NUM/surf/lh.pial":annot="$SUBJECTS_DIR/$PAT_NUM/label/lh.JULICH.annot" \
+    -f "$SUBJECTS_DIR/$PAT_NUM/surf/rh.pial":annot="$SUBJECTS_DIR/$PAT_NUM/label/rh.JULICH.annot"; }   
     
     # 3. Segmentation on freesurfer
-    handleFreesurferseg() { freeview -v output_freesurfer.mgz:colormap=LUT:lut="$BASE_DIR/Atlas/JulichLUT_freesurfer.txt"; }   
+    handleFreesurferseg() { 
+		echo "Qual das imagens deseja visualizar?:"$'\n'\
+        "1.Atlas probabilístico das ROIs no espaço nativo do paciente"$'\n'\
+        "2.Segmentação subcortical automática do freesurfer"$'\n'\
+        "3.Segmentação cortical do freesurfer usando o JulichBrain atlas"$'\n'\
+        "4.Segmentação no mrtrix (incluindo ROIs do Julich atlas)"$'\n'
+        read -p "Opção: " fsseg
+      
+        case $fsseg in
+        1) freeview -v T2_resampled.nii.gz \
+        -v NRp_lh_coreg_weighted_transformed.nii.gz:colormap=heat \
+        -v NRp_rh_coreg_weighted_transformed.nii.gz:colormap=heat \
+        -v NRm_lh_coreg_weighted_transformed.nii.gz:colormap=pet \
+        -v NRm_rh_coreg_weighted_transformed.nii.gz:colormap=pet \
+        -v SNc_lh_coreg_weighted_transformed.nii.gz:colormap=heat \
+        -v SNc_rh_coreg_weighted_transformed.nii.gz:colormap=heat \
+        -v SNr_lh_coreg_weighted_transformed.nii.gz:colormap=pet \
+        -v SNr_rh_coreg_weighted_transformed.nii.gz:colormap=pet \
+        -v DNd_lh_coreg_weighted_transformed.nii.gz:colormap=heat \
+        -v DNd_rh_coreg_weighted_transformed.nii.gz:colormap=heat \
+        -v DNv_lh_coreg_weighted_transformed.nii.gz:colormap=pet \
+        -v DNv_rh_coreg_weighted_transformed.nii.gz:colormap=pet 
+        ;;
+        2) freeview -v T2_resampled.nii.gz -v "$SUBJECTS_DIR/$PAT_NUM/mri/aseg.mgz";;
+        3) freeview -v T2_resampled.nii.gz -v output_freesurfer.mgz:colormap=LUT:lut="$ATLAS_DIR/JulichLUT_complete.txt";;
+        4) mrview Julich_parcels_mrtrix_colored.mif -overlay.load "$OUT_PRE/T2_resampled.nii.gz" -overlay.opacity 0.3 -overlay.colourmap 0;;
+        esac
+    }
+		  
     
-    # 4. Segmentation on mrview
-    handleMrviewseg() { mrview Julich_parcels_ordered.mif; }   
+    # FUNCTIONS ANALYSIS
+      
+     # 1. Visualização dos mapas
+    handleMaps() { 
+    	cd "$ANALYSIS_DIR/Results/"  
+	echo "Deseja visualizar qual mapa:"\
+              $'\n'"1.ADC"\
+              $'\n'"2.FA"\
+              $'\n'"3.CL"\
+              $'\n'"4.CS"\
+              $'\n'"5.CP"\
+              $'\n'"6.AD"\
+              $'\n'"7.RD"
+              read -p "Opção: " maps
+              
+              case $maps in
+              1) mrview ADCmap\(PRE\).nii.gz -colourmap 5 | mrview ADCmap\(24H\).nii.gz -colourmap 5 | mrview ADCmap\(Subtraction\).nii.gz -colourmap 4 -overlay.load "$ANALYSIS_DIR/Results/mask_lesion.nii.gz" -overlay.opacity 0.3;;
+              2) mrview FAmap\(PRE\).nii.gz -colourmap 7 | mrview FAmap\(24H\).nii.gz -colourmap 7 | mrview FAmap\(Subtraction\).nii.gz -colourmap 4 -overlay.load "$ANALYSIS_DIR/Results/mask_lesion.nii.gz" -overlay.opacity 0.3;;
+              3) mrview CLmap\(PRE\).nii.gz -colourmap 5 | mrview CLmap\(24H\).nii.gz -colourmap 5 | mrview CLmap\(Subtraction\).nii.gz -colourmap 4 -overlay.load "$ANALYSIS_DIR/Results/mask_lesion.nii.gz" -overlay.opacity 0.3;;
+              4) mrview CSmap\(PRE\).nii.gz -colourmap 5 | mrview CSmap\(24H\).nii.gz -colourmap 5 | mrview CSmap\(Subtraction\).nii.gz -colourmap 4 -overlay.load "$ANALYSIS_DIR/Results/mask_lesion.nii.gz" -overlay.opacity 0.3;;
+              5) mrview CPmap\(PRE\).nii.gz -colourmap 5 | mrview CPmap\(24H\).nii.gz -colourmap 5 | mrview CPmap\(Subtraction\).nii.gz -colourmap 4 -overlay.load "$ANALYSIS_DIR/Results/mask_lesion.nii.gz" -overlay.opacity 0.3;;
+              6) mrview ADmap\(PRE\).nii.gz -colourmap 5 | mrview ADmap\(24H\).nii.gz -colourmap 5 | mrview ADmap\(Subtraction\).nii.gz -colourmap 4 -overlay.load "$ANALYSIS_DIR/Results/mask_lesion.nii.gz" -overlay.opacity 0.3;;
+              7) mrview RDmap\(PRE\).nii.gz -colourmap 5 | mrview RDmap\(24H\).nii.gz -colourmap 5 | mrview RDmap\(Subtraction\).nii.gz -colourmap 4 -overlay.load "$ANALYSIS_DIR/Results/mask_lesion.nii.gz" -overlay.opacity 0.3;;   
+              esac 
+     } 
+     
+     # 2. Visualização dos tratos
+    handleTracks() {
+   	      cd "$OUT_PRE"
+		echo "Deseja visualizar qual trato:"\
+              $'\n'"1.Corticospinal tract (CST)"\
+              $'\n'"2.Decussating Dentatorubrothalamic Tract (DRTT)"\
+              $'\n'"3.Non-Decussating Dentatorubrothalamic Tract (ndDRTT)"\
+              $'\n'"Medial lemniscus (ML)"\
+              $'\n'"All"
+              read -p "Opção: " tract
+              
+              case $tract in
+              1) mrview T2_resampled.nii.gz -tractography.load cst_track_lh.tck -plane 1 ;;
+              2) mrview T2_resampled.nii.gz -tractography.load DRTT_track_lh.tck -plane 1;;
+              3) mrview T2_resampled.nii.gz -tractography.load nDRTT_track_lh.tck  -plane 1;;
+              4) mrview T2_resampled.nii.gz -tractography.load ml_track_lh.tck -plane 1;;
+              5) mrview T2_resampled.nii.gz -tractography.load ml_track_lh.tck -tractography.load nDRTT_track_lh.tck -tractography.load cst_track_lh.tck -plane 1;;
+              esac 
+     } 
     
-    # 5. Coregister of T1 and Julich_parcels_ordered.mif
-    handleT1coregister() { mrview T1_raw.mif -overlay.load Julich_parcels_ordered.mif; }   
+    handleConnectivitymatrix() { xdg-open "$ANALYSIS_DIR/Results/connectivitymatrix.png" ; }
+    
+    handleMasklesion() {
+    	cd "$ANALYSIS_DIR/Results/" 
+    	mrview "$ANALYSIS_DIR/T1_raw_24_coreg.mif" -overlay.load mask_lesion.nii.gz -overlay.opacity 0.3 ; }
         
     # MAIN FUNCTION
             
       echo "Deseja visualizar a imagem de qual etapa? "\
       $'\n'"1.Preprocessing"\
       $'\n'"2.Tractography"\
-      $'\n'"3.Segmentation"
+      $'\n'"3.Segmentation"\
+      $'\n'"4.Analysis"      
       read -p "Etapa: " option
       case $option in
       
@@ -176,7 +248,6 @@
             2) handleFod;;
             3) handleFringe;;
             4) handleStreamlines;;
-            5) handleSift;;
             esac
             
       read -p "Deseja visualizar mais imagens da tractografia (y/n)? " option
@@ -199,22 +270,19 @@
       
       while [ $FLAG_CONTINUE -eq 1 ]; do    
           echo "Deseja visualizar a imagem de qual dos processos:"\
-          $'\n'"1.Imagem T1 com as superfícies pial e wm"\
+          $'\n'"1.Imagem T1 e T2 processados pelo freesurfer"\
           $'\n'"2.Annotation files"\
           $'\n'"3.Imagem segmentada no freesurfer"\
-          $'\n'".Corregistro do diencéfalo do atlas com o espaço nativo do paciente"\
-          $'\n'".Transformação não linear do diencéfalo do atlas no espaço nativo do paciente"\
-          $'\n'".Núcleo rubro no espaço nativo do paciente"\
-          $'\n'"4.Imagem segmentada no mrview"\
-          $'\n'"5.Corregistro da imagem segmentada e a imagem T1 no mrview"
+			".Atlas probabilístico das ROIs no espaço nativo do paciente"$'\n'\
+        		".Segmentação subcortical automática do freesurfer"$'\n'\
+        		".Segmentação cortical do freesurfer usando o JulichBrain atlas"$'\n'\
+       	 		".Segmentação no mrtrix (incluindo ROIs do Julich atlas)"$'\n'
           read -p "Opção: " segmentation
           
             case $segmentation in
             1) handleFsavcoregister;;
             2) handleAnnot;;
             3) handleFreesurferseg;;
-            4) handleMrviewseg;;
-            5) handleT1coregister;;
             esac
             
       read -p "Deseja visualizar mais imagens da segmentação (y/n)? " option
@@ -227,56 +295,21 @@
       done
       ;;
       
-      4)      
+      # ANALYSIS
+      4)    
       while [ $FLAG_CONTINUE -eq 1 ]; do    
           echo "Deseja visualizar a imagem de qual dos resultados:"\
-          $'\n'"1.Tracts"\
-          $'\n'"2.Maps"\
-          $'\n'"3.Connectivity matrix"
+          $'\n'"1.Maps"\
+          $'\n'"2.Tracts"\
+          $'\n'"3.Connectivity matrix"\
+          $'\n'"4.Máscara da lesão"
           read -p "Opção: " analysis
           
             case $analysis in
-            1) 
-            echo "Deseja visualizar qual trato:"\
-              $'\n'"1.Corticospinal tract (CST)"\
-              $'\n'"2.Decussating Dentatorubrothalamic Tract (DRTT)"\
-              $'\n'"3.Non-Decussating Dentatorubrothalamic Tract (ndDRTT)"\
-              $'\n'"Medial lemniscus (ML)"\
-              $'\n'"All"
-              read -p "Opção: " tract
-              
-              case $tract in
-              1) handleCst;;
-              2) handleDrtt;;
-              3) handleNddrtt;;
-              4) handleMl;;
-              5) handleAlltracts;;
-              esac
-            ;;
-            
-            2) 
-            echo "Deseja visualizar qual mapa:"\
-              $'\n'"1.ADC"\
-              $'\n'"2.FA"\
-              $'\n'"3.CL"\
-              $'\n'"4.CS"\
-              $'\n'"5.CP"\
-              $'\n'"6.AD"\
-              $'\n'"7.RD"
-              read -p "Opção: " maps
-              
-              case $maps in
-              1) handleADCmap;;
-              2) handleFAmap;;
-              3) handleCLmap;;
-              4) handleCSmap;;
-              5) handleCPmap;;
-              6) handleADmap;;
-              7) handleRDmap;;   
-              esac           
-            ;;
-            
+            1) handleMaps;;
+            2) handleTracks;;
             3) handleConnectivitymatrix;;
+            4) handleMasklesion;;
             esac
             
       read -p "Deseja visualizar mais imagens dos resultados (y/n)? " option

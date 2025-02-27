@@ -1,4 +1,5 @@
     SUBJECTS_DIR="$BASE_DIR/fs_subjects"
+    HISTO_DIR="$SUBJECTS_DIR/next_brain_segmentation"
     ATLAS_DIR="$BASE_DIR/Atlas" 
     FILE_1="$SUBJECTS_DIR/$PAT_NUM/scripts/recon-all.done"
     FILE_2="$SUBJECTS_DIR/$PAT_NUM/label/rh.hcpmmp1.annot"
@@ -34,16 +35,36 @@
           mrconvert T2_raw_coreg.mif T2_raw_coreg.nii.gz -force
           # Reconstruction
           recon-all -s "$PAT_NUM" -i "$OUT_PRE/T1_raw.nii.gz" -T2 "$OUT_PRE/T2_raw_coreg.nii.gz" -all
-          mrconvert $SUBJECTS_DIR/"$PAT_NUM"/mri/T1.mgz T1_resampled.mif
+          mrconvert "$SUBJECTS_DIR/$PAT_NUM/mri/T1.mgz" "$OUT_PRE/T1_resampled.mif" -force
+          mrconvert "$SUBJECTS_DIR/$PAT_NUM/mri/T1_resampled.mif" "$OUT_PRE/T1_resampled.nii.gz" -force
         else
           exit
         fi
       }
       
-    handleAnnot2Patient() {
+    handleHistoSegmentation() {
         if [ $EXIST -eq 1 ]; then
-          mri_surf2surf --srcsubject fsaverage --trgsubject "$PAT_NUM" --hemi lh --sval-annot $SUBJECTS_DIR/fsaverage/label/lh.Julich.annot  --tval $SUBJECTS_DIR/"$PAT_NUM"/label/lh.JULICH.annot  
-	  mri_surf2surf --srcsubject fsaverage --trgsubject "$PAT_NUM" --hemi rh --sval-annot $SUBJECTS_DIR/fsaverage/label/rh.Julich.annot  --tval $SUBJECTS_DIR/"$PAT_NUM"/label/rh.JULICH.annot  
+          mrconvert "$OUT_PRE/Contrast_raw.mif" "$OUT_PRE/Contrast.nii.gz" -force
+          flirt -in "$OUT_PRE/Contrast.nii.gz" -ref "$OUT_PRE/T1_resampled.nii.gz" -dof 6 -omat contrast2t1.mat
+          transformconvert contrast2t1.mat "$OUT_PRE/Contrast.nii.gz" "$OUT_PRE/T1_resampled.nii.gz" flirt_import contrast2t1_mrtrix.txt -force
+          mrtransform "$OUT_PRE/Contrast_raw.mif" -linear contrast2t1_mrtrix.txt "$OUT_PRE/Contrast_coreg.mif" -force
+          mrgrid "$OUT_PRE/Contrast_coreg.mif" regrid -template "$OUT_PRE/T1_resampled.mif" "$OUT_PRE/Contrast_coreg_resampled.mif" -force
+          mrconvert "$OUT_PRE/Contrast_coreg_resampled.mif" -stride -1,3,-2 "$OUT_PRE/Contrast_coreg_resampled.nii.gz" -force          
+          
+          export FREESURFER_HOME=/usr/local/freesurfer_dev/7-dev
+          source $FREESURFER_HOME/SetUpFreeSurfer.sh
+          
+          mri_histo_atlas_segment_fast "$OUT_PRE/Contrast_coreg_resampled.nii.gz" "$HISTO_DIR" 0 -1
+          
+          # Upsample da imagem T1 para usar como template  
+	  mrgrid "$OUT_PRE/T1_resampled.mif" regrid -voxel 0.4 "$OUT_PRE/T1_upsampled.nii.gz" -force
+	  mrgrid "$HISTO_DIR/seg_left.nii.gz" regrid -interp nearest -template "$OUT_PRE/T1_upsampled.nii.gz" "$OUT_PRE/seg_left_resampled.nii.gz" -force
+	  mrgrid "$HISTO_DIR/seg_right.nii.gz" regrid -interp nearest -template "$OUT_PRE/T1_upsampled.nii.gz" "$OUT_PRE/seg_right_resampled.nii.gz" -force
+	  mrgrid "$HISTO_DIR/SynthSeg.mgz" regrid -interp nearest -template "$OUT_PRE/T1_upsampled.nii.gz" "$OUT_PRE/SynthSeg_resampled.nii.gz" -force
+	  
+	  export FREESURFER_HOME="/usr/local/freesurfer/7.4.1"
+    	  source "$FREESURFER_HOME/SetUpFreeSurfer.sh"
+    	  
         else
           exit
         fi
@@ -51,13 +72,15 @@
       
     handleLabel2Image() {
         if [ $EXIST -eq 1 ]; then
-          python "$SCRIPT_DIR/mask_extraction.py"
-          . "$SCRIPT_DIR/transformation.sh"
-          mri_aparc2aseg --new-ribbon --s "$PAT_NUM" --annot JULICH --o output_freesurfer.mgz
+          mri_surf2surf --srcsubject fsaverage --trgsubject "$PAT_NUM" --hemi lh --sval-annot "$SUBJECTS_DIR/fsaverage/label/lh.Julich.annot"  --tval $SUBJECTS_DIR/"$PAT_NUM"/label/lh.JULICH.annot  
+	  mri_surf2surf --srcsubject fsaverage --trgsubject "$PAT_NUM" --hemi rh --sval-annot "$SUBJECTS_DIR/fsaverage/label/rh.Julich.annot"  --tval $SUBJECTS_DIR/"$PAT_NUM"/label/rh.JULICH.annot 
+	  mri_aparc2aseg --new-ribbon --s "$PAT_NUM" --annot JULICH --o output_freesurfer.mgz
+	  
           mrconvert output_freesurfer.mgz output_freesurfer.nii.gz -force
           python "$SCRIPT_DIR/Python/main_segmentation.py"
           mrconvert -datatype uint32 Julich_parcels_freesurfer.nii.gz Julich_parcels_freesurfer.mif -force
           labelconvert Julich_parcels_freesurfer.mif "$ATLAS_DIR/JulichLUT_complete.txt" "$ATLAS_DIR/JulichLUT_mrtrix.txt" Julich_parcels_mrtrix.mif -force
+          label2colour Julich_parcels_mrtrix.mif -lut "$ATLAS_DIR/JulichLUT_mrtrix.txt" Julich_parcels_mrtrix_colored.mif -force
         else
           exit
         fi
@@ -139,7 +162,7 @@
         
         [Yy])
         handleReconstruction
-        handleAnnot2Patient
+        handleHistoSegmentation
         handleLabel2Image
         handleTck2Connectome;;
         
@@ -156,9 +179,9 @@
       while [ $FLAG_CONTINUE -eq 1 ]; do   
         echo "Deseja realizar qual das etapas?"\
         $'\n'"1.Reconstruction"\
-        $'\n'"2.Create annotation file"\
-        $'\n'"3.Labeling"\
-        $'\n'"4.Connectivity matrix"
+        $'\n'"2.Subcortical segmentation"\
+        $'\n'"3.Cortical segmentation"\
+        $'\n'"4.Connectivity matrix (tck2connectome)"
         read -p "Opção: " step
         
           case $step in
@@ -170,7 +193,7 @@
           2)
           FILE=$FILE_2
           fileExistence
-          handleAnnot2Patient;;
+          handleHistoSegmentation;;
         
           3)
           FILE=$FILE_3

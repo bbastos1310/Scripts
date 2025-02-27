@@ -27,7 +27,10 @@
         if [ $EXIST -eq 1 ]; then
           # Create maps (PRE)
           cd "$OUT_PRE"
-          dwi2tensor dwi_den_unr_preproc_unb_reg.mif -mask "$OUT_PRE/dwi_mask_up_reg.mif" tensor.mif -force
+          mrconvert "$SUBJECTS_DIR/$PAT_NUM/mri/T1.mgz" "$OUT_PRE/T1_resampled.mif" -force
+          mrgrid dwi_den_unr_preproc_unb_reg.mif regrid -template "$OUT_PRE/T1_resampled.mif" -strides -1,3,-2,4 dwi_den_unr_preproc_unb_reg_resampled.mif -force
+          mrgrid dwi_mask_up_reg.mif regrid -template "$OUT_PRE/T1_resampled.mif" -strides -1,3,-2 dwi_mask_resampled.mif -force
+          dwi2tensor dwi_den_unr_preproc_unb_reg_resampled.mif -mask "$OUT_PRE/dwi_mask_resampled.mif" tensor.mif -force
           tensor2metric tensor.mif -vec fa_map.mif -adc adc_map.mif -cl cl_map.mif -cs cs_map.mif -cp cp_map.mif -ad ad_map.mif -rd rd_map.mif -force
           mrcalc fa_map.mif -abs fa_map_abs.mif -force
           cp -f fa_map_abs.mif adc_map.mif cl_map.mif cs_map.mif cp_map.mif ad_map.mif rd_map.mif "$ANALYSIS_DIR"
@@ -36,7 +39,8 @@
           
           # Create maps (24H)
           cd "$OUT_24"
-          dwi2tensor dwi_den_unr_preproc_unb_reg.mif -mask "$OUT_PRE/dwi_mask_up_reg.mif" tensor_24.mif -force      
+          mrgrid dwi_den_unr_preproc_unb_reg.mif regrid -template "$OUT_PRE/T1_resampled.mif" -strides -1,3,-2,4 dwi_den_unr_preproc_unb_reg_resampled.mif -force
+          dwi2tensor dwi_den_unr_preproc_unb_reg_resampled.mif -mask "$OUT_PRE/dwi_mask_resampled.mif" tensor_24.mif -force      
           tensor2metric tensor_24.mif -vec fa_map_24.mif -adc adc_map_24.mif -cl cl_map_24.mif -cs cs_map_24.mif -cp cp_map_24.mif -ad ad_map_24.mif -rd rd_map_24.mif -force
           mrcalc fa_map_24.mif -abs fa_map_24_abs.mif -force
           cp -f fa_map_24_abs.mif adc_map_24.mif cl_map_24.mif cs_map_24.mif cp_map_24.mif ad_map_24.mif rd_map_24.mif "$ANALYSIS_DIR"
@@ -52,30 +56,29 @@
               mkdir Nifti
           fi
           # Convert the T1 image from freesurfer to mif
-          mrconvert "$SUBJECTS_DIR/$PAT_NUM/mri/T1.mgz" "$OUT_PRE/T1_resampled.mif" -force
-          mrconvert "$OUT_PRE/T1_resampled.mif" -stride 1,2,3 "$ANALYSIS_DIR/Nifti/T1_resampled.nii.gz" -force
+          mrconvert "$OUT_PRE/T1_resampled.mif" -stride -1,3,-2 "$ANALYSIS_DIR/Nifti/T1_resampled.nii.gz" -force
                     
           # Conversion (PRE)
           cd "$OUT_PRE"
           cp Julich.csv "$ANALYSIS_DIR/Nifti/Julich.csv"
-          mrconvert fa_map_abs.mif -stride 1,2,3,4 "$ANALYSIS_DIR/Nifti/fa_map_abs.nii.gz" -force
-          mrconvert adc_map.mif -stride 1,2,3 "$ANALYSIS_DIR/Nifti/adc_map.nii.gz" -force
-          mrconvert cl_map.mif -stride 1,2,3 "$ANALYSIS_DIR/Nifti/cl_map.nii.gz" -force
-          mrconvert cs_map.mif -stride 1,2,3 "$ANALYSIS_DIR/Nifti/cs_map.nii.gz" -force
-          mrconvert cp_map.mif -stride 1,2,3 "$ANALYSIS_DIR/Nifti/cp_map.nii.gz" -force
-          mrconvert ad_map.mif -stride 1,2,3 "$ANALYSIS_DIR/Nifti/ad_map.nii.gz" -force
-          mrconvert rd_map.mif -stride 1,2,3 "$ANALYSIS_DIR/Nifti/rd_map.nii.gz" -force
-          #mrconvert T1_raw.mif -stride 1,2,3 "$ANALYSIS_DIR/Nifti/T1.nii.gz" -force
-          mrconvert Julich_parcels_mrtrix.mif -stride 1,2,3 "$ANALYSIS_DIR/Nifti/Julich_parcels_mrtrix.nii.gz" -force
-          mrconvert dwi_mask_up_reg.mif -stride 1,2,3 "$ANALYSIS_DIR/Nifti/dwi_mask_up_reg.nii.gz" -force   
+          mrconvert fa_map_abs.mif -stride -1,3,-2,4 "$ANALYSIS_DIR/Nifti/fa_map_abs.nii.gz" -force
+          mrconvert adc_map.mif -stride -1,3,-2 "$ANALYSIS_DIR/Nifti/adc_map.nii.gz" -force
+          mrconvert cl_map.mif -stride -1,3,-2 "$ANALYSIS_DIR/Nifti/cl_map.nii.gz" -force
+          mrconvert cs_map.mif -stride -1,3,-2 "$ANALYSIS_DIR/Nifti/cs_map.nii.gz" -force
+          mrconvert cp_map.mif -stride -1,3,-2 "$ANALYSIS_DIR/Nifti/cp_map.nii.gz" -force
+          mrconvert ad_map.mif -stride -1,3,-2 "$ANALYSIS_DIR/Nifti/ad_map.nii.gz" -force
+          mrconvert rd_map.mif -stride -1,3,-2 "$ANALYSIS_DIR/Nifti/rd_map.nii.gz" -force
+          #mrconvert T1_raw.mif -stride -1,3,-2 "$ANALYSIS_DIR/Nifti/T1.nii.gz" -force
+          mrconvert Julich_parcels_mrtrix.mif -stride -1,3,-2 "$ANALYSIS_DIR/Nifti/Julich_parcels_mrtrix.nii.gz" -force
+          mrconvert "$OUT_PRE/dwi_mask_resampled.mif" -stride -1,3,-2 "$ANALYSIS_DIR/Nifti/dwi_mask_resampled.nii.gz" -force   
           
           # Coregister and resample Contrast with T1's freesurfer
           mrconvert Contrast.mif Contrast.nii.gz -force
           flirt -in Contrast.nii.gz -ref "$ANALYSIS_DIR/Nifti/T1_resampled.nii.gz" -dof 6 -omat contrast2t1.mat
           transformconvert contrast2t1.mat Contrast.nii.gz "$ANALYSIS_DIR/Nifti/T1_resampled.nii.gz" flirt_import contrast2t1_mrtrix.txt -force
           mrtransform Contrast.mif -linear contrast2t1_mrtrix.txt Contrast_coreg.mif -force
-          mrgrid Contrast_coreg.mif regrid -template T1_resampled.mif Contrast_coreg_resampled.mif -force
-          mrconvert Contrast_coreg_resampled.mif -stride 1,2,3 "$ANALYSIS_DIR/Nifti/Contrast_coreg_resampled.nii.gz" -force          
+          mrgrid Contrast_coreg.mif regrid -template "$OUT_PRE/T1_resampled.mif" Contrast_coreg_resampled.mif -force
+          mrconvert Contrast_coreg_resampled.mif -stride -1,3,-2 "$ANALYSIS_DIR/Nifti/Contrast_coreg_resampled.nii.gz" -force          
           
           cd "$OUT_24"
                     
@@ -97,14 +100,14 @@
           # Conversion (24H)    
           #cp T1_raw_24_coreg.mif "$ANALYSIS_DIR/T1_raw_24_coreg.mif"
           cp Julich.csv "$ANALYSIS_DIR/Nifti/Julich_24.csv" 
-          mrconvert fa_map_24_abs.mif -stride 1,2,3,4 "$ANALYSIS_DIR/Nifti/fa_map_24_abs.nii.gz" -force
-          mrconvert adc_map_24.mif -stride 1,2,3 "$ANALYSIS_DIR/Nifti/adc_map_24.nii.gz" -force
-          mrconvert cl_map_24.mif -stride 1,2,3 "$ANALYSIS_DIR/Nifti/cl_map_24.nii.gz" -force
-          mrconvert cs_map_24.mif -stride 1,2,3 "$ANALYSIS_DIR/Nifti/cs_map_24.nii.gz" -force
-          mrconvert cp_map_24.mif -stride 1,2,3 "$ANALYSIS_DIR/Nifti/cp_map_24.nii.gz" -force
-          mrconvert ad_map_24.mif -stride 1,2,3 "$ANALYSIS_DIR/Nifti/ad_map_24.nii.gz" -force
-          mrconvert rd_map_24.mif -stride 1,2,3 "$ANALYSIS_DIR/Nifti/rd_map_24.nii.gz" -force
-          #mrconvert T1_raw_24_coreg.mif -stride 1,2,3 "$ANALYSIS_DIR/Nifti/T1_24_coreg.nii.gz" -force
+          mrconvert fa_map_24_abs.mif -stride -1,3,-2,4 "$ANALYSIS_DIR/Nifti/fa_map_24_abs.nii.gz" -force
+          mrconvert adc_map_24.mif -stride -1,3,-2 "$ANALYSIS_DIR/Nifti/adc_map_24.nii.gz" -force
+          mrconvert cl_map_24.mif -stride -1,3,-2 "$ANALYSIS_DIR/Nifti/cl_map_24.nii.gz" -force
+          mrconvert cs_map_24.mif -stride -1,3,-2 "$ANALYSIS_DIR/Nifti/cs_map_24.nii.gz" -force
+          mrconvert cp_map_24.mif -stride -1,3,-2 "$ANALYSIS_DIR/Nifti/cp_map_24.nii.gz" -force
+          mrconvert ad_map_24.mif -stride -1,3,-2 "$ANALYSIS_DIR/Nifti/ad_map_24.nii.gz" -force
+          mrconvert rd_map_24.mif -stride -1,3,-2 "$ANALYSIS_DIR/Nifti/rd_map_24.nii.gz" -force
+          #mrconvert T1_raw_24_coreg.mif -stride -1,3,-2 "$ANALYSIS_DIR/Nifti/T1_24_coreg.nii.gz" -force
           
           # Coregister and resample Contrast_24 with T1's freesurfer
           mrconvert Contrast.mif Contrast.nii.gz -force
@@ -112,7 +115,7 @@
           transformconvert contrast2t1.mat Contrast.nii.gz "$ANALYSIS_DIR/Nifti/T1_resampled.nii.gz" flirt_import contrast2t1_mrtrix.txt -force
           mrtransform Contrast.mif -linear contrast2t1_mrtrix.txt Contrast_coreg.mif -force
           mrgrid Contrast_coreg.mif regrid -template "$OUT_PRE/T1_resampled.mif" Contrast_coreg_resampled.mif -force
-          mrconvert Contrast_coreg_resampled.mif -stride 1,2,3 "$ANALYSIS_DIR/Nifti/Contrast_24_coreg_resampled.nii.gz" -force
+          mrconvert Contrast_coreg_resampled.mif -stride -1,3,-2 "$ANALYSIS_DIR/Nifti/Contrast_24_coreg_resampled.nii.gz" -force
         else
           exit
         fi
@@ -126,6 +129,13 @@
           fi
           cd "$ANALYSIS_DIR/Nifti"
           python "$SCRIPT_DIR/Python/main_analysis.py"
+          cd "$ANALYSIS_DIR/Results"
+          mrcat FAmap_Red\(PRE\).nii.gz FAmap_Green\(PRE\).nii.gz FAmap_Blue\(PRE\).nii.gz FAmap\(PRE\).nii.gz -force
+          mrcat FAmap_Red\(Subtraction\).nii.gz FAmap_Green\(Subtraction\).nii.gz FAmap_Blue\(Subtraction\).nii.gz FAmap\(Subtraction\).nii.gz -force
+          mrcat FAmap_Red\(24H\).nii.gz FAmap_Green\(24H\).nii.gz FAmap_Blue\(24H\).nii.gz FAmap\(24H\).nii.gz -force  
+          rm FAmap_Red\(PRE\).nii.gz FAmap_Green\(PRE\).nii.gz FAmap_Blue\(PRE\).nii.gz
+          rm FAmap_Red\(24H\).nii.gz FAmap_Green\(24H\).nii.gz FAmap_Blue\(24H\).nii.gz
+          rm FAmap_Red\(Subtraction\).nii.gz FAmap_Green\(Subtraction\).nii.gz FAmap_Blue\(Subtraction\).nii.gz
         else
           exit
         fi

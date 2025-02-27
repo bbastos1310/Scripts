@@ -48,7 +48,7 @@ def mapTreatment(data, mask):
     for y in range(outliers.shape[1]):
       for z in range(outliers.shape[2]):
         if (outliers[x, y, z] == True):
-          print(f"Outlier: data[{x},{y},{z}] = {data[x,y,z]}")
+          #print(f"Outlier: data[{x},{y},{z}] = {data[x,y,z]}")
           data[x,y,z] = np.median(data[x-2:x+1, y-2:y+1, z-2:z+1])
           num_outliers = num_outliers + 1
 

@@ -10,4 +10,5 @@ def handleMaps(data_map, image, data24_map, image_24, data_mask, name):
 	name_sub = "../Results/" + name + "(Subtraction)"
 	functions.saveImage(map_treated, image, name_pre )
 	functions.saveImage(map24_treated, image_24, name_24 )
-	functions.saveImage(map24_treated-map_treated, image, name_sub) 	
+	functions.saveImage(map24_treated-map_treated, image, name_sub)
+	print(f"{name} saved") 	

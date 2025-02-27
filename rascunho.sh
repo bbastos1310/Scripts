@@ -3,265 +3,124 @@ SCRIPT_DIR="/home/brunobastos/Mestrado/Scripts"
 SUBJECTS_DIR="$BASE_DIR/fs_subjects"
 ATLAS_DIR="$BASE_DIR/Atlas" 
 
-
-# Corregistro da imagem T2 do atlas com T2 do paciente
-echo "Corregistro da imagem T2 do atlas com a imagem T2 no espaço nativo do paciente..."
-flirt -in $ATLAS_DIR/T2_mni_resampled.nii.gz -ref T2_resampled.nii.gz -dof 6 -omat atlas2T2.mat
-transformconvert atlas2T2.mat $ATLAS_DIR/T2_mni_resampled.nii.gz T2_resampled.nii.gz flirt_import atlas2T2_mrtrix.txt -force
-mrconvert $ATLAS_DIR/T2_mni_resampled.nii.gz T2_mni_resampled.mif -force
-mrtransform T2_mni_resampled.mif -linear atlas2T2_mrtrix.txt T2_mni_resampled_coreg.mif -force
-mrconvert T2_mni_resampled_coreg.mif T2_mni_resampled_coreg.nii.gz -force
-echo "Corregistro da imagem T2 do atlas com T2 do paciente finalizado"
-
-# Corregistro dos labels no espaço mni para o espaço do paciente
-mrconvert $ATLAS_DIR/output_freesurfer.nii.gz output_mni_freesurfer.mif -force
-mrtransform output_mni_freesurfer.mif -interp nearest -datatype uint32 -linear atlas2T2_mrtrix.txt output_mni_freesurfer_coreg.mif -force
-mrconvert output_mni_freesurfer_coreg.mif -datatype uint32 output_mni_freesurfer_coreg.nii.gz -force
-
-# Criação das máscaras com as regiões de interesse
-python $SCRIPT_DIR/Python/mask_extraction.py
-
-# Corregistro com peso no diencéfalo
-echo "Corregistro linear ponderado do diencéfalo ..."
-flirt -in T2_mni_resampled_coreg.nii.gz \
- -ref T2_resampled.nii.gz -out midbrain_flirt.nii.gz \
- -inweight mask_midbrain_coreg.nii.gz \
- -refweight mask_midbrain.nii.gz \
- -dof 6 \
- -omat atlas2T2_midbrain.mat
-echo "Corregistro linear ponderado do diencéfalo finalizado"
-
-#Corregistro não linear do diencéfalo
-antsRegistration --dimensionality 3 \
-  --float 1 \
-  --output [midbrain_to_T2_,atlas_warped.nii.gz] \
-  --transform Rigid[0.1] \
-  --metric MI[T2_resampled.nii.gz,midbrain_flirt.nii.gz,1,32,Regular,0.25] \
-  --convergence [1000x500x250,1e-6,10] \
-  --shrink-factors 8x4x2 \
-  --smoothing-sigmas 3x2x1vox \
-  --transform Affine[0.1] \
-  --metric MI[T2_resampled.nii.gz,midbrain_flirt.nii.gz,1,32,Regular,0.25] \
-  --convergence [1000x500x250,1e-6,10] \
-  --shrink-factors 8x4x2 \
-  --smoothing-sigmas 3x2x1vox \
-  --transform SyN[0.1,3,0] \
-  --metric CC[T2_resampled.nii.gz,midbrain_flirt.nii.gz,1,4] \
-  --convergence [100x70x50x20,1e-6,10] \
-  --shrink-factors 8x4x2x1 \
-  --smoothing-sigmas 3x2x1x0vox \
-  --x [mask_midbrain.nii.gz,mask_midbrain_coreg.nii.gz] \
-  --verbose 1
-  
-# Apply the transformations to the atlas red nucleus and substantia nigra
-# Corregister
-mrconvert $ATLAS_DIR/Midbrain-NRp_lh_MNI152.nii.gz NRp_lh.mif -force
-mrtransform NRp_lh.mif -linear atlas2T2_mrtrix.txt NRp_lh_coreg.mif -force
-mrconvert $ATLAS_DIR/Midbrain-NRp_rh_MNI152.nii.gz NRp_rh.mif -force
-mrtransform NRp_rh.mif -linear atlas2T2_mrtrix.txt NRp_rh_coreg.mif -force
-mrconvert $ATLAS_DIR/Midbrain-NRm_lh_MNI152.nii.gz NRm_lh.mif -force
-mrtransform NRm_lh.mif -linear atlas2T2_mrtrix.txt NRm_lh_coreg.mif -force
-mrconvert $ATLAS_DIR/Midbrain-NRm_rh_MNI152.nii.gz NRm_rh.mif -force
-mrtransform NRm_rh.mif -linear atlas2T2_mrtrix.txt NRm_rh_coreg.mif -force
-mrconvert $ATLAS_DIR/Midbrain-SNC_lh_MNI152.nii.gz SNc_lh.mif -force
-mrtransform SNc_lh.mif -linear atlas2T2_mrtrix.txt SNc_lh_coreg.mif -force
-mrconvert $ATLAS_DIR/Midbrain-SNC_rh_MNI152.nii.gz SNc_rh.mif -force
-mrtransform SNc_rh.mif -linear atlas2T2_mrtrix.txt SNc_rh_coreg.mif -force
-mrconvert $ATLAS_DIR/Midbrain-SNR_lh_MNI152.nii.gz SNr_lh.mif -force
-mrtransform SNr_lh.mif -linear atlas2T2_mrtrix.txt SNr_lh_coreg.mif -force
-mrconvert $ATLAS_DIR/Midbrain-SNR_rh_MNI152.nii.gz SNr_rh.mif -force
-mrtransform SNr_rh.mif -linear atlas2T2_mrtrix.txt SNr_rh_coreg.mif -force
+# Upsample da imagem T1 para usar como template  
+#mrgrid ~/Mestrado/Dados/Pat548/Pat548_PRE/Output_tract/T1_resampled.mif regrid -voxel 0.4 T1_teste.nii.gz -force
+#mrgrid seg_left.nii.gz regrid -interp nearest -template T1_teste.nii.gz seg_left_resampled.nii.gz -force
+#mrgrid seg_right.nii.gz regrid -interp nearest -template T1_teste.nii.gz seg_right_resampled.nii.gz -force
+#mrgrid SynthSeg.mgz regrid -interp nearest -template T1_teste.nii.gz SynthSeg_resampled.nii.gz -force
 
 
-# Corregister (weighted)
-transformconvert atlas2T2_midbrain.mat T2_mni_resampled_coreg.nii.gz T2_resampled.nii.gz flirt_import atlas2T2_midbrain_mrtrix.txt -force
-mrtransform NRp_lh_coreg.mif -linear atlas2T2_midbrain_mrtrix.txt NRp_lh_coreg_weighted.mif -force
-mrconvert NRp_lh_coreg_weighted.mif NRp_lh_coreg_weighted.nii.gz -force
-mrtransform NRp_rh_coreg.mif -linear atlas2T2_midbrain_mrtrix.txt NRp_rh_coreg_weighted.mif -force
-mrconvert NRp_rh_coreg_weighted.mif NRp_rh_coreg_weighted.nii.gz -force
-mrtransform NRm_lh_coreg.mif -linear atlas2T2_midbrain_mrtrix.txt NRm_lh_coreg_weighted.mif -force
-mrconvert NRm_lh_coreg_weighted.mif NRm_lh_coreg_weighted.nii.gz -force
-mrtransform NRm_rh_coreg.mif -linear atlas2T2_midbrain_mrtrix.txt NRm_rh_coreg_weighted.mif -force
-mrconvert NRm_rh_coreg_weighted.mif NRm_rh_coreg_weighted.nii.gz -force
-mrtransform SNc_lh_coreg.mif -linear atlas2T2_midbrain_mrtrix.txt SNc_lh_coreg_weighted.mif -force
-mrconvert SNc_lh_coreg_weighted.mif SNc_lh_coreg_weighted.nii.gz -force
-mrtransform SNc_rh_coreg.mif -linear atlas2T2_midbrain_mrtrix.txt SNc_rh_coreg_weighted.mif -force
-mrconvert SNc_rh_coreg_weighted.mif SNc_rh_coreg_weighted.nii.gz -force
-mrtransform SNr_lh_coreg.mif -linear atlas2T2_midbrain_mrtrix.txt SNr_lh_coreg_weighted.mif -force
-mrconvert SNr_lh_coreg_weighted.mif SNr_lh_coreg_weighted.nii.gz -force
-mrtransform SNr_rh_coreg.mif -linear atlas2T2_midbrain_mrtrix.txt SNr_rh_coreg_weighted.mif -force
-mrconvert SNr_rh_coreg_weighted.mif SNr_rh_coreg_weighted.nii.gz -force
+#mrcalc Julich_parcels_mrtrix.mif 47 -eq Julich_parcels_mrtrix.mif 48 -eq -or \
+	   #Julich_parcels_mrtrix.mif 86 -eq -or Julich_parcels_mrtrix.mif 87 -eq -or \
+	   #Julich_parcels_mrtrix.mif 116 -eq -or Julich_parcels_mrtrix.mif 117 -eq -or Julich_parcels_mrtrix.mif 118 -eq -or \
+	   #Julich_parcels_mrtrix.mif 146 -eq -or \
+	   #ROI_PCG_lh.mif -force
+	   
+#mrcalc Julich_parcels_mrtrix.mif 199 -eq Julich_parcels_mrtrix.mif 200 -eq -or \
+	   #Julich_parcels_mrtrix.mif 238 -eq -or Julich_parcels_mrtrix.mif 239 -eq -or \
+	   #Julich_parcels_mrtrix.mif 268 -eq -or Julich_parcels_mrtrix.mif 269 -eq -or Julich_parcels_mrtrix.mif 270 -eq -or \
+	   #Julich_parcels_mrtrix.mif 298 -eq -or \
+	   #ROI_PCG_rh.mif -force
+	   
+#mrconvert "$SUBJECTS_DIR/Pat548/mri/aseg.mgz" aseg.mif -force
+#mrcalc aseg.mif 10 -eq ROI_thalamus_lh.mif -force
+#mrcalc aseg.mif 41 -eq ROI_cerebralwm_rh.mif -force
+#mrcalc aseg.mif 46 -eq ROI_cerebellumwm_rh.mif -force
+#mrcalc aseg.mif 251 -eq aseg.mif 252 -eq -or aseg.mif 253 -eq -or aseg.mif 254 -eq -or aseg.mif 255 -eq -or ROI_CC.mif -force
 
-# Transform
-antsApplyTransforms \
-    -d 3 \
-    -i NRp_lh_coreg_weighted.nii.gz \
-    -r T2_resampled.nii.gz \
-    -o NRp_lh_coreg_weighted_transformed.nii.gz \
-    -n Linear \
-    -t midbrain_to_T2_1Warp.nii.gz \
-    -t [midbrain_to_T2_0GenericAffine.mat,1] 
+#mrcalc Julich_parcels_mrtrix.mif 0 -gt Julich_parcels_mrtrix.mif 149 -lt -and Julich_parcels_mrtrix_mask_lh.mif -force
+#mrcalc Julich_parcels_mrtrix.mif 152 -gt Julich_parcels_mrtrix.mif 300 -lt -and Julich_parcels_mrtrix_mask_rh.mif -force
 
-antsApplyTransforms \
-    -d 3 \
-    -i NRp_rh_coreg_weighted.nii.gz \
-    -r T2_resampled.nii.gz \
-    -o NRp_rh_coreg_weighted_transformed.nii.gz \
-    -n Linear \
-    -t midbrain_to_T2_1Warp.nii.gz \
-    -t [midbrain_to_T2_0GenericAffine.mat,1] 
+#mrcalc Julich_parcels_mrtrix_mask_lh.mif  ROI_PMC_lh.mif -subtract ROI_notPMC_lh.mif -force
+#mrcalc Julich_parcels_mrtrix_mask_rh.mif  ROI_PMC_rh.mif -subtract ROI_notPMC_rh.mif -force
 
-antsApplyTransforms \
-    -d 3 \
-    -i NRm_lh_coreg_weighted.nii.gz \
-    -r T2_resampled.nii.gz \
-    -o NRm_lh_coreg_weighted_transformed.nii.gz \
-    -n Linear \
-    -t midbrain_to_T2_1Warp.nii.gz \
-    -t [midbrain_to_T2_0GenericAffine.mat,1] 
+#mrcalc Julich_parcels_mrtrix_mask_lh.mif  ROI_PCG_lh.mif -subtract ROI_notPCG_lh.mif -force
+#mrcalc Julich_parcels_mrtrix_mask_rh.mif  ROI_PCG_rh.mif -subtract ROI_notPCG_rh.mif -force
 
-antsApplyTransforms \
-    -d 3 \
-    -i NRm_rh_coreg_weighted.nii.gz \
-    -r T2_resampled.nii.gz \
-    -o NRm_rh_coreg_weighted_transformed.nii.gz \
-    -n Linear \
-    -t midbrain_to_T2_1Warp.nii.gz \
-    -t [midbrain_to_T2_0GenericAffine.mat,1] 
+##mrview T2_resampled.nii.gz -overlay.load ROI_notPMC.mif -overlay.opacity 0.5
 
-antsApplyTransforms \
-    -d 3 \
-    -i SNc_lh_coreg_weighted.nii.gz \
-    -r T2_resampled.nii.gz \
-    -o SNc_lh_coreg_weighted_transformed.nii.gz \
-    -n Linear \
-    -t midbrain_to_T2_1Warp.nii.gz \
-    -t [midbrain_to_T2_0GenericAffine.mat,1] 
+#tckgen  \
+	#-act 5tt_coreg.mif \
+	#-backtrack \
+	#-seed_gmwmi gmwmSeed_coreg.mif \
+	#-select 30 \
+	#-seeds 15000000 \
+    #-include ROI_DN_lh.mif \
+    #-include ROI_NR_lh.mif \
+    #-include ROI_thalamus_lh.mif \
+    #-include ROI_PCG_lh.mif \
+    #-exclude ROI_cerebralwm_rh.mif \
+    #-exclude ROI_cerebellumwm_rh.mif \
+    #-exclude ROI_CC.mif \
+    #-minlength 40 \
+    #-angle 45 \
+    #-cutoff 0.15 \
+    #wmfod_norm.mif nDRTT_track_lh.tck \
+    #-force
 
-antsApplyTransforms \
-    -d 3 \
-    -i SNc_rh_coreg_weighted.nii.gz \
-    -r T2_resampled.nii.gz \
-    -o SNc_rh_coreg_weighted_transformed.nii.gz \
-    -n Linear \
-    -t midbrain_to_T2_1Warp.nii.gz \
-    -t [midbrain_to_T2_0GenericAffine.mat,1] 
+#tckgen  \
+	#-act 5tt_coreg.mif \
+	#-backtrack \
+	#-seed_gmwmi gmwmSeed_coreg.mif \
+	#-select 30 \
+	#-seeds 15000000 \
+    #-include ROI_DN_rh.mif \
+    #-include ROI_NR_lh.mif \
+    #-include ROI_thalamus_lh.mif \
+    #-include ROI_PCG_lh.mif \
+    #-exclude ROI_cerebralwm_rh.mif \
+    #-exclude ROI_cerebellumwm_lh.mif \
+    #-exclude ROI_CC.mif \
+    #-minlength 40 \
+    #-angle 45 \
+    #-cutoff 0.15 \
+    #wmfod_norm.mif DRTT_track_lh.tck \
+    #-force
 
-antsApplyTransforms \
-    -d 3 \
-    -i SNr_lh_coreg_weighted.nii.gz \
-    -r T2_resampled.nii.gz \
-    -o SNr_lh_coreg_weighted_transformed.nii.gz \
-    -n Linear \
-    -t midbrain_to_T2_1Warp.nii.gz \
-    -t [midbrain_to_T2_0GenericAffine.mat,1] 
+#mrcalc Julich_parcels_mrtrix.mif 49 -eq Julich_parcels_mrtrix.mif 50 -eq -or Julich_parcels_mrtrix.mif 51 -eq -or \
+	   #Julich_parcels_mrtrix.mif 81 -eq -or\
+	   #ROI_S1_lh.mif -force
+	   
+#mrcalc Julich_parcels_mrtrix.mif 201 -eq Julich_parcels_mrtrix.mif 202 -eq -or Julich_parcels_mrtrix.mif 203 -eq -or \
+	   #Julich_parcels_mrtrix.mif 233 -eq -or\
+	   #ROI_S1_lh.mif -force
+	   
+#tckgen  \
+	#-act 5tt_coreg.mif \
+	#-backtrack \
+	#-seed_gmwmi gmwmSeed_coreg.mif \
+	#-select 30 \
+	#-seeds 1000000 \
+    #-include ROI_ML_lh.mif \
+    #-include ROI_PL_lh.nii.gz \
+    #-include ROI_PCG_lh.mif \
+    #-exclude ROI_cerebralwm_rh.mif \
+    #-exclude ROI_cerebellumwm_rh.mif \
+    #-exclude ROI_cerebellumwm_lh.mif \
+    #-exclude ROI_CC.mif \
+    #-minlength 40 \
+    #-angle 45 \
+    #-cutoff 0.15 \
+    #wmfod_norm.mif ml_track_lh.tck \
+    #-force
 
-antsApplyTransforms \
-    -d 3 \
-    -i SNr_rh_coreg_weighted.nii.gz \
-    -r T2_resampled.nii.gz \
-    -o SNr_rh_coreg_weighted_transformed.nii.gz \
-    -n Linear \
-    -t midbrain_to_T2_1Warp.nii.gz \
-    -t [midbrain_to_T2_0GenericAffine.mat,1] 
-    
-# Corregistro com peso no quarto ventrículo 
-echo "Corregistro linear ponderado do quarto ventrículo ..."
-flirt -in T2_mni_resampled_coreg.nii.gz \
- -ref T2_resampled.nii.gz -out ventricle_flirt.nii.gz \
- -inweight mask_ventricle_coreg.nii.gz \
- -refweight mask_ventricle.nii.gz \
- -dof 6 \
- -omat atlas2T2_ventricle.mat
-echo "Corregistro linear ponderado do quarto ventrículo finalizado"
- 
-antsRegistration --dimensionality 3 \
-  --float 1 \
-  --output [ventricle_to_T2_,ventricle_warped.nii.gz] \
-  --transform Rigid[0.1] \
-  --metric MI[T2_resampled.nii.gz,ventricle_flirt.nii.gz,1,32,Regular,0.25] \
-  --convergence [1000x500x250,1e-6,10] \
-  --shrink-factors 8x4x2 \
-  --smoothing-sigmas 3x2x1vox \
-  --transform Affine[0.1] \
-  --metric MI[T2_resampled.nii.gz,ventricle_flirt.nii.gz,1,32,Regular,0.25] \
-  --convergence [1000x500x250,1e-6,10] \
-  --shrink-factors 8x4x2 \
-  --smoothing-sigmas 3x2x1vox \
-  --transform SyN[0.1,3,0] \
-  --metric CC[T2_resampled.nii.gz,ventricle_flirt.nii.gz,1,4] \
-  --convergence [100x70x50x20,1e-6,10] \
-  --shrink-factors 8x4x2x1 \
-  --smoothing-sigmas 3x2x1x0vox \
-  --x [mask_ventricle.nii.gz, mask_ventricle_coreg.nii.gz] \
-  --verbose 1
-
-# Apply the transformations to the atlas dentate nucleus
-# Corregister
-mrconvert $ATLAS_DIR/Cerebellum-Ndentd_lh_MNI152.nii.gz DNd_lh.mif -force
-mrtransform DNd_lh.mif -linear atlas2T2_mrtrix.txt DNd_lh_coreg.mif -force
-mrconvert $ATLAS_DIR/Cerebellum-Ndentd_rh_MNI152.nii.gz DNd_rh.mif -force
-mrtransform DNd_rh.mif -linear atlas2T2_mrtrix.txt DNd_rh_coreg.mif -force
-
-# Corregister (weighted)
-transformconvert atlas2T2_ventricle.mat T2_mni_resampled_coreg.nii.gz T2_resampled.nii.gz flirt_import atlas2T2_ventricle_mrtrix.txt -force
-mrtransform DNd_lh_coreg.mif -linear atlas2T2_ventricle_mrtrix.txt DNd_lh_coreg_weighted.mif -force
-mrconvert DNd_lh_coreg_weighted.mif DNd_lh_coreg_weighted.nii.gz -force
-mrtransform DNd_rh_coreg.mif -linear atlas2T2_ventricle_mrtrix.txt DNd_rh_coreg_weighted.mif -force
-mrconvert DNd_rh_coreg_weighted.mif DNd_rh_coreg_weighted.nii.gz -force
-
-#Transform
-antsApplyTransforms \
-    -d 3 \
-    -i DNd_lh_coreg_weighted.nii.gz \
-    -r T2_resampled.nii.gz \
-    -o DNd_lh_coreg_weighted_transformed.nii.gz \
-    -n Linear \
-    -t ventricle_to_T2_1Warp.nii.gz \
-    -t [ventricle_to_T2_0GenericAffine.mat,1] 
-
-antsApplyTransforms \
-    -d 3 \
-    -i DNd_rh_coreg_weighted.nii.gz \
-    -r T2_resampled.nii.gz \
-    -o DNd_rh_coreg_weighted_transformed.nii.gz \
-    -n Linear \
-    -t ventricle_to_T2_1Warp.nii.gz \
-    -t [ventricle_to_T2_0GenericAffine.mat,1] 
-    
-# Apply the transformations to the atlas dentate nucleus
-# Corregister
-mrconvert $ATLAS_DIR/Cerebellum-Ndentv_lh_MNI152.nii.gz DNv_lh.mif -force
-mrtransform DNv_lh.mif -linear atlas2T2_mrtrix.txt DNv_lh_coreg.mif -force
-mrconvert $ATLAS_DIR/Cerebellum-Ndentv_rh_MNI152.nii.gz DNv_rh.mif -force
-mrtransform DNv_rh.mif -linear atlas2T2_mrtrix.txt DNv_rh_coreg.mif -force
-
-# Corregister (weighted)
-mrtransform DNv_lh_coreg.mif -linear atlas2T2_ventricle_mrtrix.txt DNv_lh_coreg_weighted.mif -force
-mrconvert DNv_lh_coreg_weighted.mif DNv_lh_coreg_weighted.nii.gz -force
-mrtransform DNv_rh_coreg.mif -linear atlas2T2_ventricle_mrtrix.txt DNv_rh_coreg_weighted.mif -force
-mrconvert DNv_rh_coreg_weighted.mif DNv_rh_coreg_weighted.nii.gz -force
-
-#Transform
-antsApplyTransforms \
-    -d 3 \
-    -i DNv_lh_coreg_weighted.nii.gz \
-    -r T2_resampled.nii.gz \
-    -o DNv_lh_coreg_weighted_transformed.nii.gz \
-    -n Linear \
-    -t ventricle_to_T2_1Warp.nii.gz \
-    -t [ventricle_to_T2_0GenericAffine.mat,1] 
-
-antsApplyTransforms \
-    -d 3 \
-    -i DNv_rh_coreg_weighted.nii.gz \
-    -r T2_resampled.nii.gz \
-    -o DNv_rh_coreg_weighted_transformed.nii.gz \
-    -n Linear \
-    -t ventricle_to_T2_1Warp.nii.gz \
-    -t [ventricle_to_T2_0GenericAffine.mat,1] 
-    
-
-				 
+tckgen  \
+	-act 5tt_coreg.mif \
+	-backtrack \
+	-seed_gmwmi gmwmSeed_coreg.mif \
+	-select 20 \
+	-seeds 20000000 \
+    -include ROI_CP_lh.mif \
+    -include ROI_PL_lh.nii.gz \
+    -include ROI_PMC_lh.mif \
+    -exclude ROI_cerebralwm_rh.mif \
+    -exclude ROI_cerebellumwm_rh.mif \
+    -exclude ROI_cerebellumwm_lh.mif \
+    -exclude ROI_CC.mif \
+    -minlength 40 \
+    -angle 45 \
+    -cutoff 0.15 \
+    wmfod_norm.mif cst_track_lh.tck \
+    -force
 
 

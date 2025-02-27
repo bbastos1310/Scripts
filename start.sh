@@ -174,7 +174,8 @@
       $'\n'"5.View"\
         $'\n'"    Results of preprocessing"\
         $'\n'"    Results of tractography"\
-        $'\n'"    Results of segmentation"
+        $'\n'"    Results of segmentation"\
+        $'\n'"    Results of analysis"
        read -p "Opção: " script
        
         case $script in               

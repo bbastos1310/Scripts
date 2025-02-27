@@ -83,8 +83,8 @@
       # 5.Mask estimation
       handleMask() {
         if [ $EXIST -eq 1 ]; then
-          mrconvert dwi_den_unr_preproc_unbiased.mif dwi_unbiased.nii -force
-          bet2 dwi_unbiased.nii masked -m -f 0.6
+          mrconvert dwi_den_unr_preproc_unbiased.mif dwi_unbiased.nii.gz -force
+          bet2 dwi_unbiased.nii.gz masked -m -f 0.6
           mrconvert masked_mask.nii.gz dwi_mask.mif -force
         else
           exit
