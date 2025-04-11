@@ -3,7 +3,7 @@
       if [[ -d "$PAT_DIR_PRE" && ! -d "$OUT_PRE" ]]; then
           cd "$PAT_DIR_PRE"
           # Directory creation for output
-          mkdir Output_tract
+          mkdir -p Output_tract/{Raw,Preprocess,Segmentation,Tractography,Analysis}
           mkdir Output_general
 
           # For each component in the base directory, verify if it is a folder to rename the files inside
@@ -24,13 +24,13 @@
               size_z=$(echo $size | awk '{print $3}')
               # Verify the name folder to create a MIF file  (Folder 12: dwi, folder 9: T1)
               if [ "$dir" == "$PAT_DIR_PRE/012/" ]; then
-              mrcat I_*.dcm ../Output_tract/dwi_raw.mif -force
+              mrcat I_*.dcm ../Output_tract/Raw/dwi_raw.mif -force
               elif [ "$dir" == "$PAT_DIR_PRE/009/" ]; then
-              mrconvert ../009/ ../Output_tract/T1_raw.mif -force
+              mrconvert ../009/ ../Output_tract/Raw/T1_raw.mif -force
               elif [ "$dir" == "$PAT_DIR_PRE/007/" ]; then
-              mrconvert ../007/ ../Output_tract/T2_raw.mif -force
+              mrconvert ../007/ ../Output_tract/Raw/T2_raw.mif -force
               elif [ "$dir" == "$PAT_DIR_PRE/021/" ]; then
-              mrconvert ../021/ ../Output_tract/Contrast_raw.mif -force
+              mrconvert ../021/ ../Output_tract/Raw/Contrast_raw.mif -force
               elif [ "$size_x" -eq 1 ] || [ "$size_y" -eq 1 ] || [ "$size_z" -eq 1 ] ; then
               mrconvert "$dir" ../Output_general/${PWD##*/}_raw.mif -force
               else
@@ -46,7 +46,7 @@
       if [[ -d "$PAT_DIR_24" && ! -d "$OUT_24" ]]; then
           cd "$PAT_DIR_24"
           # Directory creation for output
-          mkdir Output_tract
+          mkdir -p Output_tract/{Raw,Preprocess,Segmentation,Tractography,Analysis}
           mkdir Output_general
 
           # For each component in the base directory, verify if it is a folder to rename the files inside
@@ -67,13 +67,13 @@
               size_z=$(echo $size | awk '{print $3}')
               # Verify the name folder to create a MIF file  (Folder 12: dwi, folder 9: T1)
               if [ "$dir" == "$PAT_DIR_24/012/" ]; then
-              mrcat I_*.dcm ../Output_tract/dwi_raw.mif -force
+              mrcat I_*.dcm ../Output_tract/Raw/dwi_raw.mif -force
               elif [ "$dir" == "$PAT_DIR_24/009/" ]; then
-              mrconvert ../009/ ../Output_tract/T1_raw_24.mif -force
+              mrconvert ../009/ ../Output_tract/Raw/T1_raw_24.mif -force
               elif [ "$dir" == "$PAT_DIR_24/007/" ]; then
-              mrconvert ../007/ ../Output_tract/T2_raw.mif -force
+              mrconvert ../007/ ../Output_tract/Raw/T2_raw.mif -force
               elif [ "$dir" == "$PAT_DIR_PRE/021/" ]; then
-              mrconvert ../021/ ../Output_tract/Contrast_raw.mif -force
+              mrconvert ../021/ ../Output_tract/Raw/Contrast_raw.mif -force
               elif [ "$size_x" -eq 1 ] || [ "$size_y" -eq 1 ] || [ "$size_z" -eq 1 ] ; then
               mrconvert "$dir" ../Output_general/${PWD##*/}_raw.mif -force
               else

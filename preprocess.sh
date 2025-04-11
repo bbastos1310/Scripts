@@ -31,8 +31,9 @@
       # 1.Denoising
       handleDenoise() {
         if [ $EXIST -eq 1 ]; then
-          time dwidenoise dwi_raw.mif dwi_den.mif -noise noise.mif -force
-          mrcalc dwi_raw.mif dwi_den.mif -subtract residual.mif -force
+          mkdir teste
+          time dwidenoise ../Raw/dwi_raw.mif dwi_den.mif -noise noise.mif -force
+          mrcalc ../Raw/dwi_raw.mif dwi_den.mif -subtract residual.mif -force
         else
           exit
         fi
@@ -52,8 +53,8 @@
       handleMotion() {
         if [ $EXIST -eq 1 ]; then
           dwiextract dwi_den_unr.mif - -bzero | mrmath - mean mean_b0_AP.mif -axis 3 -force
-          mrconvert ../019/ raw_19.mif -force
-          mrmath raw_19.mif mean mean_b0_PA.mif -axis 3 -force
+          #mrconvert ../019/ raw_19.mif -force
+          mrmath ../../Output_general/019_raw.mif mean mean_b0_PA.mif -axis 3 -force
           MEAN1=$(mrinfo mean_b0_AP.mif -size)
 	      MEAN2=$(mrinfo mean_b0_PA.mif -size)
 	  if [ "$MEAN1" != "$MEAN2" ]; then
@@ -96,11 +97,11 @@
       if [ $EXIST -eq 1 ]; then
           mrgrid dwi_den_unr_preproc_unbiased.mif regrid dwi_den_unr_preproc_unb_up.mif -voxel 1.5 -force
           mrgrid dwi_mask.mif regrid - -template dwi_den_unr_preproc_unb_up.mif -interp linear -datatype bit | maskfilter - median dwi_mask_up.mif -force
-          5ttgen fsl T1_raw.mif 5tt_coreg.mif -force
+          5ttgen fsl ../Raw/T1_raw.mif 5tt_coreg.mif -force
           dwiextract dwi_den_unr_preproc_unb_up.mif - -bzero | mrmath - mean mean_b0_preprocessed.mif -axis 3 -force
           mrconvert mean_b0_preprocessed.mif mean_b0_preprocessed.nii.gz -force
-          mrconvert T1_raw.mif T1_raw.nii.gz -force
-          mrconvert T2_raw.mif T2_raw.nii.gz -force
+          mrconvert ../Raw/T1_raw.mif T1_raw.nii.gz -force
+          mrconvert ../Raw/T2_raw.mif T2_raw.nii.gz -force
           bet2 T1_raw.nii.gz T1_brain.nii.gz -f 0.4 -m
           epi_reg --epi=mean_b0_preprocessed.nii.gz --t1=T1_raw.nii.gz --t1brain=T1_brain.nii.gz --out=dwi2t1_reg
           transformconvert dwi2t1_reg.mat mean_b0_preprocessed.nii.gz T1_raw.nii.gz flirt_import matrix_dwi2t1.txt -force
@@ -128,7 +129,7 @@
       # MAIN FUNCTION
       # Asks the user if they want to perform all the preprocessing or just one of the steps
       while true; do
-
+	cd "Preprocess/"
         read -p "Would you like to do all the preprocessing? (y/n):  " yn
 
         case $yn in

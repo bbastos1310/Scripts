@@ -51,12 +51,21 @@ map_SN_rh = np.array(np.where((data_seg == 1310) | (data_seg == 1352), True, Fal
 map_DN_rh = np.array(np.where(data_seg == 1721, True, False), dtype=bool)
 ### Subthalamic nucleus
 map_STN_rh = np.array(np.where((data_seg == 1315) | (data_seg == 1316) | (data_seg == 1321), True, False), dtype=bool)
+### White matter (forebrain)
+map_WMf_rh = np.array(np.where((data_seg == 1007), True, False), dtype=bool)
+### White matter (hindbrain)
+map_WMh_rh = np.array(np.where((data_seg == 1611), True, False), dtype=bool)
+### White matter (cerebellum)
+map_WMc_rh = np.array(np.where((data_seg == 1846), True, False), dtype=bool)
+### Brainstem
+map_brainstem_rh = np.array(np.where((data_seg == 1414) | (data_seg == 1580) | (data_seg == 1662), True, False), dtype=bool)
 ### Medial Lemniscus
 map_ML_rh = roi.handleMediallemniscus(data_seg,map_RN_rh,"right")
 ### Cerebral Peduncle
 map_CP_rh = roi.handleCerebralpeduncle(data_seg, data_synthseg, map_RN_rh,"right")
 ### Posterior subthalamic area
 map_PSA_rh = roi.handlePsa(data_seg,map_RN_rh, map_STN_rh,"right")
+
 
 # ## LEFT HEMISPHERE
 
@@ -68,6 +77,14 @@ map_SN_lh = np.array(np.where((data_seg == 310) | (data_seg == 352), True, False
 map_DN_lh = np.array(np.where(data_seg == 721, True, False), dtype=bool)
 ### Subthalamic nucleus
 map_STN_lh = np.array(np.where((data_seg == 315) | (data_seg == 316) | (data_seg == 321), True, False), dtype=bool)
+### White matter (forebrain)
+map_WMf_lh = np.array(np.where((data_seg == 7), True, False), dtype=bool)
+### White matter (hindbrain)
+map_WMh_lh = np.array(np.where((data_seg == 611), True, False), dtype=bool)
+### White matter (cerebellum)
+map_WMc_lh = np.array(np.where((data_seg == 846), True, False), dtype=bool)
+### Brainstem
+map_brainstem_lh = np.array(np.where((data_seg == 414) | (data_seg == 580) | (data_seg == 662), True, False), dtype=bool)
 ### Medial Lemniscus
 map_ML_lh = roi.handleMediallemniscus(data_seg,map_RN_lh,"left")
 ### Cerebral Peduncle
@@ -77,6 +94,7 @@ map_PSA_lh = roi.handlePsa(data_seg,map_RN_lh, map_STN_lh,"left")
 
 # Matriz com as regiões de interesse 
 data_roi = np.zeros(data_segleft.shape, dtype=np.uint16)
+data_wm = np.zeros(data_segleft.shape, dtype=np.uint16)
 
 data_roi[map_ML_lh == True] = 1210
 data_roi[map_CP_lh == True] = 1211
@@ -84,6 +102,10 @@ data_roi[map_RN_lh == True] = 1212
 data_roi[map_SN_lh == True] = 1213
 data_roi[map_DN_lh == True] = 1214
 data_roi[map_PSA_lh == True] = 1215
+data_roi[map_brainstem_lh == True] = 1216
+data_wm[map_WMf_lh == True] = 1217
+data_wm[map_WMh_lh == True] = 1218
+data_wm[map_WMc_lh == True] = 1219
 
 data_roi[map_ML_rh == True] = 2210
 data_roi[map_CP_rh == True] = 2211
@@ -91,9 +113,19 @@ data_roi[map_RN_rh == True] = 2212
 data_roi[map_SN_rh == True] = 2213
 data_roi[map_DN_rh == True] = 2214
 data_roi[map_PSA_rh == True] = 2215
+data_roi[map_brainstem_rh == True] = 2216
+data_wm[map_WMf_rh == True] = 2217
+data_wm[map_WMh_rh == True] = 2218
+data_wm[map_WMc_rh == True] = 2219
+
 
 data_nifti = nib.Nifti1Image(data_roi, affine_segleft)
-nib.save(data_nifti, "mask_ROI_teste.nii.gz")
+nib.save(data_nifti, "histo_parcels.nii.gz")
+print("File histo_parcels.nii.gz saved")
+
+data_nifti_wm = nib.Nifti1Image(data_wm, affine_segleft)
+nib.save(data_nifti_wm, "histo_wm.nii.gz")
+print("File histo_wm.nii.gz saved")
 
 ## Julich Parcels
 julich_parcels = np.where(data_freesurfer > 1000, data_freesurfer, 0) # Seleciona apenas as regiões corticais

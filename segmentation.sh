@@ -29,14 +29,14 @@
     handleReconstruction() {
         if [ $EXIST -eq 1 ]; then
           # Coregister T2_raw with T1_raw
-          flirt -in "$OUT_PRE/T2_raw.nii.gz" -ref "$OUT_PRE/T1_raw.nii.gz" -dof 6 -omat t22t1.mat
-          transformconvert t22t1.mat T2_raw.nii.gz T1_raw.nii.gz flirt_import t22t1_mrtrix.txt -force
-          mrtransform T2_raw.mif -linear t22t1_mrtrix.txt T2_raw_coreg.mif -force
+          flirt -in "$OUT_PRE/Preprocess/T2_raw.nii.gz" -ref "$OUT_PRE/Preprocess/T1_raw.nii.gz" -dof 6 -omat t22t1.mat
+          transformconvert t22t1.mat "$OUT_PRE/Preprocess/T2_raw.nii.gz" "$OUT_PRE/Preprocess/T1_raw.nii.gz" flirt_import t22t1_mrtrix.txt -force
+          mrtransform "$OUT_PRE/Raw/T2_raw.mif" -linear t22t1_mrtrix.txt T2_raw_coreg.mif -force
           mrconvert T2_raw_coreg.mif T2_raw_coreg.nii.gz -force
           # Reconstruction
-          recon-all -s "$PAT_NUM" -i "$OUT_PRE/T1_raw.nii.gz" -T2 "$OUT_PRE/T2_raw_coreg.nii.gz" -all
-          mrconvert "$SUBJECTS_DIR/$PAT_NUM/mri/T1.mgz" "$OUT_PRE/T1_resampled.mif" -force
-          mrconvert "$SUBJECTS_DIR/$PAT_NUM/mri/T1_resampled.mif" "$OUT_PRE/T1_resampled.nii.gz" -force
+          recon-all -s "$PAT_NUM" -i "$OUT_PRE/Preprocess/T1_raw.nii.gz" -T2 T2_raw_coreg.nii.gz -all
+          mrconvert "$SUBJECTS_DIR/$PAT_NUM/mri/T1.mgz" "$OUT_PRE/Segmentation/T1_resampled.mif" -force
+          mrconvert "$OUT_PRE/Segmentation/T1_resampled.mif" "$OUT_PRE/Segmentation/T1_resampled.nii.gz" -force
         else
           exit
         fi
@@ -44,23 +44,24 @@
       
     handleHistoSegmentation() {
         if [ $EXIST -eq 1 ]; then
-          mrconvert "$OUT_PRE/Contrast_raw.mif" "$OUT_PRE/Contrast.nii.gz" -force
-          flirt -in "$OUT_PRE/Contrast.nii.gz" -ref "$OUT_PRE/T1_resampled.nii.gz" -dof 6 -omat contrast2t1.mat
-          transformconvert contrast2t1.mat "$OUT_PRE/Contrast.nii.gz" "$OUT_PRE/T1_resampled.nii.gz" flirt_import contrast2t1_mrtrix.txt -force
-          mrtransform "$OUT_PRE/Contrast_raw.mif" -linear contrast2t1_mrtrix.txt "$OUT_PRE/Contrast_coreg.mif" -force
-          mrgrid "$OUT_PRE/Contrast_coreg.mif" regrid -template "$OUT_PRE/T1_resampled.mif" "$OUT_PRE/Contrast_coreg_resampled.mif" -force
-          mrconvert "$OUT_PRE/Contrast_coreg_resampled.mif" -stride -1,3,-2 "$OUT_PRE/Contrast_coreg_resampled.nii.gz" -force          
+          #mrconvert "$OUT_PRE/Raw/Contrast_raw.mif" Contrast.nii.gz -force
+          #flirt -in Contrast.nii.gz -ref T1_resampled.nii.gz -dof 6 -omat contrast2t1.mat
+          #transformconvert contrast2t1.mat Contrast.nii.gz T1_resampled.nii.gz flirt_import contrast2t1_mrtrix.txt -force
+          #mrtransform "$OUT_PRE/Raw/Contrast_raw.mif" -linear contrast2t1_mrtrix.txt Contrast_coreg.mif -force
+          #mrgrid Contrast_coreg.mif regrid -template T1_resampled.mif Contrast_coreg_resampled.mif -force
+          #mrconvert Contrast_coreg_resampled.mif Contrast_coreg_resampled.nii.gz -force          
           
           export FREESURFER_HOME=/usr/local/freesurfer_dev/7-dev
           source $FREESURFER_HOME/SetUpFreeSurfer.sh
           
-          mri_histo_atlas_segment_fast "$OUT_PRE/Contrast_coreg_resampled.nii.gz" "$HISTO_DIR" 0 -1
+          #mri_histo_atlas_segment_fast "$OUT_PRE/Contrast_coreg_resampled.nii.gz" "$HISTO_DIR" 0 -1
+          mri_histo_atlas_segment_fast T2_raw_coreg.nii.gz "$HISTO_DIR" 0 -1
           
-          # Upsample da imagem T1 para usar como template  
-	  mrgrid "$OUT_PRE/T1_resampled.mif" regrid -voxel 0.4 "$OUT_PRE/T1_upsampled.nii.gz" -force
-	  mrgrid "$HISTO_DIR/seg_left.nii.gz" regrid -interp nearest -template "$OUT_PRE/T1_upsampled.nii.gz" "$OUT_PRE/seg_left_resampled.nii.gz" -force
-	  mrgrid "$HISTO_DIR/seg_right.nii.gz" regrid -interp nearest -template "$OUT_PRE/T1_upsampled.nii.gz" "$OUT_PRE/seg_right_resampled.nii.gz" -force
-	  mrgrid "$HISTO_DIR/SynthSeg.mgz" regrid -interp nearest -template "$OUT_PRE/T1_upsampled.nii.gz" "$OUT_PRE/SynthSeg_resampled.nii.gz" -force
+          # Upsample da imagem T1 para usar como template (a imagem resultante da segmentação tem voxels de aproxidamente 4 voxels, mas os dois hemisférios tem resoluções diferentes) 
+	  #mrgrid "$OUT_PRE/T1_resampled.mif" regrid -voxel 0.4 "$OUT_PRE/T1_upsampled.nii.gz" -force
+	  #mrgrid "$HISTO_DIR/seg_left.nii.gz" regrid -interp nearest -template "$OUT_PRE/T1_upsampled.nii.gz" "$OUT_PRE/seg_left_resampled.nii.gz" -force
+	  #mrgrid "$HISTO_DIR/seg_right.nii.gz" regrid -interp nearest -template "$OUT_PRE/T1_upsampled.nii.gz" "$OUT_PRE/seg_right_resampled.nii.gz" -force
+	  #mrgrid "$HISTO_DIR/SynthSeg.mgz" regrid -interp nearest -template "$OUT_PRE/T1_upsampled.nii.gz" "$OUT_PRE/SynthSeg_resampled.nii.gz" -force
 	  
 	  export FREESURFER_HOME="/usr/local/freesurfer/7.4.1"
     	  source "$FREESURFER_HOME/SetUpFreeSurfer.sh"
@@ -107,7 +108,7 @@
     export SUBJECTS_DIR="$SUBJECTS_DIR"
     source "$FREESURFER_HOME/SetUpFreeSurfer.sh"
     
-    cd "$OUT_PRE"
+    cd "$OUT_PRE/Segmentation"
     
     if [ -d "$SUBJECTS_DIR" ]; then
         echo "Pasta fs_subjects atual: $SUBJECTS_DIR"
@@ -163,8 +164,8 @@
         [Yy])
         handleReconstruction
         handleHistoSegmentation
-        handleLabel2Image
-        handleTck2Connectome;;
+        handleLabel2Image;;
+        # handleTck2Connectome;;
         
         [Nn])
         exit;;
@@ -180,8 +181,8 @@
         echo "Deseja realizar qual das etapas?"\
         $'\n'"1.Reconstruction"\
         $'\n'"2.Subcortical segmentation"\
-        $'\n'"3.Cortical segmentation"\
-        $'\n'"4.Connectivity matrix (tck2connectome)"
+        $'\n'"3.Cortical segmentation"
+        #$'\n'"4.Connectivity matrix (tck2connectome)"
         read -p "Opção: " step
         
           case $step in
@@ -200,10 +201,10 @@
           fileExistence
           handleLabel2Image;;
         
-          4)
-          FILE=$FILE_4
-          fileExistence
-          handleTck2Connectome;;
+          #4)
+          #FILE=$FILE_4
+          #fileExistence
+          #handleTck2Connectome;;
         
           *)
           echo invalid response;;

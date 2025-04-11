@@ -159,17 +159,16 @@
         $'\n'"    Bias Correction"\
         $'\n'"    Brain mask"\
         $'\n'"    Coregister"\
-      $'\n'"2.Tractography"\
+      $'\n'"2.Freesurfer"\
+        $'\n'"    Reconstruction"\
+        $'\n'"    Segmentation"\
+        $'\n'"    Labeling"\
+      $'\n'"3.Tractography"\
         $'\n'"    Response function"\
         $'\n'"    Fiber orientation distribution"\
         $'\n'"    Mask GM/WM"\
         $'\n'"    Streamlines creation"\
-        $'\n'"    Streamlines weighting"\
-      $'\n'"3.Freesurfer"\
-        $'\n'"    Reconstruction"\
-        $'\n'"    Segmentation"\
-        $'\n'"    Labeling"\
-        $'\n'"    Connectivity matrix"\
+        $'\n'"    Streamlines filtering"\
       $'\n'"4.Analysis"\
       $'\n'"5.View"\
         $'\n'"    Results of preprocessing"\
@@ -181,12 +180,12 @@
         case $script in               
         1)
         . "$SCRIPT_DIR/preprocess.sh";;
-        
+                
         2)
-        . "$SCRIPT_DIR/tract.sh";;
+        . "$SCRIPT_DIR/segmentation.sh";;
         
         3)
-        . "$SCRIPT_DIR/segmentation.sh";;
+        . "$SCRIPT_DIR/tract.sh";;
         
         4)
         . "$SCRIPT_DIR/analysis.sh";;
@@ -199,7 +198,5 @@
         exit;;
         
         esac
-            
-      echo "teste"
-      
+                  
         
