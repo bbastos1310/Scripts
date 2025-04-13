@@ -1,5 +1,5 @@
     SUBJECTS_DIR="$BASE_DIR/fs_subjects"
-    HISTO_DIR="$SUBJECTS_DIR/next_brain_segmentation"
+    HISTO_DIR="$SUBJECTS_DIR/$PAT_NUM/next_brain_segmentation"
     ATLAS_DIR="$BASE_DIR/Atlas" 
     FILE_1="$SUBJECTS_DIR/$PAT_NUM/scripts/recon-all.done"
     FILE_2="$SUBJECTS_DIR/$PAT_NUM/label/rh.hcpmmp1.annot"
@@ -36,7 +36,7 @@
           # Reconstruction
           recon-all -s "$PAT_NUM" -i "$OUT_PRE/Preprocess/T1_raw.nii.gz" -T2 T2_raw_coreg.nii.gz -all
           mrconvert "$SUBJECTS_DIR/$PAT_NUM/mri/T1.mgz" "$OUT_PRE/Segmentation/T1_resampled.mif" -force
-          mrconvert "$OUT_PRE/Segmentation/T1_resampled.mif" "$OUT_PRE/Segmentation/T1_resampled.nii.gz" -force
+          mrconvert T1_resampled.mif -stride -1,-2,3 T1_resampled.nii.gz -force
         else
           exit
         fi
@@ -51,21 +51,25 @@
           #mrgrid Contrast_coreg.mif regrid -template T1_resampled.mif Contrast_coreg_resampled.mif -force
           #mrconvert Contrast_coreg_resampled.mif Contrast_coreg_resampled.nii.gz -force          
           
-          export FREESURFER_HOME=/usr/local/freesurfer_dev/7-dev
+          export FREESURFER_HOME=/usr/local/freesurfer_dev/7-dev # Versão dev do freesurfer
           source $FREESURFER_HOME/SetUpFreeSurfer.sh
           
           #mri_histo_atlas_segment_fast "$OUT_PRE/Contrast_coreg_resampled.nii.gz" "$HISTO_DIR" 0 -1
-          mri_histo_atlas_segment_fast T2_raw_coreg.nii.gz "$HISTO_DIR" 0 -1
+          #mri_histo_atlas_segment_fast T2_raw_coreg.nii.gz "$HISTO_DIR" 0 -1
           
-          # Upsample da imagem T1 para usar como template (a imagem resultante da segmentação tem voxels de aproxidamente 4 voxels, mas os dois hemisférios tem resoluções diferentes) 
-	  #mrgrid "$OUT_PRE/T1_resampled.mif" regrid -voxel 0.4 "$OUT_PRE/T1_upsampled.nii.gz" -force
-	  #mrgrid "$HISTO_DIR/seg_left.nii.gz" regrid -interp nearest -template "$OUT_PRE/T1_upsampled.nii.gz" "$OUT_PRE/seg_left_resampled.nii.gz" -force
-	  #mrgrid "$HISTO_DIR/seg_right.nii.gz" regrid -interp nearest -template "$OUT_PRE/T1_upsampled.nii.gz" "$OUT_PRE/seg_right_resampled.nii.gz" -force
-	  #mrgrid "$HISTO_DIR/SynthSeg.mgz" regrid -interp nearest -template "$OUT_PRE/T1_upsampled.nii.gz" "$OUT_PRE/SynthSeg_resampled.nii.gz" -force
+          export FREESURFER_HOME=/usr/local/freesurfer/7.4.1  #versão padrão do freesurfer
+    	  source $FREESURFER_HOME/SetUpFreeSurfer.sh
+                       
+          # Upsample da imagem T1 para usar como template (a imagem resultante da segmentação tem voxels de aproxidamente 0.4 mm, mas os dois hemisférios tem resoluções diferentes) 
+	  #mrgrid T1_resampled.nii.gz regrid -voxel 0.4 T1_upsampled.nii.gz -force
+	  mrgrid "$HISTO_DIR/seg_left.nii.gz" regrid -template T1_upsampled.nii.gz -interp nearest -oversample 1,1,1 seg_left_resampled.nii.gz -force
+	  mrgrid "$HISTO_DIR/seg_right.nii.gz" regrid -interp nearest -template T1_upsampled.nii.gz -oversample 1,1,1 seg_right_resampled.nii.gz -force
+	  mrgrid "$HISTO_DIR/SynthSeg.mgz" regrid -interp nearest -template T1_upsampled.nii.gz -oversample 1,1,1 SynthSeg_resampled.nii.gz -force
 	  
-	  export FREESURFER_HOME="/usr/local/freesurfer/7.4.1"
-    	  source "$FREESURFER_HOME/SetUpFreeSurfer.sh"
-    	  
+	  #flirt -in "$HISTO_DIR/seg_left.nii.gz" -ref T2_raw_coreg_upsampled.nii.gz -applyxfm -init identity.mat -out seg_left_resampled.nii.gz -interp nearestneighbour
+	  #flirt -in "$HISTO_DIR/seg_right.nii.gz" -ref T2_raw_coreg_upsampled.nii.gz -applyxfm -init t22t1.mat -out seg_right_resampled.nii.gz -interp nearestneighbour
+
+    	  	  
         else
           exit
         fi
@@ -73,15 +77,15 @@
       
     handleLabel2Image() {
         if [ $EXIST -eq 1 ]; then
-          mri_surf2surf --srcsubject fsaverage --trgsubject "$PAT_NUM" --hemi lh --sval-annot "$SUBJECTS_DIR/fsaverage/label/lh.Julich.annot"  --tval $SUBJECTS_DIR/"$PAT_NUM"/label/lh.JULICH.annot  
-	  mri_surf2surf --srcsubject fsaverage --trgsubject "$PAT_NUM" --hemi rh --sval-annot "$SUBJECTS_DIR/fsaverage/label/rh.Julich.annot"  --tval $SUBJECTS_DIR/"$PAT_NUM"/label/rh.JULICH.annot 
-	  mri_aparc2aseg --new-ribbon --s "$PAT_NUM" --annot JULICH --o output_freesurfer.mgz
+          #mri_surf2surf --srcsubject fsaverage --trgsubject "$PAT_NUM" --hemi lh --sval-annot "$SUBJECTS_DIR/fsaverage/label/lh.Julich.annot"  --tval "$SUBJECTS_DIR/"$PAT_NUM"/label/lh.JULICH.annot"  
+	  #mri_surf2surf --srcsubject fsaverage --trgsubject "$PAT_NUM" --hemi rh --sval-annot "$SUBJECTS_DIR/fsaverage/label/rh.Julich.annot"  --tval "$SUBJECTS_DIR/"$PAT_NUM"/label/rh.JULICH.annot" 
+	  #mri_aparc2aseg --new-ribbon --s "$PAT_NUM" --annot JULICH --o output_freesurfer.mgz
 	  
-          mrconvert output_freesurfer.mgz output_freesurfer.nii.gz -force
+          #mrconvert output_freesurfer.mgz output_freesurfer.nii.gz -force
           python "$SCRIPT_DIR/Python/main_segmentation.py"
-          mrconvert -datatype uint32 Julich_parcels_freesurfer.nii.gz Julich_parcels_freesurfer.mif -force
-          labelconvert Julich_parcels_freesurfer.mif "$ATLAS_DIR/JulichLUT_complete.txt" "$ATLAS_DIR/JulichLUT_mrtrix.txt" Julich_parcels_mrtrix.mif -force
-          label2colour Julich_parcels_mrtrix.mif -lut "$ATLAS_DIR/JulichLUT_mrtrix.txt" Julich_parcels_mrtrix_colored.mif -force
+          #mrconvert -datatype uint32 Julich_parcels_freesurfer.nii.gz Julich_parcels_freesurfer.mif -force
+          #labelconvert Julich_parcels_freesurfer.mif "$ATLAS_DIR/JulichLUT_complete.txt" "$ATLAS_DIR/JulichLUT_mrtrix.txt" Julich_parcels_mrtrix.mif -force
+          #label2colour Julich_parcels_mrtrix.mif -lut "$ATLAS_DIR/JulichLUT_mrtrix.txt" Julich_parcels_mrtrix_colored.mif -force
         else
           exit
         fi

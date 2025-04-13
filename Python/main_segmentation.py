@@ -35,7 +35,7 @@ data_seg = np.zeros(data_segleft.shape, dtype=np.uint16)
 mask_right = (data_segright < 1000) & (data_segright != 0)
 mask_left = (data_segleft < 1000) & (data_segleft != 0)
 
-# Substituir os valores fora da máscara por 0
+# Diferenciar os valores entre os hemisférios
 data_seg[mask_right] = data_segright[mask_right] + 1000
 data_seg[mask_left] = data_segleft[mask_left]
 
@@ -45,20 +45,36 @@ del mask_right, mask_left
 
 ### Red Nucleus
 map_RN_rh = np.array(np.where(data_seg == 1385, True, False), dtype=bool)
+print(f"Red Nucleus (Right hemisphere)")
+print(f"{map_RN_rh[map_RN_rh == True].size} voxels.")
 ### Substantia nigra
 map_SN_rh = np.array(np.where((data_seg == 1310) | (data_seg == 1352), True, False), dtype=bool)
+print(f"Substantia Nigra (Right hemisphere)")
+print(f"{map_SN_rh[map_SN_rh == True].size} voxels.")
 ### Dentante nucleus
 map_DN_rh = np.array(np.where(data_seg == 1721, True, False), dtype=bool)
+print(f"Dentate Nucleus (Right hemisphere)")
+print(f"{map_DN_rh[map_DN_rh == True].size} voxels.")
 ### Subthalamic nucleus
 map_STN_rh = np.array(np.where((data_seg == 1315) | (data_seg == 1316) | (data_seg == 1321), True, False), dtype=bool)
+print(f"Subthalamic nucleus (Right hemisphere)")
+print(f"{map_STN_rh[map_STN_rh == True].size} voxels.")
 ### White matter (forebrain)
 map_WMf_rh = np.array(np.where((data_seg == 1007), True, False), dtype=bool)
+print(f"White matter - forebrain (Right hemisphere)")
+print(f"{map_WMf_rh[map_WMf_rh == True].size} voxels.")
 ### White matter (hindbrain)
 map_WMh_rh = np.array(np.where((data_seg == 1611), True, False), dtype=bool)
+print(f"White matter - hindbrain (Right hemisphere)")
+print(f"{map_WMh_rh[map_WMh_rh == True].size} voxels.")
 ### White matter (cerebellum)
 map_WMc_rh = np.array(np.where((data_seg == 1846), True, False), dtype=bool)
+print(f"White matter - cerebellum (Right hemisphere)")
+print(f"{map_WMc_rh[map_WMc_rh == True].size} voxels.")
 ### Brainstem
 map_brainstem_rh = np.array(np.where((data_seg == 1414) | (data_seg == 1580) | (data_seg == 1662), True, False), dtype=bool)
+print(f"Brainstem (Right hemisphere)")
+print(f"{map_RN_rh[map_RN_rh == True].size} voxels.")
 ### Medial Lemniscus
 map_ML_rh = roi.handleMediallemniscus(data_seg,map_RN_rh,"right")
 ### Cerebral Peduncle
@@ -71,20 +87,36 @@ map_PSA_rh = roi.handlePsa(data_seg,map_RN_rh, map_STN_rh,"right")
 
 ### Red Nucleus
 map_RN_lh = np.array(np.where(data_seg == 385, True, False), dtype=bool)
+print(f"Red Nucleus (Left hemisphere)")
+print(f"{map_RN_lh[map_RN_lh == True].size} voxels.")
 ### Substantia nigra
 map_SN_lh = np.array(np.where((data_seg == 310) | (data_seg == 352), True, False), dtype=bool)
+print(f"Substantia Nigra (Left hemisphere)")
+print(f"{map_SN_lh[map_SN_lh == True].size} voxels.")
 ### Dentante nucleus
 map_DN_lh = np.array(np.where(data_seg == 721, True, False), dtype=bool)
+print(f"Dentate Nucleus (Left hemisphere)")
+print(f"{map_DN_lh[map_DN_lh == True].size} voxels.")
 ### Subthalamic nucleus
 map_STN_lh = np.array(np.where((data_seg == 315) | (data_seg == 316) | (data_seg == 321), True, False), dtype=bool)
+print(f"Subthalamic Nucleus (Left hemisphere)")
+print(f"{map_STN_lh[map_STN_lh == True].size} voxels.")
 ### White matter (forebrain)
 map_WMf_lh = np.array(np.where((data_seg == 7), True, False), dtype=bool)
+print(f"White matter - forebrain (Left hemisphere)")
+print(f"{map_WMf_lh[map_WMf_lh == True].size} voxels.")
 ### White matter (hindbrain)
 map_WMh_lh = np.array(np.where((data_seg == 611), True, False), dtype=bool)
+print(f"White matter - hindbrain (Left hemisphere)")
+print(f"{map_RN_rh[map_RN_rh == True].size} voxels.")
 ### White matter (cerebellum)
 map_WMc_lh = np.array(np.where((data_seg == 846), True, False), dtype=bool)
+print(f"White matter - cerebellum (Left hemisphere)")
+print(f"{map_RN_rh[map_RN_rh == True].size} voxels.")
 ### Brainstem
 map_brainstem_lh = np.array(np.where((data_seg == 414) | (data_seg == 580) | (data_seg == 662), True, False), dtype=bool)
+print(f"Brainstem (Left hemisphere)")
+print(f"{map_brainstem_lh[map_brainstem_lh == True].size} voxels.")
 ### Medial Lemniscus
 map_ML_lh = roi.handleMediallemniscus(data_seg,map_RN_lh,"left")
 ### Cerebral Peduncle

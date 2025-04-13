@@ -85,3 +85,48 @@ def linearfunctionPoints(x1,y1,x2,y2):
 def linearfunctionCoeficient(a,x1,y1):
 	b = y1 - a*x1
 	return b
+	
+def fill_convex_hull_slice(slice_2d):
+    """
+    Extrai o convex hull dos pontos ativos no slice e preenche o interior.
+
+    Args:
+        slice_2d (np.ndarray): Slice binário 2D (0s e 1s).
+
+    Returns:
+        np.ndarray: Slice preenchido com o convex hull.
+    """
+    # Encontra as coordenadas (y, x) dos pontos ativos (1s)
+    points = np.column_stack(np.where(slice_2d == 1))
+
+    if len(points) < 3:
+        # Não há pontos suficientes para formar um convex hull
+        return slice_2d
+
+    # Calcula o convex hull
+    hull = ConvexHull(points)
+    hull_points = points[hull.vertices]  # Pontos do contorno convexo
+
+    # Ordena os pontos no sentido horário para desenhar o polígono
+    hull_points = hull_points[:, ::-1]  # Inverte para (x, y)
+    hull_points = np.vstack((hull_points, hull_points[0]))  # Fecha o polígono
+
+    # Cria uma máscara preenchida do convex hull
+    mask = np.zeros_like(slice_2d)
+    rr, cc = polygon(hull_points[:, 0], hull_points[:, 1], mask.shape)
+    mask[cc, rr] = 1
+
+    return mask
+    
+def fill_convex_hull_volume(volume_3d):
+    filled_volume = np.zeros_like(volume_3d)
+
+    kmin = np.where(volume_3d == True)[2].min()
+    kmax = np.where(volume_3d == True)[2].max()
+
+    for k in range(kmin, kmax + 1):
+        slice_2d = volume_3d[:,:,k]
+        filled_slice = fill_convex_hull_slice(slice_2d)
+        filled_volume[:,:,k] = filled_slice
+
+    return filled_volume

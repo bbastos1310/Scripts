@@ -17,12 +17,13 @@ def handleMediallemniscus(data_seg,map_RN,hemisphere):
 		# Limite de fatias axiais que contêm voxels do red nucleus
 		kmin_RN = np.where(map_RN != 0)[2].min()
 		kmax_RN = np.where(map_RN != 0)[2].max()
+		print(f'kmin_RN={kmin_RN}, kmax_RN{kmax_RN}')
 		
 		for k in range (kmin_RN, kmin_RN + 5):
 		  mask_temp_RN = np.zeros((640,640), dtype=bool)
 		  mask_temp_midbrain = np.zeros((640,640), dtype=bool)
 		  mask_temp_intersection = np.zeros((640,640), dtype=bool)
-
+		  		  
 		  imax_RN_temp = np.where(map_RN[:,:,k] != 0)[0].max()
 		  mask_temp_RN[imax_RN_temp + 1:,:] = True
 		  mask_temp_midbrain = np.where(data_seg[:,:,k] == 384, True, False)
@@ -149,22 +150,28 @@ def handlePsa(data_seg,map_RN, map_STN,hemisphere):
 			j1_point = np.where(map_RN[:,i1_point,k_slice] != 0)[0].max()
 			j2_point = np.where(map_STN[:,:,k_slice] != 0)[0].max()
 			i2_point = np.where(map_STN[j2_point,:,k_slice] != 0)[0].max()
-			a,b = functions.linearfunctionPoints(i1_point,j1_point,i2_point,j2_point)
 			i3_point = np.where(map_RN[:,:,k_slice] != 0)[1].min()
 			j3_point = np.where(map_RN[:,i3_point,k_slice] != 0)[0].min()
-			b3 = functions.linearfunctionCoeficient(a,i3_point,j3_point)
-
 			x = np.arange(data_seg.shape[0])
 			y = np.arange(data_seg.shape[1])
 			i_grid, j_grid = np.meshgrid(x, y)	
-			mask_temp_line = (j_grid < (a * i_grid + b)) & (j_grid > (a * i_grid + b3))
+			if (i1_point != i2_point):
+				a,b = functions.linearfunctionPoints(i1_point,j1_point,i2_point,j2_point)
+				b3 = functions.linearfunctionCoeficient(a,i3_point,j3_point)
+				mask_temp_line = (j_grid < (a * i_grid + b)) & (j_grid > (a * i_grid + b3))
+			else:
+				mask_temp_line = (i_grid > j1_point) & (i_grid < j3_point)
 			
 			jmin_slice = np.where(map_RN[:,:,k_slice] != 0)[1].min()
 			jmax_slice = np.where(map_RN[:,:,k_slice] != 0)[1].max()
 
 			for j in range(jmin_slice, jmax_slice + 1):
-			  imin_line = np.where(map_RN[:,j,k_slice] != 0)[0].min()
-			  mask_temp_side[:imin_line,j] = True
+				try:
+					imin_line = np.where(map_RN[:,j,k_slice] != 0)[0].min()
+					mask_temp_side[:imin_line,j] = True
+				except ValueError:
+					imin_line = None
+					mask_temp_side[:,j] = True
 			  
 			mask_PSA[:,:,k_slice] = mask_temp_RN & mask_temp_STN & mask_temp_regions & mask_temp_line & ~mask_temp_side
 	
@@ -203,21 +210,28 @@ def handlePsa(data_seg,map_RN, map_STN,hemisphere):
 			j1_point = np.where(map_RN[:,i1_point,k_slice] != 0)[0].min()
 			j2_point = np.where(map_STN[:,:,k_slice] != 0)[0].min()
 			i2_point = np.where(map_STN[j2_point,:,k_slice] != 0)[0].max()
-			a,b = functions.linearfunctionPoints(i1_point,j1_point,i2_point,j2_point)
 			i3_point = np.where(map_RN[:,:,k_slice] != 0)[1].min()
 			j3_point = np.where(map_RN[:,i3_point,k_slice] != 0)[0].max()
-			b3 = functions.linearfunctionCoeficient(a,i3_point,j3_point)	
-			
 			x = np.arange(data_seg.shape[0])
 			y = np.arange(data_seg.shape[1])
 			i_grid, j_grid = np.meshgrid(x, y)
-			mask_temp_line = (j_grid > (a * i_grid + b)) & (j_grid < (a * i_grid + b3))	
+			if (i1_point != i2_point):
+				a,b = functions.linearfunctionPoints(i1_point,j1_point,i2_point,j2_point)
+				b3 = functions.linearfunctionCoeficient(a,i3_point,j3_point)	
+				mask_temp_line = (j_grid > (a * i_grid + b)) & (j_grid < (a * i_grid + b3))				
+			else:
+				mask_temp_line = (i_grid > j1_point) & (i_grid < j3_point)
 			
 			jmin_slice = np.where(map_RN[:,:,k_slice] != 0)[1].min()
 			jmax_slice = np.where(map_RN[:,:,k_slice] != 0)[1].max()
+			
 			for j in range(jmin_slice, jmax_slice + 1):
-			  imax_line = np.where(map_RN[:,j,k_slice] != 0)[0].max()
-			  mask_temp_side[imax_line:,j] = True	
+				try:
+					imax_line = np.where(map_RN[:,j,k_slice] != 0)[0].max()
+					mask_temp_side[imax_line:,j] = True
+				except ValueError:
+					imax_line = None
+					mask_temp_side[:,j] = True 
 			  
 			mask_PSA[:,:,k_slice] = mask_temp_RN & mask_temp_STN & mask_temp_regions & mask_temp_line & ~mask_temp_side
 
