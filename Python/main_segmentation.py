@@ -45,110 +45,145 @@ del mask_right, mask_left
 
 ### Red Nucleus
 map_RN_rh = np.array(np.where(data_seg == 1385, True, False), dtype=bool)
+map_RN_rh_filtered = functions.connectedComponents(map_RN_rh)
 print(f"Red Nucleus (Right hemisphere)")
-print(f"{map_RN_rh[map_RN_rh == True].size} voxels.")
+print(f"{map_RN_rh_filtered[map_RN_rh_filtered == True].size} voxels.")
+
 ### Substantia nigra
 map_SN_rh = np.array(np.where((data_seg == 1310) | (data_seg == 1352), True, False), dtype=bool)
+map_SN_rh_filtered = functions.connectedComponents(map_SN_rh)
 print(f"Substantia Nigra (Right hemisphere)")
-print(f"{map_SN_rh[map_SN_rh == True].size} voxels.")
+print(f"{map_SN_rh_filtered[map_SN_rh_filtered == True].size} voxels.")
+
 ### Dentante nucleus
 map_DN_rh = np.array(np.where(data_seg == 1721, True, False), dtype=bool)
+filled_DN_rh = functions.fillConvex_hull_volume(map_DN_rh)
+map_DN_rh_filtered = functions.connectedComponents(filled_DN_rh)
 print(f"Dentate Nucleus (Right hemisphere)")
-print(f"{map_DN_rh[map_DN_rh == True].size} voxels.")
+print(f"{map_DN_rh_filtered[map_DN_rh_filtered == True].size} voxels.")
+
 ### Subthalamic nucleus
 map_STN_rh = np.array(np.where((data_seg == 1315) | (data_seg == 1316) | (data_seg == 1321), True, False), dtype=bool)
+map_STN_rh_filtered = functions.connectedComponents(map_STN_rh)
 print(f"Subthalamic nucleus (Right hemisphere)")
-print(f"{map_STN_rh[map_STN_rh == True].size} voxels.")
+print(f"{map_STN_rh_filtered[map_STN_rh_filtered == True].size} voxels.")
+
 ### White matter (forebrain)
 map_WMf_rh = np.array(np.where((data_seg == 1007), True, False), dtype=bool)
 print(f"White matter - forebrain (Right hemisphere)")
 print(f"{map_WMf_rh[map_WMf_rh == True].size} voxels.")
+
 ### White matter (hindbrain)
 map_WMh_rh = np.array(np.where((data_seg == 1611), True, False), dtype=bool)
 print(f"White matter - hindbrain (Right hemisphere)")
 print(f"{map_WMh_rh[map_WMh_rh == True].size} voxels.")
+
 ### White matter (cerebellum)
 map_WMc_rh = np.array(np.where((data_seg == 1846), True, False), dtype=bool)
 print(f"White matter - cerebellum (Right hemisphere)")
 print(f"{map_WMc_rh[map_WMc_rh == True].size} voxels.")
+
 ### Brainstem
 map_brainstem_rh = np.array(np.where((data_seg == 1414) | (data_seg == 1580) | (data_seg == 1662), True, False), dtype=bool)
 print(f"Brainstem (Right hemisphere)")
-print(f"{map_RN_rh[map_RN_rh == True].size} voxels.")
+print(f"{map_brainstem_rh[map_brainstem_rh == True].size} voxels.")
+
 ### Medial Lemniscus
 map_ML_rh = roi.handleMediallemniscus(data_seg,map_RN_rh,"right")
+
 ### Cerebral Peduncle
-map_CP_rh = roi.handleCerebralpeduncle(data_seg, data_synthseg, map_RN_rh,"right")
+map_CP_rh = roi.handleCerebralpeduncle(data_seg, data_synthseg, map_RN_rh_filtered, map_SN_rh_filtered,"right")
+map_CP_rh_filtered = functions.connectedComponents(map_CP_rh)
+
 ### Posterior subthalamic area
-map_PSA_rh = roi.handlePsa(data_seg,map_RN_rh, map_STN_rh,"right")
+map_PSA_rh = roi.handlePsa(data_seg,map_RN_rh_filtered, map_STN_rh_filtered,"right")
+map_PSA_rh_filtered = functions.connectedComponents(map_PSA_rh)
 
-
-# ## LEFT HEMISPHERE
+## LEFT HEMISPHERE
 
 ### Red Nucleus
 map_RN_lh = np.array(np.where(data_seg == 385, True, False), dtype=bool)
+map_RN_lh_filtered = functions.connectedComponents(map_RN_lh)
 print(f"Red Nucleus (Left hemisphere)")
-print(f"{map_RN_lh[map_RN_lh == True].size} voxels.")
+print(f"{map_RN_lh_filtered[map_RN_lh_filtered == True].size} voxels.")
+
 ### Substantia nigra
 map_SN_lh = np.array(np.where((data_seg == 310) | (data_seg == 352), True, False), dtype=bool)
+map_SN_lh_filtered = functions.connectedComponents(map_SN_lh)
 print(f"Substantia Nigra (Left hemisphere)")
-print(f"{map_SN_lh[map_SN_lh == True].size} voxels.")
+print(f"{map_SN_lh_filtered[map_SN_lh_filtered == True].size} voxels.")
+
 ### Dentante nucleus
 map_DN_lh = np.array(np.where(data_seg == 721, True, False), dtype=bool)
+filled_DN_lh = functions.fillConvex_hull_volume(map_DN_lh)
+map_DN_lh_filtered = functions.connectedComponents(filled_DN_lh)
 print(f"Dentate Nucleus (Left hemisphere)")
-print(f"{map_DN_lh[map_DN_lh == True].size} voxels.")
+print(f"{map_DN_lh_filtered[map_DN_lh_filtered == True].size} voxels.")
+
 ### Subthalamic nucleus
 map_STN_lh = np.array(np.where((data_seg == 315) | (data_seg == 316) | (data_seg == 321), True, False), dtype=bool)
+map_STN_lh_filtered = functions.connectedComponents(map_STN_lh)
 print(f"Subthalamic Nucleus (Left hemisphere)")
-print(f"{map_STN_lh[map_STN_lh == True].size} voxels.")
+print(f"{map_STN_lh_filtered[map_STN_lh_filtered == True].size} voxels.")
+
 ### White matter (forebrain)
 map_WMf_lh = np.array(np.where((data_seg == 7), True, False), dtype=bool)
 print(f"White matter - forebrain (Left hemisphere)")
 print(f"{map_WMf_lh[map_WMf_lh == True].size} voxels.")
+
 ### White matter (hindbrain)
 map_WMh_lh = np.array(np.where((data_seg == 611), True, False), dtype=bool)
 print(f"White matter - hindbrain (Left hemisphere)")
-print(f"{map_RN_rh[map_RN_rh == True].size} voxels.")
+print(f"{map_WMh_lh[map_WMh_lh == True].size} voxels.")
+
 ### White matter (cerebellum)
 map_WMc_lh = np.array(np.where((data_seg == 846), True, False), dtype=bool)
 print(f"White matter - cerebellum (Left hemisphere)")
-print(f"{map_RN_rh[map_RN_rh == True].size} voxels.")
+print(f"{map_WMc_lh[map_WMc_lh == True].size} voxels.")
+
 ### Brainstem
 map_brainstem_lh = np.array(np.where((data_seg == 414) | (data_seg == 580) | (data_seg == 662), True, False), dtype=bool)
 print(f"Brainstem (Left hemisphere)")
 print(f"{map_brainstem_lh[map_brainstem_lh == True].size} voxels.")
+
 ### Medial Lemniscus
 map_ML_lh = roi.handleMediallemniscus(data_seg,map_RN_lh,"left")
+
 ### Cerebral Peduncle
-map_CP_lh = roi.handleCerebralpeduncle(data_seg, data_synthseg, map_RN_lh,"left")
+map_CP_lh = roi.handleCerebralpeduncle(data_seg, data_synthseg, map_RN_lh_filtered, map_SN_lh_filtered,"left")
+map_CP_lh_filtered = functions.connectedComponents(map_CP_lh)
+
 ### Posterior subthalamic area
-map_PSA_lh = roi.handlePsa(data_seg,map_RN_lh, map_STN_lh,"left")
+map_PSA_lh = roi.handlePsa(data_seg,map_RN_lh_filtered, map_STN_lh_filtered,"left")
+map_PSA_lh_filtered = functions.connectedComponents(map_PSA_lh)
 
 # Matriz com as regiões de interesse 
 data_roi = np.zeros(data_segleft.shape, dtype=np.uint16)
 data_wm = np.zeros(data_segleft.shape, dtype=np.uint16)
 
 data_roi[map_ML_lh == True] = 1210
-data_roi[map_CP_lh == True] = 1211
-data_roi[map_RN_lh == True] = 1212
-data_roi[map_SN_lh == True] = 1213
-data_roi[map_DN_lh == True] = 1214
-data_roi[map_PSA_lh == True] = 1215
-data_roi[map_brainstem_lh == True] = 1216
-data_wm[map_WMf_lh == True] = 1217
-data_wm[map_WMh_lh == True] = 1218
-data_wm[map_WMc_lh == True] = 1219
+data_roi[map_CP_lh_filtered == True] = 1211
+data_roi[map_RN_lh_filtered == True] = 1212
+data_roi[map_SN_lh_filtered == True] = 1213
+data_roi[map_DN_lh_filtered == True] = 1214
+data_roi[map_PSA_lh_filtered == True] = 1215
+data_roi[map_STN_lh_filtered == True] = 1216
+data_roi[map_brainstem_lh == True] = 1217
+data_wm[map_WMf_lh == True] = 1218
+data_wm[map_WMh_lh == True] = 1219
+data_wm[map_WMc_lh == True] = 1220
 
 data_roi[map_ML_rh == True] = 2210
-data_roi[map_CP_rh == True] = 2211
-data_roi[map_RN_rh == True] = 2212
-data_roi[map_SN_rh == True] = 2213
-data_roi[map_DN_rh == True] = 2214
-data_roi[map_PSA_rh == True] = 2215
-data_roi[map_brainstem_rh == True] = 2216
-data_wm[map_WMf_rh == True] = 2217
-data_wm[map_WMh_rh == True] = 2218
-data_wm[map_WMc_rh == True] = 2219
+data_roi[map_CP_rh_filtered == True] = 2211
+data_roi[map_RN_rh_filtered == True] = 2212
+data_roi[map_SN_rh_filtered == True] = 2213
+data_roi[map_DN_rh_filtered == True] = 2214
+data_roi[map_PSA_rh_filtered == True] = 2215
+data_roi[map_STN_rh_filtered == True] = 2216
+data_roi[map_brainstem_rh == True] = 2217
+data_wm[map_WMf_rh == True] = 2218
+data_wm[map_WMh_rh == True] = 2219
+data_wm[map_WMc_rh == True] = 2220
 
 
 data_nifti = nib.Nifti1Image(data_roi, affine_segleft)

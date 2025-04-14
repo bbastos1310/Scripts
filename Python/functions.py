@@ -1,6 +1,9 @@
 import nibabel as nib
 import numpy as np
 from scipy.ndimage import binary_erosion
+from skimage.measure import label, regionprops
+from scipy.spatial import ConvexHull
+from skimage.draw import polygon
 
 # save nifti image
 def saveImage(data, image, name):
@@ -86,7 +89,7 @@ def linearfunctionCoeficient(a,x1,y1):
 	b = y1 - a*x1
 	return b
 	
-def fill_convex_hull_slice(slice_2d):
+def fillConvex_hull_slice(slice_2d):
     """
     Extrai o convex hull dos pontos ativos no slice e preenche o interior.
 
@@ -118,7 +121,7 @@ def fill_convex_hull_slice(slice_2d):
 
     return mask
     
-def fill_convex_hull_volume(volume_3d):
+def fillConvex_hull_volume(volume_3d):
     filled_volume = np.zeros_like(volume_3d)
 
     kmin = np.where(volume_3d == True)[2].min()
@@ -126,7 +129,22 @@ def fill_convex_hull_volume(volume_3d):
 
     for k in range(kmin, kmax + 1):
         slice_2d = volume_3d[:,:,k]
-        filled_slice = fill_convex_hull_slice(slice_2d)
+        filled_slice = fillConvex_hull_slice(slice_2d)
         filled_volume[:,:,k] = filled_slice
 
     return filled_volume
+
+def connectedComponents(mask):
+	# Identificar componentes conectados
+	labeled_mask = label(mask, connectivity=1)  
+	# Calcular propriedades das regiões 
+	regions = regionprops(labeled_mask)
+	# Encontrar a região com maior número de voxels
+	if regions:  
+		largest_region = max(regions, key=lambda x: x.area)
+		mask_filtered = (labeled_mask == largest_region.label)
+	else:
+		print("Nenhum componente encontrado.")
+		mask_filtered = np.zeros_like(mask, dtype=bool)
+	
+	return mask_filtered
