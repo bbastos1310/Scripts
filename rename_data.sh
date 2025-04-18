@@ -27,10 +27,13 @@
               mrcat I_*.dcm ../Output_tract/Raw/dwi_raw.mif -force
               elif [ "$dir" == "$PAT_DIR_PRE/009/" ]; then
               mrconvert ../009/ ../Output_tract/Raw/T1_raw.mif -force
+              mrconvert "$OUT_PRE/Raw/T1_raw.mif" "$OUT_PRE/Segmentation/T1_raw.nii.gz" -force
               elif [ "$dir" == "$PAT_DIR_PRE/007/" ]; then
               mrconvert ../007/ ../Output_tract/Raw/T2_raw.mif -force
+              mrconvert "$OUT_PRE/Raw/T2_raw.mif" "$OUT_PRE/Segmentation/T2_raw.nii.gz" -force
               elif [ "$dir" == "$PAT_DIR_PRE/021/" ]; then
               mrconvert ../021/ ../Output_tract/Raw/Contrast_raw.mif -force
+              mrconvert "$OUT_PRE/Raw/Contrast_raw.mif" "$OUT_PRE/Segmentation/Contrast_raw.nii.gz" -force
               elif [ "$size_x" -eq 1 ] || [ "$size_y" -eq 1 ] || [ "$size_z" -eq 1 ] ; then
               mrconvert "$dir" ../Output_general/${PWD##*/}_raw.mif -force
               else
@@ -70,10 +73,13 @@
               mrcat I_*.dcm ../Output_tract/Raw/dwi_raw.mif -force
               elif [ "$dir" == "$PAT_DIR_24/009/" ]; then
               mrconvert ../009/ ../Output_tract/Raw/T1_raw_24.mif -force
+              mrconvert "$OUT_24/Raw/T1_raw.mif" "$OUT_24/Segmentation/T1_raw.nii.gz" -force
               elif [ "$dir" == "$PAT_DIR_24/007/" ]; then
               mrconvert ../007/ ../Output_tract/Raw/T2_raw.mif -force
-              elif [ "$dir" == "$PAT_DIR_PRE/021/" ]; then
+              mrconvert "$OUT_24/Raw/T2_raw.mif" "$OUT_24/Segmentation/T2_raw.nii.gz" -force
+              elif [ "$dir" == "$PAT_DIR_24/021/" ]; then
               mrconvert ../021/ ../Output_tract/Raw/Contrast_raw.mif -force
+              mrconvert "$OUT_24/Raw/Contrast_raw.mif" "$OUT_24/Segmentation/Contrast_raw.nii.gz" -force
               elif [ "$size_x" -eq 1 ] || [ "$size_y" -eq 1 ] || [ "$size_z" -eq 1 ] ; then
               mrconvert "$dir" ../Output_general/${PWD##*/}_raw.mif -force
               else

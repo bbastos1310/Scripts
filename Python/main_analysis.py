@@ -30,8 +30,8 @@ T1_seg = nib.load("Julich_parcels_ordered.nii.gz")
 mask_image = nib.load("dwi_mask_resampled.nii.gz")
 Contrast = nib.load("Contrast_coreg_resampled.nii.gz")
 Contrast_24 = nib.load("Contrast_24_coreg_resampled.nii.gz")
-matrix_PRE = pd.read_csv("Julich.csv", header = None, sep = " ")
-matrix_24 = pd.read_csv("Julich_24.csv", header = None, sep = " ")
+#matrix_PRE = pd.read_csv("Julich.csv", header = None, sep = " ")
+#matrix_24 = pd.read_csv("Julich_24.csv", header = None, sep = " ")
 print("-Arquivos carregados")
 
 # Extract data

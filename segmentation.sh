@@ -28,15 +28,43 @@
     #Functions
     handleReconstruction() {
         if [ $EXIST -eq 1 ]; then
+                             
           # Coregister T2_raw with T1_raw
-          flirt -in "$OUT_PRE/Preprocess/T2_raw.nii.gz" -ref "$OUT_PRE/Preprocess/T1_raw.nii.gz" -dof 6 -omat t22t1.mat
-          transformconvert t22t1.mat "$OUT_PRE/Preprocess/T2_raw.nii.gz" "$OUT_PRE/Preprocess/T1_raw.nii.gz" flirt_import t22t1_mrtrix.txt -force
-          mrtransform "$OUT_PRE/Raw/T2_raw.mif" -linear t22t1_mrtrix.txt T2_raw_coreg.mif -force
-          mrconvert T2_raw_coreg.mif T2_raw_coreg.nii.gz -force
+          #flirt -in "$OUT_PRE/Preprocess/T2_raw.nii.gz" -ref "$OUT_PRE/Segmentation/T1_raw.nii.gz" -dof 6 -omat t22t1.mat
+          #transformconvert t22t1.mat "$OUT_PRE/Preprocess/T2_raw.nii.gz" "$OUT_PRE/Segmentation/T1_raw.nii.gz" flirt_import t22t1_mrtrix.txt -force
+          #mrtransform "$OUT_PRE/Raw/T2_raw.mif" -linear t22t1_mrtrix.txt T2_raw_coreg.mif -force
+          #mrconvert T2_raw_coreg.mif T2_raw_coreg.nii.gz -force
+          
+          # Coregister T2_raw_24 with T1_raw
+          #mrgrid "$OUT_24/Segmentation/T2_raw.nii.gz" regrid -template T1_raw.nii.gz T2_raw_24_T1.nii.gz -force
+          #flirt -in T2_raw_24_T1.nii.gz -ref "$OUT_PRE/Segmentation/T1_raw.nii.gz" -dof 6 -omat t22t1_24.mat
+          #transformconvert t22t1_24.mat T2_raw_24_T1.nii.gz "$OUT_PRE/Segmentation/T1_raw.nii.gz" flirt_import t22t1_24_mrtrix.txt -force
+          #mrtransform "$OUT_24/Raw/T2_raw.mif" -linear t22t1_24_mrtrix.txt T2_raw_24_coreg.mif -force
+          #mrconvert T2_raw_24_coreg.mif T2_raw_24_coreg.nii.gz -force
+          #rm T2_raw_24_T1.nii.gz
+          
+          # Coregister Contrast_raw with T1_raw
+          mrgrid Contrast_raw.nii.gz regrid -template T1_raw.nii.gz Contrast_raw_T1.nii.gz -force
+          flirt -in Contrast_raw_T1.nii.gz -ref "$OUT_PRE/Segmentation/T1_raw.nii.gz" -dof 6 -omat Contrast2t1.mat
+          transformconvert Contrast2t1.mat Contrast_raw_T1.nii.gz "$OUT_PRE/Segmentation/T1_raw.nii.gz" flirt_import Contrast2t1_mrtrix.txt -force
+          mrtransform "$OUT_PRE/Raw/Contrast_raw.mif" -linear Contrast2t1_mrtrix.txt Contrast_raw_coreg.mif -force
+          mrconvert Contrast_raw_coreg.mif -stride -1,-2,3 Contrast_raw_coreg.nii.gz -force
+          rm Contrast_raw_T1.nii.gz
+          
+          # Coregister Contrast_raw_24 with T1_raw
+          mrgrid "$OUT_24/Segmentation/Contrast_raw.nii.gz" regrid -template T1_raw.nii.gz Contrast_raw_24_T1.nii.gz -force
+          flirt -in Contrast_raw_24_T1.nii.gz -ref "$OUT_PRE/Segmentation/T1_raw.nii.gz" -dof 6 -omat Contrast2t1_24.mat
+          transformconvert Contrast2t1_24.mat Contrast_raw_24_T1.nii.gz "$OUT_PRE/Segmentation/T1_raw.nii.gz" flirt_import Contrast2t1_24_mrtrix.txt -force
+          mrtransform "$OUT_24/Raw/Contrast_raw.mif" -linear Contrast2t1_24_mrtrix.txt Contrast_raw_coreg_24.mif -force
+          mrconvert Contrast_raw_coreg_24.mif -stride -1,-2,3 Contrast_raw_coreg_24.nii.gz -force      
+          rm Contrast_raw_24_T1.nii.gz
+          
+          mrgrid Contrast_raw_coreg.nii.gz regrid -template Contrast_raw_coreg_24.nii.gz Contrast_raw_coreg_resampled.nii.gz -force
+                   
           # Reconstruction
-          recon-all -s "$PAT_NUM" -i "$OUT_PRE/Preprocess/T1_raw.nii.gz" -T2 T2_raw_coreg.nii.gz -all
-          mrconvert "$SUBJECTS_DIR/$PAT_NUM/mri/T1.mgz" "$OUT_PRE/Segmentation/T1_resampled.mif" -force
-          mrconvert T1_resampled.mif -stride -1,-2,3 T1_resampled.nii.gz -force
+          #recon-all -s "$PAT_NUM" -i "$OUT_PRE/Preprocess/T1_raw.nii.gz" -T2 T2_raw_coreg.nii.gz -all
+          #mrconvert "$SUBJECTS_DIR/$PAT_NUM/mri/T1.mgz" "$OUT_PRE/Segmentation/T1_resampled.mif" -force
+          #mrconvert T1_resampled.mif -stride -1,-2,3 T1_resampled.nii.gz -force
         else
           exit
         fi
@@ -82,6 +110,8 @@
 	  #mri_aparc2aseg --new-ribbon --s "$PAT_NUM" --annot JULICH --o output_freesurfer.mgz
 	  
           #mrconvert output_freesurfer.mgz output_freesurfer.nii.gz -force
+          mrcalc "$HISTO_DIR/seg_left.nii.gz" 314 -eq ROI_rostral_lh.mif -datatype bit -force
+          mrgrid ROI_rostral_lh.mif regrid -template Contrast_raw_coreg_24.nii.gz -datatype uint8 -oversample 1,1,1 ROI_rostral_lh_Contrast.nii.gz -force
           python "$SCRIPT_DIR/Python/main_segmentation.py"
           #mrconvert -datatype uint32 Julich_parcels_freesurfer.nii.gz Julich_parcels_freesurfer.mif -force
           #labelconvert Julich_parcels_freesurfer.mif "$ATLAS_DIR/JulichLUT_complete.txt" "$ATLAS_DIR/JulichLUT_mrtrix.txt" Julich_parcels_mrtrix.mif -force

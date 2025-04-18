@@ -97,7 +97,6 @@
       1)
           if [[ -d "$PAT_DIR_PRE" && -d "$OUT_PRE" ]]; then
                 cd "$OUT_PRE"
-                echo "passou"
           elif [[ -d "$PAT_DIR_PRE" && ! -d "$OUT_PRE" ]]; then
                 echo "É necessário fazer o tratamento de dados"
                 read -p "Deseja continuar?(y/n): " yn

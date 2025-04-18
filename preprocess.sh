@@ -100,11 +100,9 @@
           5ttgen fsl ../Raw/T1_raw.mif 5tt_coreg.mif -force
           dwiextract dwi_den_unr_preproc_unb_up.mif - -bzero | mrmath - mean mean_b0_preprocessed.mif -axis 3 -force
           mrconvert mean_b0_preprocessed.mif mean_b0_preprocessed.nii.gz -force
-          mrconvert ../Raw/T1_raw.mif T1_raw.nii.gz -force
-          mrconvert ../Raw/T2_raw.mif T2_raw.nii.gz -force
-          bet2 T1_raw.nii.gz T1_brain.nii.gz -f 0.4 -m
-          epi_reg --epi=mean_b0_preprocessed.nii.gz --t1=T1_raw.nii.gz --t1brain=T1_brain.nii.gz --out=dwi2t1_reg
-          transformconvert dwi2t1_reg.mat mean_b0_preprocessed.nii.gz T1_raw.nii.gz flirt_import matrix_dwi2t1.txt -force
+          bet2 ../Segmentation/T1_raw.nii.gz T1_brain.nii.gz -f 0.4 -m
+          epi_reg --epi=mean_b0_preprocessed.nii.gz --t1=../Segmentation/T1_raw.nii.gz --t1brain=T1_brain.nii.gz --out=dwi2t1_reg
+          transformconvert dwi2t1_reg.mat mean_b0_preprocessed.nii.gz ../Segmentation/T1_raw.nii.gz flirt_import matrix_dwi2t1.txt -force
           if [ "$moment" -eq 1 ]; then
             mrtransform dwi_den_unr_preproc_unb_up.mif -linear matrix_dwi2t1.txt dwi_den_unr_preproc_unb_reg.mif -force
             mrtransform dwi_mask_up.mif -linear matrix_dwi2t1.txt dwi_mask_up_reg.mif -force
