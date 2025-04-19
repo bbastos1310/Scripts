@@ -72,32 +72,68 @@
       
     handleHistoSegmentation() {
         if [ $EXIST -eq 1 ]; then
-          #mrconvert "$OUT_PRE/Raw/Contrast_raw.mif" Contrast.nii.gz -force
-          #flirt -in Contrast.nii.gz -ref T1_resampled.nii.gz -dof 6 -omat contrast2t1.mat
-          #transformconvert contrast2t1.mat Contrast.nii.gz T1_resampled.nii.gz flirt_import contrast2t1_mrtrix.txt -force
-          #mrtransform "$OUT_PRE/Raw/Contrast_raw.mif" -linear contrast2t1_mrtrix.txt Contrast_coreg.mif -force
-          #mrgrid Contrast_coreg.mif regrid -template T1_resampled.mif Contrast_coreg_resampled.mif -force
-          #mrconvert Contrast_coreg_resampled.mif Contrast_coreg_resampled.nii.gz -force          
-          
-          export FREESURFER_HOME=/usr/local/freesurfer_dev/7-dev # Versão dev do freesurfer
-          source $FREESURFER_HOME/SetUpFreeSurfer.sh
-          
-          #mri_histo_atlas_segment_fast "$OUT_PRE/Contrast_coreg_resampled.nii.gz" "$HISTO_DIR" 0 -1
-          #mri_histo_atlas_segment_fast T2_raw_coreg.nii.gz "$HISTO_DIR" 0 -1
-          
-          export FREESURFER_HOME=/usr/local/freesurfer/7.4.1  #versão padrão do freesurfer
-    	  source $FREESURFER_HOME/SetUpFreeSurfer.sh
-                       
-          # Upsample da imagem T1 para usar como template (a imagem resultante da segmentação tem voxels de aproxidamente 0.4 mm, mas os dois hemisférios tem resoluções diferentes) 
-	  #mrgrid T1_resampled.nii.gz regrid -voxel 0.4 T1_upsampled.nii.gz -force
-	  mrgrid "$HISTO_DIR/seg_left.nii.gz" regrid -template T1_upsampled.nii.gz -interp nearest -oversample 1,1,1 seg_left_resampled.nii.gz -force
-	  mrgrid "$HISTO_DIR/seg_right.nii.gz" regrid -interp nearest -template T1_upsampled.nii.gz -oversample 1,1,1 seg_right_resampled.nii.gz -force
-	  mrgrid "$HISTO_DIR/SynthSeg.mgz" regrid -interp nearest -template T1_upsampled.nii.gz -oversample 1,1,1 SynthSeg_resampled.nii.gz -force
+		  #mrconvert "$OUT_PRE/Raw/Contrast_raw.mif" Contrast.nii.gz -force
+		  #flirt -in Contrast.nii.gz -ref T1_resampled.nii.gz -dof 6 -omat contrast2t1.mat
+		  #transformconvert contrast2t1.mat Contrast.nii.gz T1_resampled.nii.gz flirt_import contrast2t1_mrtrix.txt -force
+		  #mrtransform "$OUT_PRE/Raw/Contrast_raw.mif" -linear contrast2t1_mrtrix.txt Contrast_coreg.mif -force
+		  #mrgrid Contrast_coreg.mif regrid -template T1_resampled.mif Contrast_coreg_resampled.mif -force
+		  #mrconvert Contrast_coreg_resampled.mif Contrast_coreg_resampled.nii.gz -force          
+		  
+		  export FREESURFER_HOME=/usr/local/freesurfer_dev/7-dev # Versão dev do freesurfer
+		  source $FREESURFER_HOME/SetUpFreeSurfer.sh
+		  
+		  #mri_histo_atlas_segment_fast "$OUT_PRE/Contrast_coreg_resampled.nii.gz" "$HISTO_DIR" 0 -1
+		  #mri_histo_atlas_segment_fast T2_raw_coreg.nii.gz "$HISTO_DIR" 0 -1
+		  
+		  export FREESURFER_HOME=/usr/local/freesurfer/7.4.1  #versão padrão do freesurfer
+		  source $FREESURFER_HOME/SetUpFreeSurfer.sh
+					   
+		  # Upsample da imagem T1 para usar como template (a imagem resultante da segmentação tem voxels de aproxidamente 0.4 mm, mas os dois hemisférios tem resoluções diferentes) 
+		  #mrgrid T1_resampled.nii.gz regrid -voxel 0.4 T1_upsampled.nii.gz -force
+		  #mrgrid "$HISTO_DIR/seg_left.nii.gz" regrid -template T1_upsampled.nii.gz -interp nearest -oversample 1,1,1 seg_left_resampled.nii.gz -force
+		  #mrgrid "$HISTO_DIR/seg_right.nii.gz" regrid -interp nearest -template T1_upsampled.nii.gz -oversample 1,1,1 seg_right_resampled.nii.gz -force
+		  #mrgrid "$HISTO_DIR/SynthSeg.mgz" regrid -interp nearest -template T1_upsampled.nii.gz -oversample 1,1,1 SynthSeg_resampled.nii.gz -force
 	  
-	  #flirt -in "$HISTO_DIR/seg_left.nii.gz" -ref T2_raw_coreg_upsampled.nii.gz -applyxfm -init identity.mat -out seg_left_resampled.nii.gz -interp nearestneighbour
-	  #flirt -in "$HISTO_DIR/seg_right.nii.gz" -ref T2_raw_coreg_upsampled.nii.gz -applyxfm -init t22t1.mat -out seg_right_resampled.nii.gz -interp nearestneighbour
+		  thalamus_labels=(218 219 220 221 222 223 224 225 252 253 254 274 282 283 284 285 286 303 312 313 314 350 378 379 380 381 382 394 395 396 397 398 399 423 424 425 426 441 442 443 454 458 478 479 484 492 504 508 512 517 519 578 811 813)
+		  #thalamus_labels=(218 219)
+		  
+		  cmd="mrcalc"
+	  
+		  # Primeiro termo (sem -or)
+		  first=1
+		  for label in "${thalamus_labels[@]}"; do
+			  if [ $first -eq 1 ]; then
+				  cmd="$cmd seg_left_resampled.nii.gz $label -eq"
+				  first=0
+			  else
+				  cmd="$cmd seg_left_resampled.nii.gz $label -eq -or"
+			  fi
+		  done
 
+		  # Adiciona a saída e força bit
+		  cmd="$cmd thalamus_mask_lh.nii.gz -datatype bit -force"
+
+		  # Mostra e executa
+		  echo "Executando: $cmd"
+		  eval "$cmd"
     	  	  
+        else
+          exit
+        fi
+      }
+
+    handleMapscreation() {
+        if [ $EXIST -eq 1 ]; then
+          # Create maps (PRE)   
+          cd "$OUT_PRE/Segmentation/"
+          mkdir -p Maps
+          dwi2tensor "$OUT_PRE/Preprocess/dwi_den_unr_preproc_unb_reg.mif" -mask "$OUT_PRE/Preprocess/dwi_mask_up_reg.mif" Maps/tensor.nii.gz -force
+          tensor2metric Maps/tensor.nii.gz -vec Maps/fa_map.nii.gz -adc Maps/adc_map.nii.gz -cl Maps/cl_map.nii.gz -cs Maps/cs_map.nii.gz -cp Maps/cp_map.nii.gz -ad Maps/ad_map.nii.gz -rd Maps/rd_map.nii.gz -force
+          mrcalc Maps/fa_map.nii.gz -abs Maps/fa_map_abs.nii.gz -force
+          
+          dwi2tensor "$OUT_24/Preprocess/dwi_den_unr_preproc_unb_reg.mif" -mask "$OUT_24/Preprocess/dwi_mask_up_reg.mif" Maps/tensor_24.nii.gz -force
+          tensor2metric Maps/tensor_24.nii.gz -vec Maps/fa_map_24.nii.gz -adc Maps/adc_map_24.nii.gz -cl Maps/cl_map_24.nii.gz -cs Maps/cs_map_24.nii.gz -cp Maps/cp_map_24.nii.gz -ad Maps/ad_map_24.nii.gz -rd Maps/rd_map_24.nii.gz -force
+          mrcalc Maps/fa_map_24.nii.gz -abs Maps/fa_map_24_abs.nii.gz -force 
         else
           exit
         fi
@@ -106,12 +142,14 @@
     handleLabel2Image() {
         if [ $EXIST -eq 1 ]; then
           #mri_surf2surf --srcsubject fsaverage --trgsubject "$PAT_NUM" --hemi lh --sval-annot "$SUBJECTS_DIR/fsaverage/label/lh.Julich.annot"  --tval "$SUBJECTS_DIR/"$PAT_NUM"/label/lh.JULICH.annot"  
-	  #mri_surf2surf --srcsubject fsaverage --trgsubject "$PAT_NUM" --hemi rh --sval-annot "$SUBJECTS_DIR/fsaverage/label/rh.Julich.annot"  --tval "$SUBJECTS_DIR/"$PAT_NUM"/label/rh.JULICH.annot" 
-	  #mri_aparc2aseg --new-ribbon --s "$PAT_NUM" --annot JULICH --o output_freesurfer.mgz
+		  #mri_surf2surf --srcsubject fsaverage --trgsubject "$PAT_NUM" --hemi rh --sval-annot "$SUBJECTS_DIR/fsaverage/label/rh.Julich.annot"  --tval "$SUBJECTS_DIR/"$PAT_NUM"/label/rh.JULICH.annot" 
+	      #mri_aparc2aseg --new-ribbon --s "$PAT_NUM" --annot JULICH --o output_freesurfer.mgz
 	  
           #mrconvert output_freesurfer.mgz output_freesurfer.nii.gz -force
           mrcalc "$HISTO_DIR/seg_left.nii.gz" 314 -eq ROI_rostral_lh.mif -datatype bit -force
           mrgrid ROI_rostral_lh.mif regrid -template Contrast_raw_coreg_24.nii.gz -datatype uint8 -oversample 1,1,1 ROI_rostral_lh_Contrast.nii.gz -force
+          mrcalc "$HISTO_DIR/seg_right.nii.gz" 314 -eq ROI_rostral_rh.mif -datatype bit -force
+          mrgrid ROI_rostral_rh.mif regrid -template Contrast_raw_coreg_24.nii.gz -datatype uint8 -oversample 1,1,1 ROI_rostral_rh_Contrast.nii.gz -force
           python "$SCRIPT_DIR/Python/main_segmentation.py"
           #mrconvert -datatype uint32 Julich_parcels_freesurfer.nii.gz Julich_parcels_freesurfer.mif -force
           #labelconvert Julich_parcels_freesurfer.mif "$ATLAS_DIR/JulichLUT_complete.txt" "$ATLAS_DIR/JulichLUT_mrtrix.txt" Julich_parcels_mrtrix.mif -force
@@ -215,7 +253,8 @@
         echo "Deseja realizar qual das etapas?"\
         $'\n'"1.Reconstruction"\
         $'\n'"2.Subcortical segmentation"\
-        $'\n'"3.Cortical segmentation"
+        $'\n'"3.Maps creation"\
+        $'\n'"4.Cortical segmentation"\
         #$'\n'"4.Connectivity matrix (tck2connectome)"
         read -p "Opção: " step
         
@@ -233,12 +272,12 @@
           3)
           FILE=$FILE_3
           fileExistence
-          handleLabel2Image;;
+          handleMapscreation;;
         
-          #4)
-          #FILE=$FILE_4
-          #fileExistence
-          #handleTck2Connectome;;
+          4)
+          FILE=$FILE_4
+          fileExistence
+          handleLabel2Image;;
         
           *)
           echo invalid response;;

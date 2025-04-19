@@ -4,6 +4,9 @@ from scipy.ndimage import binary_erosion
 from skimage.measure import label, regionprops
 from scipy.spatial import ConvexHull
 from skimage.draw import polygon
+import pandas as pd
+import matplotlib.pyplot as plt
+
 
 # save nifti image
 def saveImage(data, image, name):
@@ -59,6 +62,17 @@ def mapTreatment(data, mask):
 
   return data_norm
 
+def handleMaps(data_map, image, data24_map, image_24, data_mask, name):
+	map_treated = functions.mapTreatment(data_map, data_mask)
+	map24_treated = functions.mapTreatment(data24_map, data_mask)
+	name_pre = "../Results/" + name + "(PRE)"
+	name_24 = "../Results/" + name + "(24H)"
+	name_sub = "../Results/" + name + "(Subtraction)"
+	functions.saveImage(map_treated, image, name_pre )
+	functions.saveImage(map24_treated, image_24, name_24 )
+	functions.saveImage(map24_treated-map_treated, image, name_sub)
+	print(f"{name} saved") 	
+	
 def plotMaps(data_PRE, data_24, name):
   plt.figure(figsize=(15,5))
 
@@ -148,3 +162,22 @@ def connectedComponents(mask):
 		mask_filtered = np.zeros_like(mask, dtype=bool)
 	
 	return mask_filtered
+
+def handleMatrixcreation(matrix_PRE, matrix_24):
+	matrixPRE_norm = matrix_PRE/matrix_PRE.values.max()
+	matrix24_norm = matrix_24/matrix_24.values.max()
+
+	plt.figure(figsize=(14,5))
+
+	plt.subplot(1,2,1)
+	plt.imshow(matrixPRE_norm.values, cmap = "YlGnBu_r", vmax=0.1)
+	plt.title("Connection before procedure")
+	plt.colorbar(cmap = 'YlBuGn_r')
+
+	plt.subplot(1,2,2)
+	plt.imshow(matrix24_norm.values, cmap = "YlGnBu_r", vmax=0.1)
+	plt.title("Connection 24 hours after procedure")
+	plt.colorbar(cmap = 'YlBuGn_r')	
+	
+	plt.savefig("../Results/connectivitymatrix.png") 
+	plt.close

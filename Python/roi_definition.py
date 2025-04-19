@@ -248,7 +248,7 @@ def handlePsa(data_seg,map_RN, map_STN,hemisphere):
 	print(f"{mask_PSA[mask_PSA == True].size} voxels.")
 	return mask_PSA
 	
-def handleLesionmask(data_Contrast, data_Contrast_24, data_rostral, Contrast):
+def handleLesionmask(data_Contrast, data_Contrast_24, data_rostral_lh, data_rostral_rh, Contrast):
 	# Normalização
 	data_preNorm = data_Contrast/np.abs(data_Contrast).max()
 	data_24Norm = data_Contrast_24/np.abs(data_Contrast_24).max()
@@ -303,19 +303,34 @@ def handleLesionmask(data_Contrast, data_Contrast_24, data_rostral, Contrast):
 	# print("-Imagem filtered_labels.png salva")
 	
 	# Lesion selection
-	center_image = np.array(labels_filtered.shape) / 2
 	closest_label = None
 	min_distance = float('inf')
-	center_rostral = center_of_mass(data_rostral)
+	center_rostral_lh = center_of_mass(data_rostral_lh)
+	center_rostral_rh = center_of_mass(data_rostral_rh)
 	
 	print("-Cálculo do label mais próximo do centro, esse comando é um pouco demorado")
-	# Calcular o centro de massa de cada label
+	
+	# Calcular o centro de massa de cada label e a distância no hemisfério esquerdo
 	for label in range(1, num_labels + 1):  # Começa do label 1 até o número total de labels
 		actual_label = (labels_filtered == label)  # Cria uma máscara para o label atual
 		center = center_of_mass(actual_label)  # Calcula o centro de massa
 
 		# Calcula a distância entre o centro do label e o centro da imagem
-		distance_center = np.linalg.norm(np.array(center) - center_rostral)
+		distance_center = np.linalg.norm(np.array(center) - center_rostral_lh)
+
+		# Atualiza o label mais central se a distância for menor
+		if distance_center < min_distance:
+			min_distance = distance_center
+			closest_label = label
+			center_lesion = center
+	
+	# Calcular o centro de massa de cada label e a distância no hemisfério direito
+	for label in range(1, num_labels + 1):  # Começa do label 1 até o número total de labels
+		actual_label = (labels_filtered == label)  # Cria uma máscara para o label atual
+		center = center_of_mass(actual_label)  # Calcula o centro de massa
+
+		# Calcula a distância entre o centro do label e o centro da imagem
+		distance_center = np.linalg.norm(np.array(center) - center_rostral_rh)
 
 		# Atualiza o label mais central se a distância for menor
 		if distance_center < min_distance:

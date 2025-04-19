@@ -72,7 +72,7 @@
               if [ "$dir" == "$PAT_DIR_24/012/" ]; then
               mrcat I_*.dcm ../Output_tract/Raw/dwi_raw.mif -force
               elif [ "$dir" == "$PAT_DIR_24/009/" ]; then
-              mrconvert ../009/ ../Output_tract/Raw/T1_raw_24.mif -force
+              mrconvert ../009/ ../Output_tract/Raw/T1_raw.mif -force
               mrconvert "$OUT_24/Raw/T1_raw.mif" "$OUT_24/Segmentation/T1_raw.nii.gz" -force
               elif [ "$dir" == "$PAT_DIR_24/007/" ]; then
               mrconvert ../007/ ../Output_tract/Raw/T2_raw.mif -force

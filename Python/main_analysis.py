@@ -1,12 +1,8 @@
 # Local libraries
 import functions
-import lesionDetection
-import maps
-import matrix
 
 # External libraries
 import nibabel as nib
-import pandas as pd
 
 # Main function
 # Load Files
@@ -24,15 +20,8 @@ fa_map = nib.load("fa_map_abs.nii.gz")
 fa_map_24 = nib.load("fa_map_24_abs.nii.gz")
 rd_map = nib.load("rd_map.nii.gz")
 rd_map_24 = nib.load("rd_map_24.nii.gz")
-T1_raw = nib.load("T1.nii.gz")
-T1_raw_24 = nib.load("T1_24_coreg.nii.gz")
-T1_seg = nib.load("Julich_parcels_ordered.nii.gz")
-mask_image = nib.load("dwi_mask_resampled.nii.gz")
-Contrast = nib.load("Contrast_coreg_resampled.nii.gz")
-Contrast_24 = nib.load("Contrast_24_coreg_resampled.nii.gz")
-#matrix_PRE = pd.read_csv("Julich.csv", header = None, sep = " ")
-#matrix_24 = pd.read_csv("Julich_24.csv", header = None, sep = " ")
-print("-Arquivos carregados")
+mask_image = nib.load("dwi_mask_up_reg.nii.gz")
+print("-Filed loaded")
 
 # Extract data
 data_adcmap = adc_map.get_fdata()
@@ -53,12 +42,8 @@ data_T1 = T1_raw.get_fdata()
 data_T1_24 = T1_raw_24.get_fdata()
 data_T1seg = T1_seg.get_fdata()
 data_mask = mask_image.get_fdata()
-data_contrast = Contrast.get_fdata()
-data_contrast_24 = Contrast_24.get_fdata () 
-print("-Dados extraídos")
+print("-Data loaded")
 
-# Run lesion detection
-#lesion_coordinates = lesionDetection.handleLesionmask(data_contrast, data_contrast_24, Contrast)
 maps.handleMaps(data_adcmap, adc_map, data_adcmap24, adc_map_24, data_mask, "ADCmap")
 maps.handleMaps(data_admap, ad_map, data_admap24, ad_map_24, data_mask, "ADmap")
 maps.handleMaps(data_clmap, cl_map, data_clmap24, cl_map_24, data_mask, "CLmap")
@@ -67,7 +52,4 @@ maps.handleMaps(data_csmap, cs_map, data_csmap24, cs_map_24, data_mask, "CSmap")
 maps.handleMaps(data_famap[:,:,:,0], fa_map, data_famap24[:,:,:,0], fa_map_24, data_mask, "FAmap_Red")
 maps.handleMaps(data_famap[:,:,:,1], fa_map, data_famap24[:,:,:,1], fa_map_24, data_mask, "FAmap_Green")
 maps.handleMaps(data_famap[:,:,:,2], fa_map, data_famap24[:,:,:,2], fa_map_24, data_mask, "FAmap_Blue")
-maps.handleMaps(data_rdmap, rd_map, data_rdmap24, rd_map_24, data_mask, "RDmap")
-
-matrix.handleMatrixcreation(matrix_PRE, matrix_24)
-		
+maps.handleMaps(data_rdmap, rd_map, data_rdmap24, rd_map_24, data_mask, "RDmap")		

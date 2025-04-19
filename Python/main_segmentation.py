@@ -16,6 +16,7 @@ im_synthseg = nib.load("SynthSeg_resampled.nii.gz") # saída da segmentação do
 im_Contrast = nib.load("Contrast_raw_coreg_resampled.nii.gz") # Contrast gm/wm image before procedure
 im_Contrast_24 = nib.load("Contrast_raw_coreg_24.nii.gz") # Contrast gm/wm image after procedure
 im_rostral_lh = nib.load("ROI_rostral_lh_Contrast.nii.gz")
+im_rostral_rh = nib.load("ROI_rostral_rh_Contrast.nii.gz")
 print(".Files loaded")
 
 ## Extract data from image
@@ -26,7 +27,7 @@ data_synthseg = im_synthseg.get_fdata().astype(np.uint16) # (640x640x640)
 data_Contrast = im_Contrast.get_fdata() # (560x641x71)
 data_Contrast_24 = im_Contrast_24.get_fdata() # (560x641x71)
 data_rostral_lh = im_rostral_lh.get_fdata() 
-
+data_rostral_rh = im_rostral_rh.get_fdata() 
 print(".Data loaded")
 
 # Armazenar o affine das imagens para uso posterior
@@ -44,6 +45,7 @@ mask_right = (data_segright < 1000) & (data_segright != 0)
 mask_left = (data_segleft < 1000) & (data_segleft != 0)
 
 # Diferenciar os valores entre os hemisférios
+
 data_seg[mask_right] = data_segright[mask_right] + 1000
 data_seg[mask_left] = data_segleft[mask_left]
 
@@ -176,7 +178,7 @@ del mask_right, mask_left
 # map_PSA_lh_filtered = functions.connectedComponents(map_PSA_lh)
 
 ### Lesion's mask
-map_lesion_float, map_lesion_binary = roi.handleLesionmask(data_Contrast,data_Contrast_24,data_rostral_lh,im_Contrast)
+map_lesion_float, map_lesion_binary = roi.handleLesionmask(data_Contrast,data_Contrast_24,data_rostral_lh, data_rostral_rh,im_Contrast)
 
 # # Matriz com as regiões de interesse 
 # data_roi = np.zeros(data_segleft.shape, dtype=np.uint16)
@@ -206,18 +208,22 @@ map_lesion_float, map_lesion_binary = roi.handleLesionmask(data_Contrast,data_Co
 # data_wm[map_WMh_rh == True] = 2219
 # data_wm[map_WMc_rh == True] = 2220
 
+# data_nifti_subcortical = nib.Nifti1Image(data_seg, affine_segleft)
+# nib.save(data_nifti, "subcortical_nextbrain.nii.gz")
+# print("File subcortical_nextbrain.nii.gz saved")
 
-# data_nifti = nib.Nifti1Image(data_roi, affine_segleft)
-# nib.save(data_nifti, "histo_parcels.nii.gz")
-# print("File histo_parcels.nii.gz saved")
+# data_nifti_roi = nib.Nifti1Image(data_roi, affine_segleft)
+# nib.save(data_nifti_roi, "ROIs_tracks.nii.gz")
+# print("File ROIs_tracks.nii.gz saved")
 
 # data_nifti_wm = nib.Nifti1Image(data_wm, affine_segleft)
 # nib.save(data_nifti_wm, "histo_wm.nii.gz")
 # print("File histo_wm.nii.gz saved")
 
-# ## Julich Parcels
-# julich_parcels = np.where(data_freesurfer > 1000, data_freesurfer, 0) # Seleciona apenas as regiões corticais
-# julich_parcels[julich_parcels == 1148] = 0
-
-# functions.saveImage(julich_parcels, out_freesurfer, "Julich_parcels_freesurfer")
-# print("File Julich_parcels_freesurfer.nii.gz saved")
+# data_cortical = np.where(data_freesurfer > 1000, data_freesurfer, 0) # Seleciona apenas as regiões corticais
+# data_cortical[data_cortical == 1148] = 0
+#data_cortical = np.zeros(data_freesurfer.shape, dtype=np.uint16)
+#mask = (data_freesurfer != 0) & (data_freesurfer > 1000)
+#data_cortical[mask] = data_freesurfer[mask] + 2000
+# functions.saveImage(data_cortical, out_freesurfer, "cortical_Julich")
+# print("File cortical_Julich.nii.gz saved")

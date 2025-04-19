@@ -95,25 +95,25 @@
       # 6.Coregister
     handleCoregister() {
       if [ $EXIST -eq 1 ]; then
-          mrgrid dwi_den_unr_preproc_unbiased.mif regrid dwi_den_unr_preproc_unb_up.mif -voxel 1.5 -force
-          mrgrid dwi_mask.mif regrid - -template dwi_den_unr_preproc_unb_up.mif -interp linear -datatype bit | maskfilter - median dwi_mask_up.mif -force
-          5ttgen fsl ../Raw/T1_raw.mif 5tt_coreg.mif -force
-          dwiextract dwi_den_unr_preproc_unb_up.mif - -bzero | mrmath - mean mean_b0_preprocessed.mif -axis 3 -force
-          mrconvert mean_b0_preprocessed.mif mean_b0_preprocessed.nii.gz -force
-          bet2 ../Segmentation/T1_raw.nii.gz T1_brain.nii.gz -f 0.4 -m
-          epi_reg --epi=mean_b0_preprocessed.nii.gz --t1=../Segmentation/T1_raw.nii.gz --t1brain=T1_brain.nii.gz --out=dwi2t1_reg
-          transformconvert dwi2t1_reg.mat mean_b0_preprocessed.nii.gz ../Segmentation/T1_raw.nii.gz flirt_import matrix_dwi2t1.txt -force
+          #mrgrid dwi_den_unr_preproc_unbiased.mif regrid dwi_den_unr_preproc_unb_up.mif -voxel 1.5 -force
+          #mrgrid dwi_mask.mif regrid - -template dwi_den_unr_preproc_unb_up.mif -interp linear -datatype bit | maskfilter - median dwi_mask_up.mif -force
+          #5ttgen fsl ../Raw/T1_raw.mif 5tt_coreg.mif -force
+          #dwiextract dwi_den_unr_preproc_unb_up.mif - -bzero | mrmath - mean mean_b0_preprocessed.mif -axis 3 -force
+          #mrconvert mean_b0_preprocessed.mif mean_b0_preprocessed.nii.gz -force
+          bet2 "$OUT_PRE/Preprocess/T1_raw.nii.gz" T1_brain.nii.gz -f 0.4 -m
+          epi_reg --epi=mean_b0_preprocessed.nii.gz --t1="$OUT_PRE/Preprocess/T1_raw.nii.gz" --t1brain="$OUT_PRE/Preprocess/T1_brain.nii.gz" --out=dwi2t1_reg
+          transformconvert dwi2t1_reg.mat mean_b0_preprocessed.nii.gz "$OUT_PRE/Preprocess/T1_raw.nii.gz" flirt_import matrix_dwi2t1.txt -force
           if [ "$moment" -eq 1 ]; then
             mrtransform dwi_den_unr_preproc_unb_up.mif -linear matrix_dwi2t1.txt dwi_den_unr_preproc_unb_reg.mif -force
             mrtransform dwi_mask_up.mif -linear matrix_dwi2t1.txt dwi_mask_up_reg.mif -force
           elif [ "$moment" -eq 2 ]; then
-            MEAN1=$(mrinfo "$OUT_PRE/dwi_mask_up_reg.mif" -size)
-            MEAN2=$(mrinfo "$OUT_24/dwi_den_unr_preproc_unb_up.mif" -size)
+            MEAN1=$(mrinfo "$OUT_PRE/Preprocess/dwi_mask_up_reg.mif" -size)
+            MEAN2=$(mrinfo "$OUT_24/Preprocess/dwi_den_unr_preproc_unb_up.mif" -size)
 	    if [ "$MEAN1" != "$MEAN2" ]; then
 	    	echo "Os arquivos dwi_PRE e dwi_24 possuem um número diferente de cortes, será feito um resample do arquivo dwi_24 para que fiquem com o mesmo número de cortes. Isso é necessário para que a comparação entre as duas imagens tenha a mesma referência, confira o arquivo de saída."
 		mrtransform dwi_den_unr_preproc_unb_up.mif -linear matrix_dwi2t1.txt dwi_den_unr_preproc_unb_reg_temp.mif -force
 		mrtransform dwi_mask_up.mif -linear matrix_dwi2t1.txt dwi_mask_up_reg_24.mif -force
-		mrgrid dwi_den_unr_preproc_unb_reg_temp.mif regrid -template "$OUT_PRE/dwi_mask_up_reg.mif" dwi_den_unr_preproc_unb_reg.mif -force
+		mrgrid dwi_den_unr_preproc_unb_reg_temp.mif regrid -template "$OUT_PRE/Preprocess/dwi_mask_up_reg.mif" dwi_den_unr_preproc_unb_reg.mif -force
             else     
             	mrtransform dwi_den_unr_preproc_unb_up.mif -linear matrix_dwi2t1.txt dwi_den_unr_preproc_unb_reg.mif -force
             	mrtransform dwi_mask_up.mif -linear matrix_dwi2t1.txt dwi_mask_up_reg_24.mif -force
