@@ -361,3 +361,74 @@ def handleLesionmask(data_Contrast, data_Contrast_24, data_rostral_lh, data_rost
 	print("-mask_lesion.nii.gz salva")
 	
 	return lesion_data_float, lesion_data_binary
+
+def handlePosteriorLimb(data_seg, data_FAmap, data_thalamus, hemisphere):
+	print(f"Posterior limb Area ({hemisphere} hemisphere)")
+	mask_threshold = np.zeros((640,640), dtype=bool)
+	mask_limit = np.zeros((640,640), dtype=bool)
+	mask_PostLimb = np.zeros(data_seg.shape, dtype=bool)
+	mask_red = np.zeros((640,640), dtype=bool)
+	mask_green = np.zeros((640,640), dtype=bool)
+	mask_blue = np.zeros((640,640), dtype=bool)
+	
+	if hemisphere == 'left':
+		
+		map_globus_int = np.array(np.where((data_seg == 206), True, False), dtype=bool)
+		map_globus_int_filtered = functions.connectedComponents(map_globus_int)
+		map_midbrain = np.array(np.where((data_seg == 384), True, False), dtype=bool)
+		map_midbrain_filtered = functions.connectedComponents(map_midbrain)	
+		map_putamen = np.array(np.where((data_seg == 79), True, False), dtype=bool)
+		map_wm = np.array(np.where((data_seg == 7), True, False), dtype=bool)
+		
+		#Inferior-superior limits:
+		kmin = np.where(map_midbrain_filtered != 0)[2].max() + 1
+		kmax = np.where(map_globus_int_filtered != 0)[2].max()
+				
+		for k_slice in range (kmin, kmax + 1):
+			# Lateral limits
+			imin = np.where(data_thalamus[:,:,k_slice] != 0)[0].min()
+			imax = np.where(map_putamen[:,:,k_slice] != 0)[0].max()
+			# Anterior-posterior limits
+			jmin = np.where(map_globus_int_filtered[:,:,k_slice] != 0)[1].min()
+			jmax = np.where(data_thalamus[:,:,k_slice] != 0)[1].max()
+			# Limits mask
+			mask_limit[imin:imax, jmin:jmax] = True
+			# Threshold 
+			mask_red = np.where(data_FAmap[:,:,k_slice,0] < 50, True, False).astype(bool)
+			mask_green = np.where(data_FAmap[:,:,k_slice,1] < 50, True, False).astype(bool)
+			mask_blue = np.where(data_FAmap[:,:,k_slice,2] > 70, True, False).astype(bool)
+			mask_threshold = mask_red & mask_green & mask_blue
+			# Intersection
+			mask_PostLimb[:,:,k_slice] = mask_limit & mask_threshold & map_wm[:,:,k_slice]
+			
+	if hemisphere == 'right':
+		
+		map_globus_int = np.array(np.where((data_seg == 1206), True, False), dtype=bool)
+		map_globus_int_filtered = functions.connectedComponents(map_globus_int)
+		map_midbrain = np.array(np.where((data_seg == 1384), True, False), dtype=bool)
+		map_midbrain_filtered = functions.connectedComponents(map_midbrain)	
+		map_putamen = np.array(np.where((data_seg == 1079), True, False), dtype=bool)
+		map_wm = np.array(np.where((data_seg == 1007), True, False), dtype=bool)
+		
+		#Inferior-superior limits:
+		kmin = np.where(map_midbrain_filtered != 0)[2].max() + 1
+		kmax = np.where(map_globus_int_filtered != 0)[2].max()
+				
+		for k_slice in range (kmin, kmax + 1):
+			# Lateral limits
+			imin = np.where(map_putamen[:,:,k_slice] != 0)[0].min()
+			imax = np.where(data_thalamus[:,:,k_slice] != 0)[0].max()
+			# Anterior-posterior limits
+			jmin = np.where(map_globus_int_filtered[:,:,k_slice] != 0)[1].min()
+			jmax = np.where(data_thalamus[:,:,k_slice] != 0)[1].max()
+			# Limits mask
+			mask_limit[imin:imax, jmin:jmax] = True
+			# Threshold 
+			mask_red = np.where(data_FAmap[:,:,k_slice,0] < 50, True, False).astype(bool)
+			mask_green = np.where(data_FAmap[:,:,k_slice,1] < 50, True, False).astype(bool)
+			mask_blue = np.where(data_FAmap[:,:,k_slice,2] > 70, True, False).astype(bool)
+			mask_threshold = mask_red & mask_green & mask_blue
+			# Intersection
+			mask_PostLimb[:,:,k_slice] = mask_limit & mask_threshold & map_wm[:,:,k_slice]
+	return mask_PostLimb	
+		

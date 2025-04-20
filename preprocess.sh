@@ -106,6 +106,7 @@
           if [ "$moment" -eq 1 ]; then
             mrtransform dwi_den_unr_preproc_unb_up.mif -linear matrix_dwi2t1.txt dwi_den_unr_preproc_unb_reg.mif -force
             mrtransform dwi_mask_up.mif -linear matrix_dwi2t1.txt dwi_mask_up_reg.mif -force
+            mrconvert dwi_mask_up_reg.mif "$OUT_PRE/Segmentation/dwi_mask_up_reg.nii.gz"
           elif [ "$moment" -eq 2 ]; then
             MEAN1=$(mrinfo "$OUT_PRE/Preprocess/dwi_mask_up_reg.mif" -size)
             MEAN2=$(mrinfo "$OUT_24/Preprocess/dwi_den_unr_preproc_unb_up.mif" -size)

@@ -97,25 +97,31 @@
 		  thalamus_labels=(218 219 220 221 222 223 224 225 252 253 254 274 282 283 284 285 286 303 312 313 314 350 378 379 380 381 382 394 395 396 397 398 399 423 424 425 426 441 442 443 454 458 478 479 484 492 504 508 512 517 519 578 811 813)
 		  #thalamus_labels=(218 219)
 		  
-		  cmd="mrcalc"
+		  cmd_lh="mrcalc"
+		  cmd_rh="mrcalc"
 	  
 		  # Primeiro termo (sem -or)
 		  first=1
 		  for label in "${thalamus_labels[@]}"; do
 			  if [ $first -eq 1 ]; then
-				  cmd="$cmd seg_left_resampled.nii.gz $label -eq"
+				  cmd_lh="$cmd_lh seg_left_resampled.nii.gz $label -eq"
+				  cmd_rh="$cmd_rh seg_right_resampled.nii.gz $label -eq"
 				  first=0
 			  else
-				  cmd="$cmd seg_left_resampled.nii.gz $label -eq -or"
+				  cmd_lh="$cmd_lh seg_left_resampled.nii.gz $label -eq -or"
+				  cmd_rh="$cmd_rh seg_right_resampled.nii.gz $label -eq -or"
 			  fi
 		  done
 
 		  # Adiciona a saída e força bit
-		  cmd="$cmd thalamus_mask_lh.nii.gz -datatype bit -force"
+		  cmd_lh="$cmd_lh thalamus_mask_lh.nii.gz -datatype bit -force"
+		  cmd_rh="$cmd_rh thalamus_mask_rh.nii.gz -datatype bit -force"
 
 		  # Mostra e executa
-		  echo "Executando: $cmd"
-		  eval "$cmd"
+		  echo "Executando: $cmd_lh"
+		  eval "$cmd_lh"
+		  echo "Executando: $cmd_rh"
+		  eval "$cmd_rh"
     	  	  
         else
           exit
@@ -125,15 +131,32 @@
     handleMapscreation() {
         if [ $EXIST -eq 1 ]; then
           # Create maps (PRE)   
-          cd "$OUT_PRE/Segmentation/"
           mkdir -p Maps
           dwi2tensor "$OUT_PRE/Preprocess/dwi_den_unr_preproc_unb_reg.mif" -mask "$OUT_PRE/Preprocess/dwi_mask_up_reg.mif" Maps/tensor.nii.gz -force
           tensor2metric Maps/tensor.nii.gz -vec Maps/fa_map.nii.gz -adc Maps/adc_map.nii.gz -cl Maps/cl_map.nii.gz -cs Maps/cs_map.nii.gz -cp Maps/cp_map.nii.gz -ad Maps/ad_map.nii.gz -rd Maps/rd_map.nii.gz -force
           mrcalc Maps/fa_map.nii.gz -abs Maps/fa_map_abs.nii.gz -force
           
-          dwi2tensor "$OUT_24/Preprocess/dwi_den_unr_preproc_unb_reg.mif" -mask "$OUT_24/Preprocess/dwi_mask_up_reg.mif" Maps/tensor_24.nii.gz -force
+          dwi2tensor "$OUT_24/Preprocess/dwi_den_unr_preproc_unb_reg.mif" -mask "$OUT_PRE/Preprocess/dwi_mask_up_reg.mif" Maps/tensor_24.nii.gz -force
           tensor2metric Maps/tensor_24.nii.gz -vec Maps/fa_map_24.nii.gz -adc Maps/adc_map_24.nii.gz -cl Maps/cl_map_24.nii.gz -cs Maps/cs_map_24.nii.gz -cp Maps/cp_map_24.nii.gz -ad Maps/ad_map_24.nii.gz -rd Maps/rd_map_24.nii.gz -force
-          mrcalc Maps/fa_map_24.nii.gz -abs Maps/fa_map_24_abs.nii.gz -force 
+          mrcalc Maps/fa_map_24.nii.gz -abs Maps/fa_map_24_abs.nii.gz -force
+          
+          python "$SCRIPT_DIR/Python/main_maps.py"
+          cd "Maps/"
+          mrcat FAmap_Red\(PRE\).nii.gz FAmap_Green\(PRE\).nii.gz FAmap_Blue\(PRE\).nii.gz FAmap\(PRE\).nii.gz -force
+          mrcat FAmap_Red\(Subtraction\).nii.gz FAmap_Green\(Subtraction\).nii.gz FAmap_Blue\(Subtraction\).nii.gz FAmap\(Subtraction\).nii.gz -force
+          mrcat FAmap_Red\(24H\).nii.gz FAmap_Green\(24H\).nii.gz FAmap_Blue\(24H\).nii.gz FAmap\(24H\).nii.gz -force
+          
+          mrcalc FAmap\(PRE\).nii.gz 100 -mult -datatype uint8 FAmap_temp.nii.gz -force
+          mrgrid FAmap_temp.nii.gz regrid -template ../T1_upsampled.nii.gz -datatype uint8 -interp linear FAmap_up.nii.gz -force
+          
+          rm FAmap_temp.nii.gz
+          rm FAmap_Red\(PRE\).nii.gz FAmap_Green\(PRE\).nii.gz FAmap_Blue\(PRE\).nii.gz
+          rm FAmap_Red\(24H\).nii.gz FAmap_Green\(24H\).nii.gz FAmap_Blue\(24H\).nii.gz
+          rm FAmap_Red\(Subtraction\).nii.gz FAmap_Green\(Subtraction\).nii.gz FAmap_Blue\(Subtraction\).nii.gz
+          rm fa_map.nii.gz adc_map.nii.gz cl_map.nii.gz cs_map.nii.gz cp_map.nii.gz ad_map.nii.gz rd_map.nii.gz fa_map_abs.nii.gz
+          rm fa_map_24.nii.gz adc_map_24.nii.gz cl_map_24.nii.gz cs_map_24.nii.gz cp_map_24.nii.gz ad_map_24.nii.gz rd_map_24.nii.gz fa_map_24_abs.nii.gz       
+          
+          cd "$OUT_PRE/Segmentation/"
         else
           exit
         fi
@@ -144,13 +167,15 @@
           #mri_surf2surf --srcsubject fsaverage --trgsubject "$PAT_NUM" --hemi lh --sval-annot "$SUBJECTS_DIR/fsaverage/label/lh.Julich.annot"  --tval "$SUBJECTS_DIR/"$PAT_NUM"/label/lh.JULICH.annot"  
 		  #mri_surf2surf --srcsubject fsaverage --trgsubject "$PAT_NUM" --hemi rh --sval-annot "$SUBJECTS_DIR/fsaverage/label/rh.Julich.annot"  --tval "$SUBJECTS_DIR/"$PAT_NUM"/label/rh.JULICH.annot" 
 	      #mri_aparc2aseg --new-ribbon --s "$PAT_NUM" --annot JULICH --o output_freesurfer.mgz
-	  
-          #mrconvert output_freesurfer.mgz output_freesurfer.nii.gz -force
+	      #mrconvert output_freesurfer.mgz output_freesurfer.nii.gz -force
+	      
           mrcalc "$HISTO_DIR/seg_left.nii.gz" 314 -eq ROI_rostral_lh.mif -datatype bit -force
           mrgrid ROI_rostral_lh.mif regrid -template Contrast_raw_coreg_24.nii.gz -datatype uint8 -oversample 1,1,1 ROI_rostral_lh_Contrast.nii.gz -force
           mrcalc "$HISTO_DIR/seg_right.nii.gz" 314 -eq ROI_rostral_rh.mif -datatype bit -force
           mrgrid ROI_rostral_rh.mif regrid -template Contrast_raw_coreg_24.nii.gz -datatype uint8 -oversample 1,1,1 ROI_rostral_rh_Contrast.nii.gz -force
+          
           python "$SCRIPT_DIR/Python/main_segmentation.py"
+          
           #mrconvert -datatype uint32 Julich_parcels_freesurfer.nii.gz Julich_parcels_freesurfer.mif -force
           #labelconvert Julich_parcels_freesurfer.mif "$ATLAS_DIR/JulichLUT_complete.txt" "$ATLAS_DIR/JulichLUT_mrtrix.txt" Julich_parcels_mrtrix.mif -force
           #label2colour Julich_parcels_mrtrix.mif -lut "$ATLAS_DIR/JulichLUT_mrtrix.txt" Julich_parcels_mrtrix_colored.mif -force
