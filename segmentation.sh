@@ -2,9 +2,10 @@
     HISTO_DIR="$SUBJECTS_DIR/$PAT_NUM/next_brain_segmentation"
     ATLAS_DIR="$BASE_DIR/Atlas" 
     FILE_1="$SUBJECTS_DIR/$PAT_NUM/scripts/recon-all.done"
-    FILE_2="$SUBJECTS_DIR/$PAT_NUM/label/rh.hcpmmp1.annot"
-    FILE_3="hcpmmp1_parcels.mif"
-    FILE_4="hcpmmp1.csv"
+    FILE_2="$OUT_PRE/Segmentation/thalamus_mask_lh.nii.gz"
+    FILE_3="$OUT_PRE/Segmentation/Maps/FAmap_up.nii.gz"
+    FILE_4="$OUT_PRE/Segmentation/full_segmentation_colored.mif"
+    FILE_5="$OUT_PRE/Segmentation/Julich.csv"
     FLAG=0
     FLAG_CONTINUE=1
     
@@ -30,18 +31,18 @@
         if [ $EXIST -eq 1 ]; then
                              
           # Coregister T2_raw with T1_raw
-          #flirt -in "$OUT_PRE/Preprocess/T2_raw.nii.gz" -ref "$OUT_PRE/Segmentation/T1_raw.nii.gz" -dof 6 -omat t22t1.mat
-          #transformconvert t22t1.mat "$OUT_PRE/Preprocess/T2_raw.nii.gz" "$OUT_PRE/Segmentation/T1_raw.nii.gz" flirt_import t22t1_mrtrix.txt -force
-          #mrtransform "$OUT_PRE/Raw/T2_raw.mif" -linear t22t1_mrtrix.txt T2_raw_coreg.mif -force
-          #mrconvert T2_raw_coreg.mif T2_raw_coreg.nii.gz -force
+          flirt -in "$OUT_PRE/Preprocess/T2_raw.nii.gz" -ref "$OUT_PRE/Segmentation/T1_raw.nii.gz" -dof 6 -omat t22t1.mat
+          transformconvert t22t1.mat "$OUT_PRE/Preprocess/T2_raw.nii.gz" "$OUT_PRE/Segmentation/T1_raw.nii.gz" flirt_import t22t1_mrtrix.txt -force
+          mrtransform "$OUT_PRE/Raw/T2_raw.mif" -linear t22t1_mrtrix.txt T2_raw_coreg.mif -force
+          mrconvert T2_raw_coreg.mif T2_raw_coreg.nii.gz -force
           
           # Coregister T2_raw_24 with T1_raw
-          #mrgrid "$OUT_24/Segmentation/T2_raw.nii.gz" regrid -template T1_raw.nii.gz T2_raw_24_T1.nii.gz -force
-          #flirt -in T2_raw_24_T1.nii.gz -ref "$OUT_PRE/Segmentation/T1_raw.nii.gz" -dof 6 -omat t22t1_24.mat
-          #transformconvert t22t1_24.mat T2_raw_24_T1.nii.gz "$OUT_PRE/Segmentation/T1_raw.nii.gz" flirt_import t22t1_24_mrtrix.txt -force
-          #mrtransform "$OUT_24/Raw/T2_raw.mif" -linear t22t1_24_mrtrix.txt T2_raw_24_coreg.mif -force
-          #mrconvert T2_raw_24_coreg.mif T2_raw_24_coreg.nii.gz -force
-          #rm T2_raw_24_T1.nii.gz
+          mrgrid "$OUT_24/Segmentation/T2_raw.nii.gz" regrid -template T1_raw.nii.gz T2_raw_24_T1.nii.gz -force
+          flirt -in T2_raw_24_T1.nii.gz -ref "$OUT_PRE/Segmentation/T1_raw.nii.gz" -dof 6 -omat t22t1_24.mat
+          transformconvert t22t1_24.mat T2_raw_24_T1.nii.gz "$OUT_PRE/Segmentation/T1_raw.nii.gz" flirt_import t22t1_24_mrtrix.txt -force
+          mrtransform "$OUT_24/Raw/T2_raw.mif" -linear t22t1_24_mrtrix.txt T2_raw_24_coreg.mif -force
+          mrconvert T2_raw_24_coreg.mif T2_raw_24_coreg.nii.gz -force
+          rm T2_raw_24_T1.nii.gz
           
           # Coregister Contrast_raw with T1_raw
           mrgrid Contrast_raw.nii.gz regrid -template T1_raw.nii.gz Contrast_raw_T1.nii.gz -force
@@ -62,9 +63,9 @@
           mrgrid Contrast_raw_coreg.nii.gz regrid -template Contrast_raw_coreg_24.nii.gz Contrast_raw_coreg_resampled.nii.gz -force
                    
           # Reconstruction
-          #recon-all -s "$PAT_NUM" -i "$OUT_PRE/Preprocess/T1_raw.nii.gz" -T2 T2_raw_coreg.nii.gz -all
-          #mrconvert "$SUBJECTS_DIR/$PAT_NUM/mri/T1.mgz" "$OUT_PRE/Segmentation/T1_resampled.mif" -force
-          #mrconvert T1_resampled.mif -stride -1,-2,3 T1_resampled.nii.gz -force
+          recon-all -s "$PAT_NUM" -i "$OUT_PRE/Preprocess/T1_raw.nii.gz" -T2 T2_raw_coreg.nii.gz -all
+          mrconvert "$SUBJECTS_DIR/$PAT_NUM/mri/T1.mgz" "$OUT_PRE/Segmentation/T1_resampled.mif" -force
+          mrconvert T1_resampled.mif -stride -1,-2,3 T1_resampled.nii.gz -force
         else
           exit
         fi
@@ -72,30 +73,28 @@
       
     handleHistoSegmentation() {
         if [ $EXIST -eq 1 ]; then
-		  #mrconvert "$OUT_PRE/Raw/Contrast_raw.mif" Contrast.nii.gz -force
-		  #flirt -in Contrast.nii.gz -ref T1_resampled.nii.gz -dof 6 -omat contrast2t1.mat
-		  #transformconvert contrast2t1.mat Contrast.nii.gz T1_resampled.nii.gz flirt_import contrast2t1_mrtrix.txt -force
-		  #mrtransform "$OUT_PRE/Raw/Contrast_raw.mif" -linear contrast2t1_mrtrix.txt Contrast_coreg.mif -force
-		  #mrgrid Contrast_coreg.mif regrid -template T1_resampled.mif Contrast_coreg_resampled.mif -force
-		  #mrconvert Contrast_coreg_resampled.mif Contrast_coreg_resampled.nii.gz -force          
+		  mrconvert "$OUT_PRE/Raw/Contrast_raw.mif" Contrast.nii.gz -force
+		  flirt -in Contrast.nii.gz -ref T1_resampled.nii.gz -dof 6 -omat contrast2t1.mat
+		  transformconvert contrast2t1.mat Contrast.nii.gz T1_resampled.nii.gz flirt_import contrast2t1_mrtrix.txt -force
+		  mrtransform "$OUT_PRE/Raw/Contrast_raw.mif" -linear contrast2t1_mrtrix.txt Contrast_coreg.mif -force
+		  mrgrid Contrast_coreg.mif regrid -template T1_resampled.mif Contrast_coreg_resampled.mif -force
+		  mrconvert Contrast_coreg_resampled.mif Contrast_coreg_resampled.nii.gz -force          
 		  
 		  export FREESURFER_HOME=/usr/local/freesurfer_dev/7-dev # Versão dev do freesurfer
 		  source $FREESURFER_HOME/SetUpFreeSurfer.sh
 		  
-		  #mri_histo_atlas_segment_fast "$OUT_PRE/Contrast_coreg_resampled.nii.gz" "$HISTO_DIR" 0 -1
-		  #mri_histo_atlas_segment_fast T2_raw_coreg.nii.gz "$HISTO_DIR" 0 -1
+		  mri_histo_atlas_segment_fast T2_raw_coreg.nii.gz "$HISTO_DIR" 0 -1
 		  
 		  export FREESURFER_HOME=/usr/local/freesurfer/7.4.1  #versão padrão do freesurfer
 		  source $FREESURFER_HOME/SetUpFreeSurfer.sh
 					   
 		  # Upsample da imagem T1 para usar como template (a imagem resultante da segmentação tem voxels de aproxidamente 0.4 mm, mas os dois hemisférios tem resoluções diferentes) 
-		  #mrgrid T1_resampled.nii.gz regrid -voxel 0.4 T1_upsampled.nii.gz -force
-		  #mrgrid "$HISTO_DIR/seg_left.nii.gz" regrid -template T1_upsampled.nii.gz -interp nearest -oversample 1,1,1 seg_left_resampled.nii.gz -force
-		  #mrgrid "$HISTO_DIR/seg_right.nii.gz" regrid -interp nearest -template T1_upsampled.nii.gz -oversample 1,1,1 seg_right_resampled.nii.gz -force
-		  #mrgrid "$HISTO_DIR/SynthSeg.mgz" regrid -interp nearest -template T1_upsampled.nii.gz -oversample 1,1,1 SynthSeg_resampled.nii.gz -force
+		  mrgrid T1_resampled.nii.gz regrid -voxel 0.4 T1_upsampled.nii.gz -force
+		  mrgrid "$HISTO_DIR/seg_left.nii.gz" regrid -template T1_upsampled.nii.gz -interp nearest -oversample 1,1,1 seg_left_resampled.nii.gz -force
+		  mrgrid "$HISTO_DIR/seg_right.nii.gz" regrid -interp nearest -template T1_upsampled.nii.gz -oversample 1,1,1 seg_right_resampled.nii.gz -force
+		  mrgrid "$HISTO_DIR/SynthSeg.mgz" regrid -interp nearest -template T1_upsampled.nii.gz -oversample 1,1,1 SynthSeg_resampled.nii.gz -force
 	  
 		  thalamus_labels=(218 219 220 221 222 223 224 225 252 253 254 274 282 283 284 285 286 303 312 313 314 350 378 379 380 381 382 394 395 396 397 398 399 423 424 425 426 441 442 443 454 458 478 479 484 492 504 508 512 517 519 578 811 813)
-		  #thalamus_labels=(218 219)
 		  
 		  cmd_lh="mrcalc"
 		  cmd_rh="mrcalc"
@@ -164,10 +163,10 @@
       
     handleLabel2Image() {
         if [ $EXIST -eq 1 ]; then
-          #mri_surf2surf --srcsubject fsaverage --trgsubject "$PAT_NUM" --hemi lh --sval-annot "$SUBJECTS_DIR/fsaverage/label/lh.Julich.annot"  --tval "$SUBJECTS_DIR/"$PAT_NUM"/label/lh.JULICH.annot"  
-		  #mri_surf2surf --srcsubject fsaverage --trgsubject "$PAT_NUM" --hemi rh --sval-annot "$SUBJECTS_DIR/fsaverage/label/rh.Julich.annot"  --tval "$SUBJECTS_DIR/"$PAT_NUM"/label/rh.JULICH.annot" 
-	      #mri_aparc2aseg --new-ribbon --s "$PAT_NUM" --annot JULICH --o output_freesurfer.mgz
-	      #mrconvert output_freesurfer.mgz output_freesurfer.nii.gz -force
+          mri_surf2surf --srcsubject fsaverage --trgsubject "$PAT_NUM" --hemi lh --sval-annot "$SUBJECTS_DIR/fsaverage/label/lh.Julich.annot"  --tval "$SUBJECTS_DIR/"$PAT_NUM"/label/lh.JULICH.annot"  
+	  mri_surf2surf --srcsubject fsaverage --trgsubject "$PAT_NUM" --hemi rh --sval-annot "$SUBJECTS_DIR/fsaverage/label/rh.Julich.annot"  --tval "$SUBJECTS_DIR/"$PAT_NUM"/label/rh.JULICH.annot" 
+	  mri_aparc2aseg --new-ribbon --s "$PAT_NUM" --annot JULICH --o output_freesurfer.mgz
+	  mrconvert output_freesurfer.mgz output_freesurfer.nii.gz -force
 	      
           mrcalc "$HISTO_DIR/seg_left.nii.gz" 314 -eq ROI_rostral_lh.mif -datatype bit -force
           mrgrid ROI_rostral_lh.mif regrid -template Contrast_raw_coreg_24.nii.gz -datatype uint8 -oversample 1,1,1 ROI_rostral_lh_Contrast.nii.gz -force
@@ -176,9 +175,11 @@
           
           python "$SCRIPT_DIR/Python/main_segmentation.py"
           
-          #mrconvert -datatype uint32 Julich_parcels_freesurfer.nii.gz Julich_parcels_freesurfer.mif -force
-          #labelconvert Julich_parcels_freesurfer.mif "$ATLAS_DIR/JulichLUT_complete.txt" "$ATLAS_DIR/JulichLUT_mrtrix.txt" Julich_parcels_mrtrix.mif -force
-          #label2colour Julich_parcels_mrtrix.mif -lut "$ATLAS_DIR/JulichLUT_mrtrix.txt" Julich_parcels_mrtrix_colored.mif -force
+          mrgrid cortical_Julich.nii.gz regrid -template T1_upsampled.nii.gz -interp nearest -datatype uint16 cortical_Julich_upsampled.mif -force
+          mrcalc cortical_Julich_upsampled.mif subcortical_nextbrain.nii.gz -and - | mrcalc - -not - | mrcalc cortical_Julich_upsampled.mif - -mult -datatype uint16 cortical_Julich_temp.mif -force
+          mrcalc cortical_Julich_temp.mif subcortical_nextbrain.nii.gz -add -datatype uint16 full_segmentation.mif -force
+          labelconvert full_segmentation.mif "$ATLAS_DIR/LUT_unordered.txt" "$ATLAS_DIR/LUT_ordered.txt" full_segmentation_mrtrix.mif -force
+          label2colour full_segmentation_mrtrix.mif -lut "$ATLAS_DIR/LUT_ordered.txt" full_segmentation_colored.mif -force
         else
           exit
         fi
@@ -187,11 +188,11 @@
     handleTck2Connectome() {
         if [ $EXIST -eq 1 ]; then
           echo "Pat_PRE"
-          tck2connectome -symmetric -zero_diagonal -scale_invnodevol -tck_weights_in sift_weights.txt tracks_10mio.tck "$OUT_PRE/Julich_parcels_mrtrix.mif" Julich.csv -out_assignment assignments_Julich.csv -force
+          tck2connectome -symmetric -zero_diagonal -scale_invnodevol -tck_weights_in sift_weights.txt tracks_10mio.tck full_segmentation_mrtrix.mif Julich.csv -out_assignment assignments_Julich.csv -force
           if [ -a "$OUT_24/sift_weights.txt" ]; then
             echo "Pat_24"
             cd "$OUT_24"
-            tck2connectome -symmetric -zero_diagonal -scale_invnodevol -tck_weights_in sift_weights.txt tracks_10mio.tck "$OUT_PRE/Julich_parcels_mrtrix.mif" Julich.csv -out_assignment assignments_Julich.csv -force
+            tck2connectome -symmetric -zero_diagonal -scale_invnodevol -tck_weights_in sift_weights.txt tracks_10mio.tck "$OUT_PRE/Segmentation/full_segmentation_mrtrix.mif" Julich.csv -out_assignment assignments_Julich.csv -force
           fi
         else
           exit
@@ -261,8 +262,8 @@
         [Yy])
         handleReconstruction
         handleHistoSegmentation
+        handleMapscreation
         handleLabel2Image;;
-        # handleTck2Connectome;;
         
         [Nn])
         exit;;
@@ -280,7 +281,7 @@
         $'\n'"2.Subcortical segmentation"\
         $'\n'"3.Maps creation"\
         $'\n'"4.Cortical segmentation"\
-        #$'\n'"4.Connectivity matrix (tck2connectome)"
+        $'\n'"5.Connectivity matrix (tck2connectome-OPCIONAL)"
         read -p "Opção: " step
         
           case $step in
@@ -303,6 +304,10 @@
           FILE=$FILE_4
           fileExistence
           handleLabel2Image;;
+          
+          5)
+          fileExistence
+          handleTck2Connectome;;
         
           *)
           echo invalid response;;

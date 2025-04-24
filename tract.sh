@@ -1,8 +1,11 @@
     # Files 
-    FILE_1="wm.txt"
-    FILE_2="wmfod.mif"    
-    FILE_3="gmwmSeed_coreg.mif"
-    FILE_4="tracks_10mio.tck"
+    FILE_1="wmfod.mif"
+    FILE_2="gmwmSeed_coreg.mif"    
+    FILE_3="ROIs/intersect_seed_rh.mif"
+    FILE_4A="track_ndDRTT_lh.tck"
+    FILE_4B="track_DRTT_lh.tck"
+    FILE_4C="track_CST_lh.tck"
+    FILE_4D="tracks_10mio.tck"
     FILE_5="sift_weights.txt"
     FLAG=0
     FLAG_CONTINUE=1
@@ -26,36 +29,222 @@
       fi
     }
     
-    # 1.Resample and response function
+    # 1.Response function and Fiber Orientation distribution (FOD)
       handleFunction() {
         if [ $EXIST -eq 1 ]; then
-          dwi2response dhollander dwi_den_unr_preproc_unb_reg.mif wm.txt gm.txt csf.txt -voxels voxels.mif -mask "$OUT_PRE/dwi_mask_up_reg.mif" -force
+          dwi2response dhollander ../Preprocess/dwi_den_unr_preproc_unb_reg.mif wm.txt gm.txt csf.txt -voxels voxels.mif -mask ../Preprocess/dwi_mask_up_reg.mif -force
+          time ss3t_csd_beta1 ../Preprocess/dwi_den_unr_preproc_unb_reg.mif wm.txt wmfod.mif gm.txt gmfod.mif csf.txt csffod.mif -mask ../Preprocess/dwi_mask_up_reg.mif -force
+          mrconvert -coord 3 0 wmfod.mif - | mrcat csffod.mif gmfod.mif - vf.mif -force
+          mtnormalise wmfod.mif wmfod_norm.mif gmfod.mif gmfod_norm.mif csffod.mif csffod_norm.mif -mask ../Preprocess/dwi_mask_up_reg.mif -force
         else
           exit
         fi
       }
 
-      # 2.Fiber orientation distribution (FOD)
-      handleFod() {
-        if [ $EXIST -eq 1 ]; then
-          time ss3t_csd_beta1 dwi_den_unr_preproc_unb_reg.mif wm.txt wmfod.mif gm.txt gmfod.mif csf.txt csffod.mif -mask "$OUT_PRE/dwi_mask_up_reg.mif" -force
-          mrconvert -coord 3 0 wmfod.mif - | mrcat csffod.mif gmfod.mif - vf.mif -force
-          mtnormalise wmfod.mif wmfod_norm.mif gmfod.mif gmfod_norm.mif csffod.mif csffod_norm.mif -mask "$OUT_PRE/dwi_mask_up_reg.mif" -force
-        else
-          exit
-        fi
-      }
-    
-    # 3.Mask between GM and WM
+          
+    # 2.Mask between GM and WM
     handleFringe() {
       if [ $EXIST -eq 1 ]; then
+      	5ttgen freesurfer "$SUBJECTS_DIR/$PAT_NUM/mri/aparc+aseg.mgz" 5tt_coreg.mif -force
         5tt2gmwmi 5tt_coreg.mif gmwmSeed_coreg.mif -force
       else
         exit
       fi
     }
-
-    # 4.Streamlines creation
+	
+	# 3.ROI extraction
+	handleRoiextraction() {
+      if [ $EXIST -eq 1 ]; then
+		mkdir -p ROIs
+		mrgrid gmwmSeed_coreg.mif regrid -template ../Segmentation/T1_upsampled.nii.gz gmwmSeed_coreg_subcortical.mif -interp linear -force
+		mrgrid gmwmSeed_coreg.mif regrid -template ../Segmentation/cortical_Julich.nii.gz gmwmSeed_coreg_cortical.mif -interp linear -force
+		
+		# Left hemisphere
+		mrcalc ../Segmentation/ROIs_tracks.nii.gz 1001 -eq ROIs/ROI_ML_lh.mif -datatype uint8 -force
+		mrcalc ../Segmentation/ROIs_tracks.nii.gz 1002 -eq ROIs/ROI_CP_lh.mif -datatype uint8 -force
+		mrcalc ../Segmentation/ROIs_tracks.nii.gz 1005 -eq ROIs/ROI_DN_lh.mif -datatype uint8 -force
+		mrcalc ../Segmentation/ROIs_tracks.nii.gz 1006 -eq ROIs/ROI_PSA_lh.mif -datatype uint8 -force
+		mrcalc ../Segmentation/ROIs_tracks.nii.gz 1007 -eq ROIs/ROI_STN_lh.mif -datatype uint8 -force
+		mrcalc ../Segmentation/ROIs_tracks.nii.gz 1008 -eq ROIs/ROI_PL_lh.mif -datatype uint8 -force
+		mrcalc ../Segmentation/ROIs_tracks.nii.gz 1009 -eq ROIs/ROI_BS_lh.mif -datatype uint8 -force
+				
+		mrcalc ../Segmentation/cortical_Julich.nii.gz 2047 -eq ../Segmentation/cortical_Julich.nii.gz 2048 -eq -or \
+	    ../Segmentation/cortical_Julich.nii.gz 2086 -eq -or ../Segmentation/cortical_Julich.nii.gz 2087 -eq -or \
+	    ../Segmentation/cortical_Julich.nii.gz 2116 -eq -or ../Segmentation/cortical_Julich.nii.gz 2117 -eq -or ../Segmentation/cortical_Julich.nii.gz 2118 -eq -or \
+	    ../Segmentation/cortical_Julich.nii.gz 2146 -eq -or \
+	    ROIs/ROI_PreCG_lh.mif \
+	    -datatype uint8 -force  #Pre central gyrus regions 
+	    
+	    mrcalc ../Segmentation/cortical_Julich.nii.gz 2047 -eq ../Segmentation/cortical_Julich.nii.gz 2048 -eq -or ROIs/ROI_PMC_lh.mif -force  #Primary motor cortex (4a e 4p)
+	    
+	    mrcalc ../Segmentation/cortical_Julich.nii.gz 2049 -eq ../Segmentation/cortical_Julich.nii.gz 2050 -eq -or \
+	    ../Segmentation/cortical_Julich.nii.gz 2051 -eq -or ../Segmentation/cortical_Julich.nii.gz 2081 -eq -or \
+	    ROIs/ROI_PostCG_PostCS_lh.mif \
+	    -datatype uint8 -force   # Somatosensorial region (Post central gyrus + Post CS )
+		
+		mrcalc ../Segmentation/wm_nextbrain.nii.gz 1010 -eq ROIs/ROI_WMf_lh.mif -datatype uint8 -force
+		mrcalc ../Segmentation/wm_nextbrain.nii.gz 1011 -eq ROIs/ROI_WMh_lh.mif -datatype uint8 -force
+		mrcalc ../Segmentation/wm_nextbrain.nii.gz 1012 -eq ROIs/ROI_WMc_lh.mif -datatype uint8 -force
+		
+		mrconvert ../Segmentation/thalamus_mask_lh.nii.gz ROIs/ROI_thalamus_lh.mif -datatype uint8 -force
+		mrcalc gmwmSeed_coreg_resampled.mif ROIs/ROI_DN_lh.mif -mult ROIs/intersect_seed_lh.mif -force
+		mrcalc gmwmSeed_coreg_cortical.mif ROIs/ROI_PreCG_lh.mif -mult ROIs/intersect_seed_DRTT_lh.mif -force
+		mrcalc gmwmSeed_coreg_cortical.mif ROIs/ROI_PMC_lh.mif -mult ROIs/intersect_seed_CST_lh.mif -force
+		mrcalc gmwmSeed_coreg_cortical.mif ROIs/ROI_PostCG_PostCS_lh.mif -mult ROIs/intersect_seed_ML_lh.mif -force
+		
+		# Right hemisphere
+		mrcalc ../Segmentation/ROIs_tracks.nii.gz 2001 -eq ROIs/ROI_ML_rh.mif -datatype uint8 -force
+		mrcalc ../Segmentation/ROIs_tracks.nii.gz 2002 -eq ROIs/ROI_CP_rh.mif -datatype uint8 -force
+		mrcalc ../Segmentation/ROIs_tracks.nii.gz 2005 -eq ROIs/ROI_DN_rh.mif -datatype uint8 -force
+		mrcalc ../Segmentation/ROIs_tracks.nii.gz 2006 -eq ROIs/ROI_PSA_rh.mif -datatype uint8 -force
+		mrcalc ../Segmentation/ROIs_tracks.nii.gz 2007 -eq ROIs/ROI_STN_rh.mif -datatype uint8 -force
+		mrcalc ../Segmentation/ROIs_tracks.nii.gz 2008 -eq ROIs/ROI_PL_rh.mif -datatype uint8 -force
+		mrcalc ../Segmentation/ROIs_tracks.nii.gz 2009 -eq ROIs/ROI_BS_rh.mif -datatype uint8 -force
+		
+		mrcalc ../Segmentation/cortical_Julich.nii.gz 3047 -eq ../Segmentation/cortical_Julich.nii.gz 3048 -eq -or \
+	    ../Segmentation/cortical_Julich.nii.gz 3086 -eq -or ../Segmentation/cortical_Julich.nii.gz 3087 -eq -or \
+	    ../Segmentation/cortical_Julich.nii.gz 3116 -eq -or ../Segmentation/cortical_Julich.nii.gz 3117 -eq -or ../Segmentation/cortical_Julich.nii.gz 3118 -eq -or \
+	    ../Segmentation/cortical_Julich.nii.gz 3146 -eq -or \
+	    ROIs/ROI_PreCG_rh.mif \
+	    -datatype uint8 -force  #Pre central gyrus regions
+	    
+	    mrcalc ../Segmentation/cortical_Julich.nii.gz 3047 -eq ../Segmentation/cortical_Julich.nii.gz 3048 -eq -or ROIs/ROI_PMC_rh.mif -force  #Primary motor cortex
+	    
+	    mrcalc ../Segmentation/cortical_Julich.nii.gz 3049 -eq ../Segmentation/cortical_Julich.nii.gz 3050 -eq -or \
+	    ../Segmentation/cortical_Julich.nii.gz 3051 -eq -or ../Segmentation/cortical_Julich.nii.gz 3081 -eq -or \
+	    ROIs/ROI_PostCG_PostCS_rh.mif \
+	    -datatype uint8 -force   #Somatosensorial region (PostCG + PostCS)
+		
+		mrcalc ../Segmentation/wm_nextbrain.nii.gz 2010 -eq ROIs/ROI_WMf_rh.mif -datatype uint8 -force
+		mrcalc ../Segmentation/wm_nextbrain.nii.gz 2011 -eq ROIs/ROI_WMh_rh.mif -datatype uint8 -force
+		mrcalc ../Segmentation/wm_nextbrain.nii.gz 2012 -eq ROIs/ROI_WMc_rh.mif -datatype uint8 -force
+		
+		mrconvert ../Segmentation/thalamus_mask_rh.nii.gz ROIs/ROI_thalamus_rh.mif -datatype uint8 -force
+		mrcalc gmwmSeed_coreg_resampled.mif ROIs/ROI_DN_rh.mif -mult ROIs/intersect_seed_rh.mif -force
+					
+      else
+        exit
+      fi
+    }
+    
+	# 4A.Tract ndDRTT
+	handleTractndDRTT() {
+      if [ $EXIST -eq 1 ]; then
+				
+		tckgen  \
+			-act 5tt_coreg.mif \
+			-backtrack \
+			-seed_gmwmi ROIs/intersect_seed_lh.mif \
+			-select 10 \
+			-seeds 50M \
+			-include ROIs/ROI_PSA_lh.mif \
+			-include ROIs/ROI_PreCG_lh.mif \
+			-exclude ROIs/ROI_WMf_rh.mif \
+			-exclude ROIs/ROI_WMh_rh.mif \
+			-exclude ROIs/ROI_WMc_rh.mif \
+			-minlength 40 \
+			-angle 30 \
+			-cutoff 0.1 \
+			-seed_unidirectional \
+			-samples 2 \
+			wmfod_norm.mif track_ndDRTT_lh.tck \
+			-force
+				
+      else
+        exit
+      fi
+    }
+    
+    # 4B.Tract DRTT
+	handleTractDRTT() {
+      if [ $EXIST -eq 1 ]; then
+				
+		tckgen  \
+			-act 5tt_coreg.mif \
+			-backtrack \
+			-seed_gmwmi ROIs/intersect_seed_DRTT_lh.mif \
+			-select 10 \
+			-seeds 100M \
+			-include ROIs/ROI_PSA_lh.mif \
+			-exclude ROIs/ROI_WMf_rh.mif \
+			-exclude ROIs/ROI_WMc_lh.mif \
+			-minlength 40 \
+			-angle 20 \
+			-cutoff 0.1 \
+			-step 1 \
+			-seed_unidirectional \
+			-samples 2 \
+			wmfod_norm.mif track_DRTT_lh_teste.tck \
+			-force
+				
+      else
+        exit
+      fi
+    }
+    
+    # 4C.Tract CST
+	handleTractCST() {
+      if [ $EXIST -eq 1 ]; then
+				
+		tckgen  \
+			-act 5tt_coreg.mif \
+			-backtrack \
+			-seed_gmwmi ROIs/intersect_seed_CST_lh.mif \
+			-select 1000 \
+			-seeds 100M \
+			-include ROIs/ROI_CP_lh.mif \
+			-include ROIs/ROI_PL_lh.mif \
+			-exclude ROIs/ROI_WMf_rh.mif \
+			-exclude ROIs/ROI_WMh_rh.mif \
+			-exclude ROIs/ROI_WMc_rh.mif \
+			-exclude ROIs/ROI_WMc_lh.mif \
+			-minlength 40 \
+			-angle 20 \
+			-cutoff 0.1 \
+			-step 1 \
+			-seed_unidirectional \
+			-samples 2 \
+			wmfod_norm.mif track_CST_lh_teste.tck \
+			-force
+				
+      else
+        exit
+      fi
+    }
+    
+    # 4D.Tract ML
+	handleTractML() {
+      if [ $EXIST -eq 1 ]; then
+				
+		tckgen  \
+			-act 5tt_coreg.mif \
+			-backtrack \
+			-seed_gmwmi ROIs/intersect_seed_ML_lh.mif \
+			-select 1000 \
+			-seeds 100M \
+			-include ROIs/ROI_ML_lh.mif \
+			-include ROIs/ROI_PL_lh.mif \
+			-exclude ROIs/ROI_WMf_rh.mif \
+			-exclude ROIs/ROI_WMh_rh.mif \
+			-exclude ROIs/ROI_WMc_rh.mif \
+			-exclude ROIs/ROI_WMc_lh.mif \
+			-minlength 40 \
+			-angle 20 \
+			-cutoff 0.1 \
+			-step 1 \
+			-seed_unidirectional \
+			-samples 2 \
+			wmfod_norm.mif track_ML_lh.tck \
+			-force
+				
+      else
+        exit
+      fi
+    }
+    
+    
+    
+    # 5.Streamlines creation
     handleStreamlines() {
       if [ $EXIST -eq 1 ]; then
         time tckgen -act 5tt_coreg.mif -backtrack -seed_gmwmi gmwmSeed_coreg.mif -select 10000000 wmfod_norm.mif tracks_10mio.tck -force
@@ -65,7 +254,7 @@
       fi
     }
 
-    # 5.SIFT (Streamlines filtering)
+    # 6.SIFT (Streamlines filtering)
     handleSift() {
       if [ $EXIST -eq 1 ]; then
         time tcksift2 -act 5tt_coreg.mif -out_mu sift_mu.txt -out_coeffs sift_coeffs.txt -nthreads 4 tracks_10mio.tck wmfod_norm.mif sift_weights.txt -force
@@ -75,7 +264,8 @@
     }
 
     # MAIN FUNCTION
-    
+      
+      cd Tractography/
       read -p "Would you like to do all the tractography? (y/n):  " yn
       case $yn in
       
@@ -111,11 +301,12 @@
         [Nn])
         while [ $FLAG_CONTINUE -eq 1 ]; do
           echo "Deseja realizar qual das etapas?"\
-          $'\n'"1.Response function"\
-          $'\n'"2.Fiber orientation distribution"\
-          $'\n'"3.Mask GM/WM"\
-          $'\n'"4.Streamlines creation"\
-          $'\n'"5.Streamlines filtering"
+          $'\n'"1.Response function and Fiber orientation distribution"\
+          $'\n'"2.Mask GM/WM"\
+          $'\n'"3.ROIs extraction"\
+          $'\n'"4.Tract estimation"\
+          $'\n'"5.Creation of streamlines for connectivity matrix (Optional)"\
+          $'\n'"6.Streamlines filtering (Optional)"
           read -p "Opção: " step
           
             case $step in
@@ -132,14 +323,46 @@
             3)
             FILE=$FILE_3
             fileExistence
-            handleFringe;;
+            handleRoiextraction;;
           
-            4)
-            FILE=$FILE_4
-            fileExistence
-            handleStreamlines;;
+            4)		       
+			echo "Deseja criar uma estimativa de qual trato?"\
+			$'\n'"1.ndDRTT (non-decussating dentato-rubro-thalamic tract)"\
+			$'\n'"2.DRTT (decussating dentato-rubro-thalamic tract)"\
+			$'\n'"3.CST (corticospinal tract)"\
+			$'\n'"4.ML (medial lemniscus tract)"
+			read -p "Opção: " tract
+		  
+			  case $tract in
+			  1)
+			  FILE=$FILE_4A
+			  fileExistence
+			  handleTractndDRTT;;
+			  
+			  2) 
+			  FILE=$FILE_4B
+              fileExistence
+			  handleTractDRTT;;
+			  
+			  3) 
+			  FILE=$FILE_4C
+              fileExistence
+			  handleCST;;
+			  
+			  4) 
+			  FILE=$FILE_4D
+              fileExistence
+			  handleML;;
+			  
+			  esac  
+            ;;
           
             5)
+            FILE=$FILE_5
+            fileExistence
+            handleStreamlines;;
+            
+            6)
             FILE=$FILE_5
             fileExistence
             handleSift;;

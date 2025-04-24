@@ -12,7 +12,7 @@ import numpy as np
 out_freesurfer = nib.load("output_freesurfer.nii.gz") # saída da segmentação do freesurfer
 im_segleft = nib.load("seg_left_resampled.nii.gz") # saída da segmentação do mri_histo (hemisfério esquerdo)
 im_segright = nib.load("seg_right_resampled.nii.gz") # saída da segmentação do mri_histo (hemisfério direito)
-#im_synthseg = nib.load("SynthSeg_resampled.nii.gz") # saída da segmentação do mri_histo (equivalente à segmentação subcortical do freesurfer)
+im_synthseg = nib.load("SynthSeg_resampled.nii.gz") # saída da segmentação do mri_histo (equivalente à segmentação subcortical do freesurfer)
 im_Contrast = nib.load("Contrast_raw_coreg_resampled.nii.gz") # Contrast gm/wm image before procedure
 im_Contrast_24 = nib.load("Contrast_raw_coreg_24.nii.gz") # Contrast gm/wm image after procedure
 im_rostral_lh = nib.load("ROI_rostral_lh_Contrast.nii.gz")
@@ -26,9 +26,9 @@ print(".Files loaded")
 data_freesurfer = out_freesurfer.get_fdata().astype(np.uint16) # (256x256x256)
 data_segleft = im_segleft.get_fdata().astype(np.uint16) # (640x640x640)
 data_segright = im_segright.get_fdata().astype(np.uint16) # (640x640x640)
-# data_synthseg = im_synthseg.get_fdata().astype(np.uint16) # (640x640x640)
-data_Contrast = im_Contrast.get_fdata().astype(np.uint16) # (560x641x71)
-data_Contrast_24 = im_Contrast_24.get_fdata().astype(np.uint16) # (560x641x71)
+data_synthseg = im_synthseg.get_fdata().astype(np.uint16) # (640x640x640)
+data_Contrast = im_Contrast.get_fdata() # (560x641x71)
+data_Contrast_24 = im_Contrast_24.get_fdata() # (560x641x71)
 data_rostral_lh = im_rostral_lh.get_fdata().astype(bool) 
 data_rostral_rh = im_rostral_rh.get_fdata().astype(bool)  
 data_thalamus_lh = im_thalamus_lh.get_fdata().astype(bool) 
@@ -39,9 +39,9 @@ print(".Data loaded")
 # Armazenar o affine das imagens para uso posterior
 affine_segleft = im_segleft.affine
 affine_segright = im_segright.affine
-# affine_synthseg = im_synthseg.affine
+affine_synthseg = im_synthseg.affine
 
-del im_segleft, im_segright, im_Contrast, im_Contrast_24 # deletar as imagens da memória já que possuem resolução alta 
+del im_segleft, im_segright, im_synthseg, im_Contrast_24 # deletar as imagens da memória já que possuem resolução alta 
 
 # Matriz para armazenar as informações dos dois hemisférios juntos 
 data_seg = np.zeros(data_segleft.shape, dtype=np.uint16)
@@ -194,38 +194,44 @@ map_PostLimb_lh_filtered = functions.connectedComponents(map_PostLimb_lh)
 ### Lesion's mask
 map_lesion_float, map_lesion_binary = roi.handleLesionmask(data_Contrast,data_Contrast_24,data_rostral_lh, data_rostral_rh,im_Contrast)
 
-# # Matriz com as regiões de interesse 
+# Matriz com as regiões de interesse 
 data_roi = np.zeros(data_segleft.shape, dtype=np.uint16)
 data_wm = np.zeros(data_segleft.shape, dtype=np.uint16)
 
-data_roi[map_ML_lh == True] = 1210
-data_roi[map_CP_lh_filtered == True] = 1211
-data_roi[map_RN_lh_filtered == True] = 1212
-data_roi[map_SN_lh_filtered == True] = 1213
-data_roi[map_DN_lh_filtered == True] = 1214
-data_roi[map_PSA_lh_filtered == True] = 1215
-data_roi[map_STN_lh_filtered == True] = 1216
-data_roi[map_PostLimb_lh_filtered == True] = 1217
-data_roi[map_brainstem_lh == True] = 1218
-data_wm[map_WMf_lh == True] = 1219
-data_wm[map_WMh_lh == True] = 1220
-data_wm[map_WMc_lh == True] = 1221
+data_roi[map_ML_lh == True] = 1001
+data_roi[map_CP_lh_filtered == True] = 1002
+data_roi[map_RN_lh_filtered == True] = 1003
+data_roi[map_SN_lh_filtered == True] = 1004
+data_roi[map_DN_lh_filtered == True] = 1005
+data_roi[map_PSA_lh_filtered == True] = 1006
+data_roi[map_STN_lh_filtered == True] = 1007
+data_roi[map_PostLimb_lh_filtered == True] = 1008
+data_roi[map_brainstem_lh == True] = 1009
+data_wm[map_WMf_lh == True] = 1010
+data_wm[map_WMh_lh == True] = 1011
+data_wm[map_WMc_lh == True] = 1012
 
-data_roi[map_ML_rh == True] = 2210
-data_roi[map_CP_rh_filtered == True] = 2211
-data_roi[map_RN_rh_filtered == True] = 2212
-data_roi[map_SN_rh_filtered == True] = 2213
-data_roi[map_DN_rh_filtered == True] = 2214
-data_roi[map_PSA_rh_filtered == True] = 2215
-data_roi[map_STN_rh_filtered == True] = 2216
-data_roi[map_PostLimb_rh_filtered == True] = 2217
-data_roi[map_brainstem_rh == True] = 2218
-data_wm[map_WMf_rh == True] = 2219
-data_wm[map_WMh_rh == True] = 2220
-data_wm[map_WMc_rh == True] = 2221
+data_roi[map_ML_rh == True] = 2001
+data_roi[map_CP_rh_filtered == True] = 2002
+data_roi[map_RN_rh_filtered == True] = 2003
+data_roi[map_SN_rh_filtered == True] = 2004
+data_roi[map_DN_rh_filtered == True] = 2005
+data_roi[map_PSA_rh_filtered == True] = 2006
+data_roi[map_STN_rh_filtered == True] = 2007
+data_roi[map_PostLimb_rh_filtered == True] = 2008
+data_roi[map_brainstem_rh == True] = 2009
+data_wm[map_WMf_rh == True] = 2010
+data_wm[map_WMh_rh == True] = 2011
+data_wm[map_WMc_rh == True] = 2012
 
+data_seg[map_WMf_lh] = 0
+data_seg[map_WMf_lh] = 0
+data_seg[map_WMf_lh] = 0
+data_seg[map_WMf_rh] = 0
+data_seg[map_WMf_rh] = 0
+data_seg[map_WMf_rh] = 0
 data_nifti_subcortical = nib.Nifti1Image(data_seg, affine_segleft)
-nib.save(data_nifti, "subcortical_nextbrain.nii.gz")
+nib.save(data_nifti_subcortical, "subcortical_nextbrain.nii.gz")
 print("File subcortical_nextbrain.nii.gz saved")
 
 data_nifti_roi = nib.Nifti1Image(data_roi, affine_segleft)
@@ -240,6 +246,6 @@ data_cortical = np.where(data_freesurfer > 1000, data_freesurfer, 0) # Seleciona
 data_cortical[data_cortical == 1148] = 0
 data_cortical = np.zeros(data_freesurfer.shape, dtype=np.uint16)
 mask = (data_freesurfer != 0) & (data_freesurfer > 1000)
-data_cortical[mask] = data_freesurfer[mask] + 2000
+data_cortical[mask] = data_freesurfer[mask] + 1000
 functions.saveImage(data_cortical, out_freesurfer, "cortical_Julich")
 print("File cortical_Julich.nii.gz saved")

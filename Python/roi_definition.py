@@ -249,6 +249,7 @@ def handlePsa(data_seg,map_RN, map_STN,hemisphere):
 	return mask_PSA
 	
 def handleLesionmask(data_Contrast, data_Contrast_24, data_rostral_lh, data_rostral_rh, Contrast):
+	print(f"Lesion's mask")
 	# Normalização
 	data_preNorm = data_Contrast/np.abs(data_Contrast).max()
 	data_24Norm = data_Contrast_24/np.abs(data_Contrast_24).max()
@@ -430,5 +431,6 @@ def handlePosteriorLimb(data_seg, data_FAmap, data_thalamus, hemisphere):
 			mask_threshold = mask_red & mask_green & mask_blue
 			# Intersection
 			mask_PostLimb[:,:,k_slice] = mask_limit & mask_threshold & map_wm[:,:,k_slice]
+	print(f"{mask_PostLimb[mask_PostLimb == True].size} voxels.")
 	return mask_PostLimb	
 		
