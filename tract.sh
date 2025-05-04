@@ -5,8 +5,8 @@
     FILE_4A="track_ndDRTT_lh.tck"
     FILE_4B="track_DRTT_lh.tck"
     FILE_4C="track_CST_lh.tck"
-    FILE_4D="tracks_10mio.tck"
-    FILE_5="sift_weights.txt"
+    FILE_4D="track_ML_lh.tck"
+    FILE_5="track_ML_lh.nii.gz"
     FLAG=0
     FLAG_CONTINUE=1
 
@@ -86,11 +86,14 @@
 		mrcalc ../Segmentation/wm_nextbrain.nii.gz 1011 -eq ROIs/ROI_WMh_lh.mif -datatype uint8 -force
 		mrcalc ../Segmentation/wm_nextbrain.nii.gz 1012 -eq ROIs/ROI_WMc_lh.mif -datatype uint8 -force
 		
+		mrcalc ../Segmentation/subcortical_nextbrain.nii.gz 119 -eq ../Segmentation/subcortical_nextbrain.nii.gz 206 -eq -or ROIs/ROI_GP_lh.mif -force
+		
 		mrconvert ../Segmentation/thalamus_mask_lh.nii.gz ROIs/ROI_thalamus_lh.mif -datatype uint8 -force
-		mrcalc gmwmSeed_coreg_resampled.mif ROIs/ROI_DN_lh.mif -mult ROIs/intersect_seed_lh.mif -force
+		mrcalc gmwmSeed_coreg_resampled.mif ROIs/ROI_DN_lh.mif -mult ROIs/intersect_seed_DN_lh.mif -force
 		mrcalc gmwmSeed_coreg_cortical.mif ROIs/ROI_PreCG_lh.mif -mult ROIs/intersect_seed_DRTT_lh.mif -force
 		mrcalc gmwmSeed_coreg_cortical.mif ROIs/ROI_PMC_lh.mif -mult ROIs/intersect_seed_CST_lh.mif -force
 		mrcalc gmwmSeed_coreg_cortical.mif ROIs/ROI_PostCG_PostCS_lh.mif -mult ROIs/intersect_seed_ML_lh.mif -force
+		mrcalc gmwmSeed_coreg_resampled.mif ROIs/ROI_WMc_rh.mif -mult ROIs/intersect_seed_DRTT_lh_teste.mif -force
 		
 		# Right hemisphere
 		mrcalc ../Segmentation/ROIs_tracks.nii.gz 2001 -eq ROIs/ROI_ML_rh.mif -datatype uint8 -force
@@ -120,7 +123,7 @@
 		mrcalc ../Segmentation/wm_nextbrain.nii.gz 2012 -eq ROIs/ROI_WMc_rh.mif -datatype uint8 -force
 		
 		mrconvert ../Segmentation/thalamus_mask_rh.nii.gz ROIs/ROI_thalamus_rh.mif -datatype uint8 -force
-		mrcalc gmwmSeed_coreg_resampled.mif ROIs/ROI_DN_rh.mif -mult ROIs/intersect_seed_rh.mif -force
+		mrcalc gmwmSeed_coreg_resampled.mif ROIs/ROI_DN_rh.mif -mult ROIs/intersect_seed_DN_rh.mif -force
 					
       else
         exit
@@ -134,8 +137,8 @@
 		tckgen  \
 			-act 5tt_coreg.mif \
 			-backtrack \
-			-seed_gmwmi ROIs/intersect_seed_lh.mif \
-			-select 10 \
+			-seed_gmwmi ROIs/intersect_seed_DN_lh.mif \
+			-select 1100 \
 			-seeds 50M \
 			-include ROIs/ROI_PSA_lh.mif \
 			-include ROIs/ROI_PreCG_lh.mif \
@@ -147,7 +150,7 @@
 			-cutoff 0.1 \
 			-seed_unidirectional \
 			-samples 2 \
-			wmfod_norm.mif track_ndDRTT_lh.tck \
+			wmfod_norm.mif track_ndDRTT_lh_teste.tck \
 			-force
 				
       else
@@ -162,12 +165,15 @@
 		tckgen  \
 			-act 5tt_coreg.mif \
 			-backtrack \
-			-seed_gmwmi ROIs/intersect_seed_DRTT_lh.mif \
-			-select 10 \
+			-seed_gmwmi ROIs/intersect_seed_DN_rh.mif \
+			-select 100 \
 			-seeds 100M \
 			-include ROIs/ROI_PSA_lh.mif \
+			-include ROIs/ROI_PreCG_lh.mif \
 			-exclude ROIs/ROI_WMf_rh.mif \
+			-exclude ROIs/ROI_WMh_lh.mif \
 			-exclude ROIs/ROI_WMc_lh.mif \
+			-exclude ROIs/ROI_GP_lh.mif \
 			-minlength 40 \
 			-angle 20 \
 			-cutoff 0.1 \
@@ -190,21 +196,21 @@
 			-act 5tt_coreg.mif \
 			-backtrack \
 			-seed_gmwmi ROIs/intersect_seed_CST_lh.mif \
-			-select 1000 \
-			-seeds 100M \
+			-select 10500 \
+			-seeds 50M \
 			-include ROIs/ROI_CP_lh.mif \
 			-include ROIs/ROI_PL_lh.mif \
 			-exclude ROIs/ROI_WMf_rh.mif \
 			-exclude ROIs/ROI_WMh_rh.mif \
 			-exclude ROIs/ROI_WMc_rh.mif \
 			-exclude ROIs/ROI_WMc_lh.mif \
-			-minlength 40 \
+			-minlength 90 \
 			-angle 20 \
-			-cutoff 0.1 \
+			-cutoff 0.2 \
 			-step 1 \
 			-seed_unidirectional \
 			-samples 2 \
-			wmfod_norm.mif track_CST_lh_teste.tck \
+			wmfod_norm.mif track_CST_lh.tck \
 			-force
 				
       else
@@ -219,11 +225,12 @@
 		tckgen  \
 			-act 5tt_coreg.mif \
 			-backtrack \
-			-seed_gmwmi ROIs/intersect_seed_ML_lh.mif \
-			-select 1000 \
+			-seed_gmwmi ROIs/ROI_BS_lh.mif \
+			-select 20 \
 			-seeds 100M \
 			-include ROIs/ROI_ML_lh.mif \
 			-include ROIs/ROI_PL_lh.mif \
+			-include ROIs/ROI_PostCG_PostCS_lh.mif \
 			-exclude ROIs/ROI_WMf_rh.mif \
 			-exclude ROIs/ROI_WMh_rh.mif \
 			-exclude ROIs/ROI_WMc_rh.mif \
@@ -234,7 +241,7 @@
 			-step 1 \
 			-seed_unidirectional \
 			-samples 2 \
-			wmfod_norm.mif track_ML_lh.tck \
+			wmfod_norm.mif track_ML_lh_teste.tck \
 			-force
 				
       else
@@ -242,9 +249,28 @@
       fi
     }
     
+    # 5.Streamlines' filter
+    handleStreamlinesfilter() {
+      if [ $EXIST -eq 1 ]; then
+        python "$SCRIPT_DIR/Python/streamline_filter.py"
+      else
+        exit
+      fi
+    }
     
+    # 6.Statistics
+    handleStatistics() {
+      if [ $EXIST -eq 1 ]; then
+		mkdir -p Contour
+		mrgrid ../Segmentation/mask_lesion_float.nii.gz regrid -template ../Segmentation/T1_upsampled.nii.gz mask_lesion_float_up.nii.gz -interp cubic -force
+				
+        python "$SCRIPT_DIR/Python/results.py"
+      else
+        exit
+      fi
+    }
     
-    # 5.Streamlines creation
+    # 6.Streamlines creation
     handleStreamlines() {
       if [ $EXIST -eq 1 ]; then
         time tckgen -act 5tt_coreg.mif -backtrack -seed_gmwmi gmwmSeed_coreg.mif -select 10000000 wmfod_norm.mif tracks_10mio.tck -force
@@ -254,7 +280,7 @@
       fi
     }
 
-    # 6.SIFT (Streamlines filtering)
+    # 7.SIFT (Streamlines filtering)
     handleSift() {
       if [ $EXIST -eq 1 ]; then
         time tcksift2 -act 5tt_coreg.mif -out_mu sift_mu.txt -out_coeffs sift_coeffs.txt -nthreads 4 tracks_10mio.tck wmfod_norm.mif sift_weights.txt -force
@@ -305,8 +331,9 @@
           $'\n'"2.Mask GM/WM"\
           $'\n'"3.ROIs extraction"\
           $'\n'"4.Tract estimation"\
-          $'\n'"5.Creation of streamlines for connectivity matrix (Optional)"\
-          $'\n'"6.Streamlines filtering (Optional)"
+          $'\n'"5.Streamlines filter"\
+          $'\n'"6.Creation of streamlines for connectivity matrix (Optional)"\
+          $'\n'"7.Streamlines filtering (Optional)"
           read -p "Opção: " step
           
             case $step in
@@ -356,14 +383,19 @@
 			  
 			  esac  
             ;;
-          
-            5)
+			
+			5)
             FILE=$FILE_5
+            fileExistence
+            handleStreamlinesfilter;;
+            
+            6)
+            FILE=$FILE_6
             fileExistence
             handleStreamlines;;
             
-            6)
-            FILE=$FILE_5
+            7)
+            FILE=$FILE_7
             fileExistence
             handleSift;;
           

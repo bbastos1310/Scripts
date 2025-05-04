@@ -121,7 +121,9 @@
 		  eval "$cmd_lh"
 		  echo "Executando: $cmd_rh"
 		  eval "$cmd_rh"
-    	  	  
+		  
+		  mrgrid thalamus_mask_lh.nii.gz regrid -template dwi_mask_up_reg.nii.gz thalamus_mask_dwi_lh.nii.gz -datatype bit -force
+		  mrgrid thalamus_mask_rh.nii.gz regrid -template dwi_mask_up_reg.nii.gz thalamus_mask_dwi_rh.nii.gz -datatype bit -force
         else
           exit
         fi

@@ -7,10 +7,12 @@ import numpy as np
 from scipy.ndimage import binary_erosion
 from skimage.measure import label, regionprops
 from scipy.spatial import ConvexHull
+from scipy.spatial import Delaunay
 from skimage.draw import polygon
 #import pandas as pd
 import matplotlib.pyplot as plt
-
+from skimage import measure
+import cv2
 
 
 # save nifti image
@@ -186,3 +188,79 @@ def handleMatrixcreation(matrix_PRE, matrix_24):
 	
 	plt.savefig("../Results/connectivitymatrix.png") 
 	plt.close
+	
+from scipy.spatial import Delaunay
+from skimage import measure
+import numpy as np
+
+def process_chunk(chunk, level=0.5):
+    """Aplica Marching Cubes e preenchimento em um chunk com tratamento de chunks uniformes."""
+    # Verifica se o chunk não é uniforme
+    chunk_min = chunk.min()
+    chunk_max = chunk.max()
+    
+    if chunk_min == chunk_max:
+        # Chunk totalmente vazio ou preenchido
+        return np.zeros_like(chunk, dtype=bool)
+    
+    # Ajusta o level para estar dentro do intervalo do chunk
+    adjusted_level = np.clip(level, chunk_min + 1e-6, chunk_max - 1e-6)
+    
+    try:
+        verts, faces, _, _ = measure.marching_cubes(
+            chunk.astype(float),  # Garante dados float para suavização posterior
+            level=adjusted_level,
+            allow_degenerate=False
+        )
+    except ValueError as e:
+        print(f"Erro no chunk: {e}. Retornando máscara vazia.")
+        return np.zeros_like(chunk, dtype=bool)
+    
+    # Gera grid de coordenadas apenas para os pontos ativos
+    grid_coords = np.array(np.where(chunk)).T
+    
+    if len(grid_coords) == 0:
+        return np.zeros_like(chunk, dtype=bool)
+    
+    # Verifica se há geometria válida
+    if len(verts) < 4:  # Mínimo 4 vértices para um tetraedro
+        return np.zeros_like(chunk, dtype=bool)
+    
+    # Cria máscara preenchida
+    try:
+        tri = Delaunay(verts)
+        inside = tri.find_simplex(grid_coords) >= 0
+        mask = np.zeros_like(chunk, dtype=bool)
+        mask[tuple(grid_coords[inside].T)] = True
+    except:
+        mask = np.zeros_like(chunk, dtype=bool)
+    
+    return mask
+
+def contourSlice(mask_slice):
+    # Converte para uint8 (OpenCV requer esse tipo)
+    slice_uint8 = (mask_slice * 255).astype(np.uint8)
+    
+    # Detecta contornos
+    contours, _ = cv2.findContours(
+        slice_uint8, 
+        mode=cv2.RETR_EXTERNAL,
+        method=cv2.CHAIN_APPROX_SIMPLE
+    )
+    
+    # Cria máscara de contornos (garantindo tipo e contiguidade)
+    mask = np.zeros_like(slice_uint8, dtype=np.uint8)
+    
+    # Desenha contornos apenas se existirem
+    if contours:  # Verifica se há contornos detectados
+        # Garante que o array é contíguo (evita erro de layout)
+        mask = np.ascontiguousarray(mask)
+        cv2.drawContours(
+            image=mask,
+            contours=contours,
+            contourIdx=-1,
+            color=255,
+            thickness=1
+        )
+    
+    return (mask > 0).astype(np.uint8)  # Binário 0/1
