@@ -1,8 +1,11 @@
 import nibabel as nib
 import matplotlib.pyplot as plt
 import numpy as np
+import os
+from joblib import Parallel, delayed
+from scipy.ndimage import gaussian_filter, binary_fill_holes
 from skimage import measure
-from skimage import measure
+from skimage.morphology import binary_closing
 
 import functions
 
@@ -18,7 +21,10 @@ def handleRelativeintersection (data_reference, data_compare):
 	
 def handleAxialcontour (im_ref, hemisphere, data_lesion, data_ndDRTT, data_DRTT, data_CST, data_ML):
 	# Função que cria os contornos dos tratos 
-	contour_mask = np.zeros(data_lesion.shape, dtype=np.uint8)		
+	contour_mask_ndDRTT = np.zeros(data_lesion.shape, dtype=np.uint8)
+	contour_mask_DRTT = np.zeros(data_lesion.shape, dtype=np.uint8)
+	contour_mask_CST = np.zeros(data_lesion.shape, dtype=np.uint8)
+	contour_mask_ML = np.zeros(data_lesion.shape, dtype=np.uint8)	
 			
 	if (hemisphere == 'left'):
 		hem = 'lh'
@@ -34,39 +40,53 @@ def handleAxialcontour (im_ref, hemisphere, data_lesion, data_ndDRTT, data_DRTT,
 		for contour in contours_lesion:
 			rr, cc = np.round(contour).astype(int).T
 			valid = (rr >= 0) & (rr < slice_2d.shape[0]) & (cc >= 0) & (cc < slice_2d.shape[1])
-			contour_mask[rr[valid], cc[valid], k] = 1  
+			contour_mask_ndDRTT[rr[valid], cc[valid], k] = 1
+			contour_mask_DRTT[rr[valid], cc[valid], k] = 1
+			contour_mask_CST[rr[valid], cc[valid], k] = 1
+			contour_mask_ML[rr[valid], cc[valid], k] = 1  
 		
 		contours_ndDRTT = measure.find_contours(data_ndDRTT[:,:,k], level=0.5)	
 		for contour in contours_ndDRTT:
 			rr, cc = np.round(contour).astype(int).T
 			valid = (rr >= 0) & (rr < slice_2d.shape[0]) & (cc >= 0) & (cc < slice_2d.shape[1])
-			contour_mask[rr[valid], cc[valid], k] = 2
+			contour_mask_ndDRTT[rr[valid], cc[valid], k] = 2
 		
 		contours_DRTT = measure.find_contours(data_DRTT[:,:,k], level=0.5)	
 		for contour in contours_DRTT:
 			rr, cc = np.round(contour).astype(int).T
 			valid = (rr >= 0) & (rr < slice_2d.shape[0]) & (cc >= 0) & (cc < slice_2d.shape[1])
-			contour_mask[rr[valid], cc[valid], k] = 3 
+			contour_mask_DRTT[rr[valid], cc[valid], k] = 3 
 			
 		contours_CST = measure.find_contours(data_CST[:,:,k], level=0.5)	
 		for contour in contours_CST:
 			rr, cc = np.round(contour).astype(int).T
 			valid = (rr >= 0) & (rr < slice_2d.shape[0]) & (cc >= 0) & (cc < slice_2d.shape[1])
-			contour_mask[rr[valid], cc[valid], k] = 4  
+			contour_mask_CST[rr[valid], cc[valid], k] = 4  
 		
 		contours_ML = measure.find_contours(data_ML[:,:,k], level=0.5)	
 		for contour in contours_ML:
 			rr, cc = np.round(contour).astype(int).T
 			valid = (rr >= 0) & (rr < slice_2d.shape[0]) & (cc >= 0) & (cc < slice_2d.shape[1])
-			contour_mask[rr[valid], cc[valid], k] = 5
+			contour_mask_ML[rr[valid], cc[valid], k] = 5
 	
-	nifti_contour = nib.Nifti1Image(contour_mask, im_ref.affine)
-	nib.save(nifti_contour, "axial_contour.nii.gz")
-	print("Image axial_contour.nii.gz saved")
+	nifti_contour = nib.Nifti1Image(contour_mask_ndDRTT, im_ref.affine)
+	nib.save(nifti_contour, "axial_contour_ndDRTT.nii.gz")
+	
+	nifti_contour = nib.Nifti1Image(contour_mask_DRTT, im_ref.affine)
+	nib.save(nifti_contour, "axial_contour_DRTT.nii.gz")
+	
+	nifti_contour = nib.Nifti1Image(contour_mask_CST, im_ref.affine)
+	nib.save(nifti_contour, "axial_contour_CST.nii.gz")
+	
+	nifti_contour = nib.Nifti1Image(contour_mask_ML, im_ref.affine)
+	nib.save(nifti_contour, "axial_contour_ML.nii.gz")
 	
 def handleCoronalcontour (im_ref, hemisphere, data_lesion, data_ndDRTT, data_DRTT, data_CST, data_ML):
 	# Função que cria os contornos dos tratos 
-	contour_mask = np.zeros((640,640,640,5), dtype=np.uint8)
+	contour_mask_ndDRTT = np.zeros(data_lesion.shape, dtype=np.uint8)
+	contour_mask_DRTT = np.zeros(data_lesion.shape, dtype=np.uint8)
+	contour_mask_CST = np.zeros(data_lesion.shape, dtype=np.uint8)
+	contour_mask_ML = np.zeros(data_lesion.shape, dtype=np.uint8)
 				
 	if (hemisphere == 'left'):
 		hem = 'lh'
@@ -87,39 +107,113 @@ def handleCoronalcontour (im_ref, hemisphere, data_lesion, data_ndDRTT, data_DRT
 		for contour in contours_lesion:
 			rr, cc = np.round(contour).astype(int).T
 			valid = (rr >= 0) & (rr < slice_2d.shape[0]) & (cc >= 0) & (cc < slice_2d.shape[1])
-			contour_mask[rr[valid], j, cc[valid], 4] = 1  
+			contour_mask_ndDRTT[rr[valid], j, cc[valid]] = 1  
+			contour_mask_DRTT[rr[valid], j, cc[valid]] = 1  
+			contour_mask_CST[rr[valid], j, cc[valid]] = 1  
+			contour_mask_ML[rr[valid], j, cc[valid]] = 1  
 		
 		contours_ndDRTT = measure.find_contours(data_ndDRTT[:, j, :], level=0.5)	
 		for contour in contours_ndDRTT:
 			rr, cc = np.round(contour).astype(int).T
 			valid = (rr >= 0) & (rr < slice_2d.shape[0]) & (cc >= 0) & (cc < slice_2d.shape[1])
-			contour_mask[rr[valid], j, cc[valid], 0] = 2
-			contour_mask[rr[valid], j, cc[valid], 4] = 2
-		
+			contour_mask_ndDRTT[rr[valid], j, cc[valid]] = 2
+					
 		contours_DRTT = measure.find_contours(data_DRTT[:, j, :], level=0.5)	
 		for contour in contours_DRTT:
 			rr, cc = np.round(contour).astype(int).T
 			valid = (rr >= 0) & (rr < slice_2d.shape[0]) & (cc >= 0) & (cc < slice_2d.shape[1])
-			contour_mask[rr[valid], j, cc[valid], 1] = 3
-			contour_mask[rr[valid], j, cc[valid], 4] = 3
-			
+			contour_mask_DRTT[rr[valid], j, cc[valid]] = 3
+						
 		contours_CST = measure.find_contours(data_CST[:, j, :], level=0.5)	
 		for contour in contours_CST:
 			rr, cc = np.round(contour).astype(int).T
 			valid = (rr >= 0) & (rr < slice_2d.shape[0]) & (cc >= 0) & (cc < slice_2d.shape[1])
-			contour_mask[rr[valid], j, cc[valid], 2] = 4  
-			contour_mask[rr[valid], j, cc[valid], 4] = 4
-		
+			contour_mask_CST[rr[valid], j, cc[valid]] = 4  
+					
 		contours_ML = measure.find_contours(data_ML[:, j, :], level=0.5)	
 		for contour in contours_ML:
 			rr, cc = np.round(contour).astype(int).T
 			valid = (rr >= 0) & (rr < slice_2d.shape[0]) & (cc >= 0) & (cc < slice_2d.shape[1])
-			contour_mask[rr[valid], j, cc[valid], 3] = 5
-			contour_mask[rr[valid], j, cc[valid], 4] = 5
+			contour_mask_ML[rr[valid], j, cc[valid]] = 5
 	
-	nifti_contour = nib.Nifti1Image(contour_mask, im_ref.affine)
-	nib.save(nifti_contour, "coronal_contour.nii.gz")
-	print("Image coronal_contour.nii.gz saved")
+	nifti_contour = nib.Nifti1Image(contour_mask_ndDRTT, im_ref.affine)
+	nib.save(nifti_contour, "coronal_contour_ndDRTT.nii.gz")
+	
+	nifti_contour = nib.Nifti1Image(contour_mask_DRTT, im_ref.affine)
+	nib.save(nifti_contour, "coronal_contour_DRTT.nii.gz")
+	
+	nifti_contour = nib.Nifti1Image(contour_mask_CST, im_ref.affine)
+	nib.save(nifti_contour, "coronal_contour_CST.nii.gz")
+	
+	nifti_contour = nib.Nifti1Image(contour_mask_ML, im_ref.affine)
+	nib.save(nifti_contour, "coronal_contour_ML.nii.gz")
+	
+
+
+def handleLesiondata(data_lesion_up, affine):
+	data_lesion_filtered = np.zeros(data_lesion_up.shape, dtype=float)
+	mask_lesion = np.zeros(data_lesion_up.shape, dtype=np.uint8)
+	mask_closed = np.zeros(data_lesion_up.shape, dtype=np.uint8)
+	
+	for k in range(data_lesion_up.shape[2]):
+	  contornos = measure.find_contours(np.abs(data_lesion_up[:,:,k]), level=0.25)
+	  # Itera sobre cada contorno encontrado
+	  for contorno in contornos:
+		  # Obter as coordenadas dos contornos
+		  r = contorno[:, 0].astype(int)
+		  c = contorno[:, 1].astype(int)
+		  mask_lesion[r, c, k] = 1
+		  
+	kmin = np.where(mask_lesion != 0)[2].min()
+	kmax = np.where(mask_lesion != 0)[2].max()
+	for k in range (kmin, kmax + 1):
+		mask_closed[:,:,k] = binary_fill_holes(mask_lesion[:,:,k])
+		
+	mask_closed_connected = functions.connectedComponents(mask_closed)
+	
+	chunk_size = 64
+	chunks = [
+		mask_closed_connected[i:i+chunk_size, j:j+chunk_size, k:k+chunk_size]
+		for i in range(0, 640, chunk_size)
+		for j in range(0, 640, chunk_size)
+		for k in range(0, 640, chunk_size)
+	]
+
+	# Processa chunks em paralelo
+	results = Parallel(n_jobs=os.cpu_count())(
+		delayed(functions.process_chunk)(chunk) for chunk in chunks
+	)
+
+	# Recompõe a imagem
+	mask_closed_connected_solid = np.zeros_like(mask_closed_connected)
+	idx = 0
+	for i in range(0, 640, chunk_size):
+		for j in range(0, 640, chunk_size):
+			for k in range(0, 640, chunk_size):
+				mask_closed_connected_solid[
+					i:i+chunk_size, 
+					j:j+chunk_size, 
+					k:k+chunk_size
+				] = results[idx]
+				idx += 1
+				
+	# Suavização Gaussiana
+	mask_lesion_smoothed = gaussian_filter(mask_closed_connected_solid.astype(float), sigma=2)
+	mask_lesion_smoothed_binary = (mask_lesion_smoothed > 0.5).astype(np.uint8)
+	
+	data_lesion_filtered[mask_lesion_smoothed_binary == 1] = data_lesion_up[mask_lesion_smoothed_binary == 1]
+	
+	nifti_teste = nib.Nifti1Image(data_lesion_filtered, affine)
+	nib.save(nifti_teste, "lesion_teste.nii.gz")
+	
+	#data_lesion_treated[smoothed_binary == 1] = data_lesion_up[smoothed_binary == 1]
+	mask_center = np.zeros(data_lesion_up.shape, dtype=np.uint8)
+	mask_center[(data_lesion_filtered < 0.15) & (data_lesion_filtered != 0)] = 1
+	mask_center_connected = functions.connectedComponents(mask_center).astype(np.uint8)
+		
+	nifti_teste = nib.Nifti1Image(mask_center_connected, affine)
+	nib.save(nifti_teste, "lesion_center_teste.nii.gz")
+		
 		
 		
 # Main
@@ -144,17 +238,18 @@ print(".Data loaded")
 
 del track_ndDRTT, track_DRTT, track_CST, track_ML
 
-data_reference = np.zeros(data_lesion.shape)
-data_reference[data_lesion != 0] = 1 - data_lesion[data_lesion != 0]
+handleLesiondata(data_lesion, mask_lesion.affine)
 
-nifti_teste = nib.Nifti1Image(data_reference, mask_lesion.affine)
-nib.save(nifti_teste, "data_reference.nii.gz")
+# data_reference = np.zeros(data_lesion.shape)
+# data_reference[data_lesion != 0] = 1 - data_lesion[data_lesion != 0]
 
 #handleAxialcontour(mask_lesion, "left", data_lesion, data_ndDRTT, data_DRTT, data_CST, data_ML)
 #handleCoronalcontour(mask_lesion, "left", data_lesion, data_ndDRTT, data_DRTT, data_CST, data_ML)
-intersection_ndDRTT = handleRelativeintersection(data_reference, data_ndDRTT)
-print(intersection_ndDRTT)
-intersection_DRTT = handleRelativeintersection(data_reference, data_DRTT)
-print(intersection_DRTT)
-intersection_CST = handleRelativeintersection(data_reference, data_CST)
-print(intersection_CST)
+# intersection_ndDRTT = handleRelativeintersection(data_reference, data_ndDRTT)
+# print(intersection_ndDRTT)
+# intersection_DRTT = handleRelativeintersection(data_reference, data_DRTT)
+# print(intersection_DRTT)
+# intersection_CST = handleRelativeintersection(data_reference, data_CST)
+# print(intersection_CST)
+
+

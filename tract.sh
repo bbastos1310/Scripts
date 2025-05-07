@@ -162,7 +162,7 @@
 	handleTractDRTT() {
       if [ $EXIST -eq 1 ]; then
 				
-		tckgen  \
+		time tckgen  \
 			-act 5tt_coreg.mif \
 			-backtrack \
 			-seed_gmwmi ROIs/intersect_seed_DN_rh.mif \
@@ -222,19 +222,20 @@
 	handleTractML() {
       if [ $EXIST -eq 1 ]; then
 				
-		tckgen  \
+		time tckgen  \
 			-act 5tt_coreg.mif \
 			-backtrack \
-			-seed_gmwmi ROIs/ROI_BS_lh.mif \
+			-seed_gmwmi ROIs/intersect_seed_ML_lh.mif \
 			-select 20 \
 			-seeds 100M \
 			-include ROIs/ROI_ML_lh.mif \
 			-include ROIs/ROI_PL_lh.mif \
-			-include ROIs/ROI_PostCG_PostCS_lh.mif \
+			-include ROIs/ROI_BS_lh.mif \
 			-exclude ROIs/ROI_WMf_rh.mif \
 			-exclude ROIs/ROI_WMh_rh.mif \
 			-exclude ROIs/ROI_WMc_rh.mif \
 			-exclude ROIs/ROI_WMc_lh.mif \
+			-exclude ROIs/ROI_BS_rh.mif \
 			-minlength 40 \
 			-angle 20 \
 			-cutoff 0.1 \
@@ -262,7 +263,7 @@
     handleStatistics() {
       if [ $EXIST -eq 1 ]; then
 		mkdir -p Contour
-		mrgrid ../Segmentation/mask_lesion_float.nii.gz regrid -template ../Segmentation/T1_upsampled.nii.gz mask_lesion_float_up.nii.gz -interp cubic -force
+		mrgrid ../Segmentation/mask_lesion_float.nii.gz regrid -template ../Segmentation/T1_upsampled.nii.gz mask_lesion_float_up.nii.gz -interp linear -force
 				
         python "$SCRIPT_DIR/Python/results.py"
       else

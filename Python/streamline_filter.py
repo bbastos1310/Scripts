@@ -197,8 +197,8 @@ data_thalamus_lh = img_ref.get_fdata().astype(bool)
 #del im_thalamus_lh
 print("Data loaded")
 
-handleStreamlinefilter("ndDRTT", img_ref, data_thalamus_lh, "left", 2)
-handleStreamlinefilter("DRTT", img_ref, data_thalamus_lh, "left", 2)
-handleStreamlinefilter("CST", img_ref, data_thalamus_lh, "left", 2)
+#handleStreamlinefilter("ndDRTT", img_ref, data_thalamus_lh, "left", 2)
+#handleStreamlinefilter("DRTT", img_ref, data_thalamus_lh, "left", 2)
+#handleStreamlinefilter("CST", img_ref, data_thalamus_lh, "left", 2)
 handleStreamlinefilter("ML", img_ref, data_thalamus_lh, "left", 2)
 

@@ -189,10 +189,6 @@ def handleMatrixcreation(matrix_PRE, matrix_24):
 	plt.savefig("../Results/connectivitymatrix.png") 
 	plt.close
 	
-from scipy.spatial import Delaunay
-from skimage import measure
-import numpy as np
-
 def process_chunk(chunk, level=0.5):
     """Aplica Marching Cubes e preenchimento em um chunk com tratamento de chunks uniformes."""
     # Verifica se o chunk não é uniforme
@@ -237,30 +233,30 @@ def process_chunk(chunk, level=0.5):
     
     return mask
 
-def contourSlice(mask_slice):
-    # Converte para uint8 (OpenCV requer esse tipo)
-    slice_uint8 = (mask_slice * 255).astype(np.uint8)
+# def contourSlice(mask_slice):
+    # # Converte para uint8 (OpenCV requer esse tipo)
+    # slice_uint8 = (mask_slice * 255).astype(np.uint8)
     
-    # Detecta contornos
-    contours, _ = cv2.findContours(
-        slice_uint8, 
-        mode=cv2.RETR_EXTERNAL,
-        method=cv2.CHAIN_APPROX_SIMPLE
-    )
+    # # Detecta contornos
+    # contours, _ = cv2.findContours(
+        # slice_uint8, 
+        # mode=cv2.RETR_EXTERNAL,
+        # method=cv2.CHAIN_APPROX_SIMPLE
+    # )
     
-    # Cria máscara de contornos (garantindo tipo e contiguidade)
-    mask = np.zeros_like(slice_uint8, dtype=np.uint8)
+    # # Cria máscara de contornos (garantindo tipo e contiguidade)
+    # mask = np.zeros_like(slice_uint8, dtype=np.uint8)
     
-    # Desenha contornos apenas se existirem
-    if contours:  # Verifica se há contornos detectados
-        # Garante que o array é contíguo (evita erro de layout)
-        mask = np.ascontiguousarray(mask)
-        cv2.drawContours(
-            image=mask,
-            contours=contours,
-            contourIdx=-1,
-            color=255,
-            thickness=1
-        )
+    # # Desenha contornos apenas se existirem
+    # if contours:  # Verifica se há contornos detectados
+        # # Garante que o array é contíguo (evita erro de layout)
+        # mask = np.ascontiguousarray(mask)
+        # cv2.drawContours(
+            # image=mask,
+            # contours=contours,
+            # contourIdx=-1,
+            # color=255,
+            # thickness=1
+        # )
     
-    return (mask > 0).astype(np.uint8)  # Binário 0/1
+    # return (mask > 0).astype(np.uint8)  # Binário 0/1
