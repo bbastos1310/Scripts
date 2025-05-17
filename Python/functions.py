@@ -6,8 +6,7 @@ import nibabel as nib
 import numpy as np
 from scipy.ndimage import binary_erosion
 from skimage.measure import label, regionprops
-from scipy.spatial import ConvexHull
-from scipy.spatial import Delaunay
+from scipy.spatial import ConvexHull, Delaunay, KDTree
 from skimage.draw import polygon
 #import pandas as pd
 import matplotlib.pyplot as plt
@@ -260,3 +259,18 @@ def process_chunk(chunk, level=0.5):
         # )
     
     # return (mask > 0).astype(np.uint8)  # Binário 0/1
+
+def minDistance(mask_points, mask_target):
+	mask_points_int = mask_points.astype(np.uint8)
+	mask_target_int = mask_target.astype(np.uint8)
+	
+	coords_points = np.argwhere(mask_points_int == 1)
+	coords_target = np.argwhere(mask_target_int == 1)
+	
+	tree = KDTree(coords_target)
+	distances, _ = tree.query(coords_points, k=1) 
+	
+	distances_array = np.zeros_like(mask_points_int, dtype=np.float32)
+	distances_array[tuple(coords_points.T)] = distances
+	
+	return distances_array	

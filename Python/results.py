@@ -19,7 +19,7 @@ def handleRelativeintersection (data_reference, data_compare):
 	rel_intersection = data_intersection.sum()/data_reference.sum() 
 	return rel_intersection
 	
-def handleAxialcontour (im_ref, hemisphere, data_lesion, data_ndDRTT, data_DRTT, data_CST, data_ML):
+def handleAxialcontour (im_ref, hemisphere, plan, data_lesion, data_ndDRTT, data_DRTT, data_CST, data_ML):
 	# Função que cria os contornos dos tratos 
 	contour_mask_ndDRTT = np.zeros(data_lesion.shape, dtype=np.uint8)
 	contour_mask_DRTT = np.zeros(data_lesion.shape, dtype=np.uint8)
@@ -68,18 +68,31 @@ def handleAxialcontour (im_ref, hemisphere, data_lesion, data_ndDRTT, data_DRTT,
 			rr, cc = np.round(contour).astype(int).T
 			valid = (rr >= 0) & (rr < slice_2d.shape[0]) & (cc >= 0) & (cc < slice_2d.shape[1])
 			contour_mask_ML[rr[valid], cc[valid], k] = 5
-	
-	nifti_contour = nib.Nifti1Image(contour_mask_ndDRTT, im_ref.affine)
-	nib.save(nifti_contour, "axial_contour_ndDRTT.nii.gz")
-	
-	nifti_contour = nib.Nifti1Image(contour_mask_DRTT, im_ref.affine)
-	nib.save(nifti_contour, "axial_contour_DRTT.nii.gz")
-	
-	nifti_contour = nib.Nifti1Image(contour_mask_CST, im_ref.affine)
-	nib.save(nifti_contour, "axial_contour_CST.nii.gz")
-	
-	nifti_contour = nib.Nifti1Image(contour_mask_ML, im_ref.affine)
-	nib.save(nifti_contour, "axial_contour_ML.nii.gz")
+	if (plan == 'axial'):
+		nifti_contour = nib.Nifti1Image(contour_mask_ndDRTT, im_ref.affine)
+		nib.save(nifti_contour, "axial_contour_ndDRTT.nii.gz")
+
+		nifti_contour = nib.Nifti1Image(contour_mask_DRTT, im_ref.affine)
+		nib.save(nifti_contour, "axial_contour_DRTT.nii.gz")
+
+		nifti_contour = nib.Nifti1Image(contour_mask_CST, im_ref.affine)
+		nib.save(nifti_contour, "axial_contour_CST.nii.gz")
+
+		nifti_contour = nib.Nifti1Image(contour_mask_ML, im_ref.affine)
+		nib.save(nifti_contour, "axial_contour_ML.nii.gz")
+	elif (plan == 'acpc'):
+		nifti_contour = nib.Nifti1Image(contour_mask_ndDRTT, im_ref.affine)
+		nib.save(nifti_contour, "Contour/acpc_contour_ndDRTT.nii.gz")
+
+		nifti_contour = nib.Nifti1Image(contour_mask_DRTT, im_ref.affine)
+		nib.save(nifti_contour, "Contour/acpc_contour_DRTT.nii.gz")
+
+		nifti_contour = nib.Nifti1Image(contour_mask_CST, im_ref.affine)
+		nib.save(nifti_contour, "Contour/acpc_contour_CST.nii.gz")
+
+		nifti_contour = nib.Nifti1Image(contour_mask_ML, im_ref.affine)
+		nib.save(nifti_contour, "Contour/acpc_contour_ML.nii.gz")
+	print("images saved")
 	
 def handleCoronalcontour (im_ref, hemisphere, data_lesion, data_ndDRTT, data_DRTT, data_CST, data_ML):
 	# Função que cria os contornos dos tratos 
@@ -206,50 +219,74 @@ def handleLesiondata(data_lesion_up, affine):
 	nifti_teste = nib.Nifti1Image(data_lesion_filtered, affine)
 	nib.save(nifti_teste, "lesion_teste.nii.gz")
 	
-	#data_lesion_treated[smoothed_binary == 1] = data_lesion_up[smoothed_binary == 1]
 	mask_center = np.zeros(data_lesion_up.shape, dtype=np.uint8)
 	mask_center[(data_lesion_filtered < 0.15) & (data_lesion_filtered != 0)] = 1
 	mask_center_connected = functions.connectedComponents(mask_center).astype(np.uint8)
+	
+	mask_reference = functions.minDistance(mask_lesion_smoothed_binary, mask_center_connected)
+	mask_reference[mask_lesion_smoothed_binary != 0] = 1 - (mask_reference[mask_lesion_smoothed_binary != 0]/mask_reference[mask_lesion_smoothed_binary != 0].max())
 		
-	nifti_teste = nib.Nifti1Image(mask_center_connected, affine)
+	nifti_teste = nib.Nifti1Image(mask_reference, affine)
 	nib.save(nifti_teste, "lesion_center_teste.nii.gz")
+	
+	return mask_lesion_smoothed_binary, mask_reference
 		
 		
 		
 # Main
 ## Load files
 
-track_ndDRTT = nib.load("track_ndDRTT_lh.nii.gz") 
-track_DRTT = nib.load("track_DRTT_lh.nii.gz") 
-track_CST = nib.load("track_CST_lh.nii.gz") 
-track_ML = nib.load("track_ML_lh.nii.gz") 
-mask_lesion = nib.load("mask_lesion_float_up.nii.gz")
+# track_ndDRTT = nib.load("track_ndDRTT_lh.nii.gz") 
+# track_DRTT = nib.load("track_DRTT_lh.nii.gz") 
+# track_CST = nib.load("track_CST_lh.nii.gz") 
+# track_ML = nib.load("track_ML_lh.nii.gz") 
+# mask_lesion = nib.load("mask_lesion_float_up.nii.gz")
 
-print(".Files loaded")
+# print(".Files loaded")
 
 ## Extract data from image
-data_ndDRTT = track_ndDRTT.get_fdata().astype(np.uint16) 
-data_DRTT = track_DRTT.get_fdata().astype(np.uint16) 
-data_CST = track_CST.get_fdata().astype(np.uint16) 
-data_ML = track_ML.get_fdata().astype(np.uint16) 
-data_lesion = mask_lesion.get_fdata()
+# data_ndDRTT = track_ndDRTT.get_fdata().astype(np.uint16) 
+# data_DRTT = track_DRTT.get_fdata().astype(np.uint16) 
+# data_CST = track_CST.get_fdata().astype(np.uint16) 
+# data_ML = track_ML.get_fdata().astype(np.uint16) 
+# data_lesion = mask_lesion.get_fdata()
 
-print(".Data loaded")
+# print(".Data loaded")
 
-del track_ndDRTT, track_DRTT, track_CST, track_ML
+# del track_ndDRTT, track_DRTT, track_CST, track_ML
 
-handleLesiondata(data_lesion, mask_lesion.affine)
+# mask_lesion_filtered, data_reference = handleLesiondata(data_lesion, mask_lesion.affine)
 
-# data_reference = np.zeros(data_lesion.shape)
-# data_reference[data_lesion != 0] = 1 - data_lesion[data_lesion != 0]
-
-#handleAxialcontour(mask_lesion, "left", data_lesion, data_ndDRTT, data_DRTT, data_CST, data_ML)
-#handleCoronalcontour(mask_lesion, "left", data_lesion, data_ndDRTT, data_DRTT, data_CST, data_ML)
+# handleAxialcontour(mask_lesion, "left", "axial", data_lesion, data_ndDRTT, data_DRTT, data_CST, data_ML)
+# handleCoronalcontour(mask_lesion, "left", data_lesion, data_ndDRTT, data_DRTT, data_CST, data_ML)
 # intersection_ndDRTT = handleRelativeintersection(data_reference, data_ndDRTT)
 # print(intersection_ndDRTT)
 # intersection_DRTT = handleRelativeintersection(data_reference, data_DRTT)
 # print(intersection_DRTT)
 # intersection_CST = handleRelativeintersection(data_reference, data_CST)
 # print(intersection_CST)
+# intersection_ML = handleRelativeintersection(data_reference, data_ML)
+# print(intersection_ML)
 
+## ACPC plan
+## Load files
+track_ndDRTT_ACPC = nib.load("ACPC/track_ndDRTT_lh_ACPC.nii.gz") 
+track_DRTT_ACPC = nib.load("ACPC/track_DRTT_lh_ACPC.nii.gz") 
+track_CST_ACPC = nib.load("ACPC/track_CST_lh_ACPC.nii.gz") 
+track_ML_ACPC = nib.load("ACPC/track_ML_lh_ACPC.nii.gz") 
+mask_lesion_ACPC = nib.load("ACPC/mask_lesion_float_up_ACPC.nii.gz")
 
+print(".Files loaded (ACPC)")
+
+## Extract data from image
+data_ndDRTT_ACPC = track_ndDRTT_ACPC.get_fdata().astype(np.uint16) 
+data_DRTT_ACPC = track_DRTT_ACPC.get_fdata().astype(np.uint16) 
+data_CST_ACPC = track_CST_ACPC.get_fdata().astype(np.uint16) 
+data_ML_ACPC = track_ML_ACPC.get_fdata().astype(np.uint16) 
+data_lesion_ACPC = mask_lesion_ACPC.get_fdata()
+
+del track_ndDRTT_ACPC, track_DRTT_ACPC, track_CST_ACPC, track_ML_ACPC
+
+print(".Data loaded(ACPC)")
+
+handleAxialcontour(mask_lesion_ACPC, "left", "acpc", data_lesion_ACPC, data_ndDRTT_ACPC, data_DRTT_ACPC, data_CST_ACPC, data_ML_ACPC)
