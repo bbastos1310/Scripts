@@ -95,11 +95,12 @@
       # 6.Coregister
     handleCoregister() {
       if [ $EXIST -eq 1 ]; then
-          #mrgrid dwi_den_unr_preproc_unbiased.mif regrid dwi_den_unr_preproc_unb_up.mif -voxel 1.5 -force
-          #mrgrid dwi_mask.mif regrid - -template dwi_den_unr_preproc_unb_up.mif -interp linear -datatype bit | maskfilter - median dwi_mask_up.mif -force
-          #5ttgen fsl ../Raw/T1_raw.mif 5tt_coreg.mif -force
-          #dwiextract dwi_den_unr_preproc_unb_up.mif - -bzero | mrmath - mean mean_b0_preprocessed.mif -axis 3 -force
-          #mrconvert mean_b0_preprocessed.mif mean_b0_preprocessed.nii.gz -force
+          mrgrid dwi_den_unr_preproc_unbiased.mif regrid dwi_den_unr_preproc_unb_up.mif -voxel 1.5 -force
+          mrgrid dwi_mask.mif regrid - -template dwi_den_unr_preproc_unb_up.mif -interp linear -datatype bit | maskfilter - median dwi_mask_up.mif -force
+          5ttgen fsl ../Raw/T1_raw.mif 5tt_coreg.mif -force
+          dwiextract dwi_den_unr_preproc_unb_up.mif - -bzero | mrmath - mean mean_b0_preprocessed.mif -axis 3 -force
+          mrconvert mean_b0_preprocessed.mif mean_b0_preprocessed.nii.gz -force
+          mrconvert ../Raw/T1_raw.mif T1_raw.nii.gz -force
           bet2 "$OUT_PRE/Preprocess/T1_raw.nii.gz" T1_brain.nii.gz -f 0.4 -m
           epi_reg --epi=mean_b0_preprocessed.nii.gz --t1="$OUT_PRE/Preprocess/T1_raw.nii.gz" --t1brain="$OUT_PRE/Preprocess/T1_brain.nii.gz" --out=dwi2t1_reg
           transformconvert dwi2t1_reg.mat mean_b0_preprocessed.nii.gz "$OUT_PRE/Preprocess/T1_raw.nii.gz" flirt_import matrix_dwi2t1.txt -force

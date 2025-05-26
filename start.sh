@@ -5,21 +5,21 @@
 
     # Files 
     FILE_1="rename_data.sh"
-    FILE_2="preprocess.sh"
-    FILE_3="tract.sh"
-    FILE_4="view.sh"
-    FILE_5="analysis.sh"
-    FILE_6="start.sh"
+    FILE_2="start.sh"
+    FILE_3="preprocess.sh"
+    FILE_4="segmentation.sh"
+    FILE_5="tract.sh"
+    FILE_6="view.sh"
     FLAG_SCRIPT=6
       
     # Verification of the scripts folder
-      cd "$SCRIPT_DIR"
-      for file in $FILE_1 $FILE_2 $FILE_3 $FILE_4 $FILE_5 $FILE_6; do
-        FILE=$file
-        if [[ -a $FILE ]]; then
-          FLAG_SCRIPT=$(($FLAG_SCRIPT-1))
-        fi       
-      done  
+    cd "$SCRIPT_DIR"
+    for file in $FILE_1 $FILE_2 $FILE_3 $FILE_4 $FILE_5 $FILE_6; do
+	  FILE=$file
+	  if [[ -a $FILE ]]; then
+	    FLAG_SCRIPT=$(($FLAG_SCRIPT-1))
+	  fi       
+    done  
     
     if [ $FLAG_SCRIPT -ne 0 ]; then
         echo "Verifique a pasta dos scripts, na pasta definida atualmente estão faltanto $FLAG_SCRIPT arquivos .sh"
@@ -46,6 +46,9 @@
                 echo "Pasta inválida, abra o programa novamente ou mude a pasta base no script"
                 exit
             fi;;
+            
+            *) echo "Opção inválida, abra o programa novamente"
+               exit;;
         esac
     else
         echo "A pasta de dados registrada no script é inválida"
@@ -170,9 +173,10 @@
         $'\n'"    Streamlines filtering"\
       $'\n'"4.Analysis"\
       $'\n'"5.View"\
+		$'\n'"    Raw images"\
         $'\n'"    Results of preprocessing"\
-        $'\n'"    Results of tractography"\
         $'\n'"    Results of segmentation"\
+        $'\n'"    Results of tractography"\
         $'\n'"    Results of analysis"
        read -p "Opção: " script
        

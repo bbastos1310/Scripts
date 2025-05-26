@@ -1,47 +1,49 @@
-.
-└── Pat/
-    ├── Pat_Pre/
-    │   ├── Number_folders/
-    │   │   └── dicom_files
-    │   ├── Output_general/
-    │   │   └── raw_files (general images)
-    │   └── Output_tract/
-    │       ├── Raw/
-    │       │   ├── dwi_raw.mif (dwi images, res:112x112x69x36, voxel:2x2x2, stride:-1,-3,4,2) )
-    │       │   ├── T1_raw.mif (T1 image, res:216x256x176, voxel:0.976562x0.976562x1, stride:-1,-2,3)
-    │       │   ├── T2_raw.mif (T2 image, res:560x640x80, voxel:0.328125x0.328125x2, stride:-1,-2,3 )
-    │       │   └── Contrast_raw.mif (image for subcortical contrast, res:222x224x160, voxel:1x1x1, stride:-1,-2,3)
-    │       ├── Preprocess/
-    │       │   ├── dwi_den.mif (denoised image)
-    │       │   ├── noise.mif (noise image)
-    │       │   ├── residual.mif (difference between noise and dwi)
-    │       │   ├── dwi_den_unr.mif (unringed image)
-    │       │   ├── residualUnringed.mif (difference between dwi and unringed dwi)
-    │       │   ├── mean_b0_AP.mif (mean of the b=0 dwi in AP direction)
-    │       │   ├── mean_b0_PA.mif (mean of the b=0 dwi in PA direction)
-    │       │   ├── b0_pair.mif (combination of b0_PA and b0_AP images)
-    │       │   ├── dwi_den_unr_preproc.mif (image after motion correction)
-    │       │   ├── dwi_den_unr_preproc_unbiased (unbiased image)
-    │       │   ├── bias.mif (bias field image)
-    │       │   ├── dwi_mask.mif (binary mask of dwi image)
-    │       │   ├── dwi_den_unr_preproc_unb_up (upsampled dwi image,res:149x149x92x36, voxel:1.5x1.5x1.5, stride:-1,-3,4,2)
-    │       │   ├── dwi_mask_up.mif (upsampled binary mask of dwi image)
-    │       │   ├── files.mat (matrix used by FSL for corregistration)
-    │       │   ├── files.txt (matrix used by Mrtrix for corregistration)
-    │       │   ├── 5tt_coreg.mif (5 tissues segmentation, res:154x169x128x5, voxel:0.976x0.976x1, stride:2,3,4,1)
-    │       │   └── b0_pair.mif 
-    │       ├── Segmentation/
-    │       │   ├── files.mat (matrix used by FSL for corregistration)
-    │       │   ├── files.txt (matrix used by Mrtrix for corregistration)
-    │       │   ├── T1_resampled (freesurfer image, res:256x256x256, voxel:1x1x1, stride:-1,3,-2)
-    │       │   ├── T2_raw_coreg (T2 corregistrada à T1, res:560x640x80, voxel:0.328x0.328x2, stride:-1,-2,3)
-    │       │   ├── output_freesurfer (Julich + freesurfer segmentation, res:560x640x80, voxel:1x1x1, stride:-1,-2,3)
-    │       │   ├── seg_left_resampled.nii.gz (next brain subcortical segmentation, res:640x640x640, voxel:0.4x0.4x0.4, stride:-1,-2,3)
-    │       │   ├── seg_right_resampled.nii.gz (next brain subcortical segmentation, res:640x640x640, voxel:0.4x0.4x0.4, stride:-1,-2,3)
-    │       │   ├── SynthSeg_resampled.nii.gz (subcortical segmentation, res:640x640x640, voxel:0.4x0.4x0.4, stride:-1,-2,3)
-    │       │   ├── histo_parcels.nii.gz (ROIs, res:640x640x640, voxel:0.4x0.4x0.4, stride:-1,-2,3)
-    │       │   ├── histo_wm.nii.gz (regions of white matter, res:640x640x640, voxel:0.4x0.4x0.4, stride:-1,-2,3)
-    │       │   └── Julich_parcels_freesurfer.nii.gz (cortical segmentation, res:560x640x80, voxel:1x1x1, stride:-1,-2,3)
-    │       ├── Tractography
-    │       └── Analysis
-    └── Pat_24H
+Pat
+  Pat_Pre
+    Number_folders
+      dicom_files
+    Output_general
+      raw_files (general images)
+    Output_tract
+      Raw
+        dwi_raw.mif (dwi images, res:112x112x69x36, voxel:2x2x2, stride:-1,-3,4,2) )
+        T1_raw.mif (T1 image, res:216x256x176, voxel:0.976562x0.976562x1, stride:-1,-2,3)
+        T2_raw.mif (T2 image, res:560x640x80, voxel:0.328125x0.328125x2, stride:-1,-2,3 )
+        Contrast_raw.mif (image for wm/gm contrast, res:222x224x160, voxel:1x1x1, stride:-1,-2,3)
+      Preprocess
+        dwi_den.mif (denoised image)
+        noise.mif (noise image)
+        residual.mif (difference between noise and dwi)
+        dwi_den_unr.mif (unringed image)
+        residualUnringed.mif (difference between dwi and unringed dwi)
+        mean_b0_AP.mif (mean of the b=0 dwi in AP direction)
+        mean_b0_PA.mif (mean of the b=0 dwi in PA direction)
+        b0_pair.mif (combination of b0_PA and b0_AP images)
+        dwi_den_unr_preproc.mif (image after motion correction)
+        dwi_den_unr_preproc_unbiased (unbiased image)
+        bias.mif (bias field image)
+        dwi_mask.mif (binary mask of dwi image)
+        dwi_den_unr_preproc_unb_up (upsampled dwi image,res:149x149x92x36, voxel:1.5x1.5x1.5, stride:-1,-3,4,2)
+        dwi_mask_up.mif (upsampled binary mask of dwi image)
+        dwi_den_unr_preproc_unb_reg (registered dwi image,res:149x149x92x36, voxel:1.5x1.5x1.5, stride:-1,-3,4,2)
+        files.mat (matrix used by FSL for corregistration)
+        files.txt (matrix used by Mrtrix for corregistration)
+        5tt_coreg.mif (5 tissues segmentation, res:154x169x128x5, voxel:0.976x0.976x1, stride:2,3,4,1)
+        b0_pair.mif 
+      Segmentation
+        files.mat (matrix used by FSL for corregistration)
+        files.txt (matrix used by Mrtrix for corregistration)
+        T1_resampled (freesurfer image, res:256x256x256, voxel:1x1x1, stride:-1,3,-2)
+        T2_raw_coreg (T2 corregistrada à T1, res:560x640x80, voxel:0.328x0.328x2, stride:-1,-2,3)
+        output_freesurfer (Julich + freesurfer segmentation, res:560x640x80, voxel:1x1x1, stride:-1,-2,3)
+        seg_left_resampled.nii.gz (next brain subcortical segmentation, res:640x640x640, voxel:0.4x0.4x0.4, stride:-1,-2,3)
+        seg_right_resampled.nii.gz (next brain subcortical segmentation, res:640x640x640, voxel:0.4x0.4x0.4, stride:-1,-2,3)
+        SynthSeg_resampled.nii.gz (subcortical segmentation, res:640x640x640, voxel:0.4x0.4x0.4, stride:-1,-2,3)
+        histo_parcels.nii.gz (ROIs, res:640x640x640, voxel:0.4x0.4x0.4, stride:-1,-2,3)
+        histo_wm.nii.gz (regions of white matter, res:640x640x640, voxel:0.4x0.4x0.4, stride:-1,-2,3)
+        Julich_parcels_freesurfer.nii.gz (cortical segmentation, res:560x640x80, voxel:1x1x1, stride:-1,-2,3)
+        maps
+          maps.mif
+      Tractography
+      Analysis
+  Pat_24H

@@ -31,8 +31,8 @@
         if [ $EXIST -eq 1 ]; then
                              
           # Coregister T2_raw with T1_raw
-          flirt -in "$OUT_PRE/Preprocess/T2_raw.nii.gz" -ref "$OUT_PRE/Segmentation/T1_raw.nii.gz" -dof 6 -omat t22t1.mat
-          transformconvert t22t1.mat "$OUT_PRE/Preprocess/T2_raw.nii.gz" "$OUT_PRE/Segmentation/T1_raw.nii.gz" flirt_import t22t1_mrtrix.txt -force
+          flirt -in "$OUT_PRE/Segmentation/T2_raw.nii.gz" -ref "$OUT_PRE/Segmentation/T1_raw.nii.gz" -dof 6 -omat t22t1.mat
+          transformconvert t22t1.mat "$OUT_PRE/Segmentation/T2_raw.nii.gz" "$OUT_PRE/Segmentation/T1_raw.nii.gz" flirt_import t22t1_mrtrix.txt -force
           mrtransform "$OUT_PRE/Raw/T2_raw.mif" -linear t22t1_mrtrix.txt T2_raw_coreg.mif -force
           mrconvert T2_raw_coreg.mif T2_raw_coreg.nii.gz -force
           

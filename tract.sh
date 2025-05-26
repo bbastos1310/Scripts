@@ -165,8 +165,8 @@
 		time tckgen  \
 			-act 5tt_coreg.mif \
 			-backtrack \
-			-seed_gmwmi ROIs/intersect_seed_DN_rh.mif \
-			-select 100 \
+			-seed_gmwmi ROIs/ROI_WMc_rh.mif \
+			-select 10 \
 			-seeds 100M \
 			-include ROIs/ROI_PSA_lh.mif \
 			-include ROIs/ROI_PreCG_lh.mif \
@@ -174,13 +174,15 @@
 			-exclude ROIs/ROI_WMh_lh.mif \
 			-exclude ROIs/ROI_WMc_lh.mif \
 			-exclude ROIs/ROI_GP_lh.mif \
-			-minlength 40 \
+			-minlength 100 \
 			-angle 20 \
 			-cutoff 0.1 \
 			-step 1 \
+			-trials 5000 \
+			-max_attempts_per_seed 5000 \
 			-seed_unidirectional \
-			-samples 2 \
-			wmfod_norm.mif track_DRTT_lh_teste.tck \
+			-samples 4 \
+			wmfod_norm.mif track_DRTT_lh_teste2.tck \
 			-force
 				
       else
@@ -264,26 +266,24 @@
       if [ $EXIST -eq 1 ]; then
 		mkdir -p Contour
 		mrgrid ../Segmentation/mask_lesion_float.nii.gz regrid -template ../Segmentation/T1_upsampled.nii.gz mask_lesion_float_up.nii.gz -interp linear -force
+		mrgrid ../Segmentation/Contrast_raw_coreg_24.nii.gz regrid -template ../Segmentation/T1_upsampled.nii.gz Contrast_raw_coreg_24_up.nii.gz -force
 		
 		#AC-PC plan
 		mkdir -p ACPC
-		mrconvert ../Segmentation/T1_raw.nii.gz T1_raw.nii -force
-		mrconvert ../Segmentation/T1_upsampled.nii.gz T1_raw.nii -force
+		mrconvert ../Segmentation/T1_upsampled.nii.gz -datatype uint16 T1_raw.nii -force
 		export ARTHOME=/home/brunobastos/Downloads/acpc
 		export PATH=$ARTHOME/bin:$PATH
 		acpcdetect -i T1_raw.nii -output-orient LPS -v
 		rm T1_raw.mrx T1_raw_ACPC_axial.png T1_raw_ACPC_sagittal.png T1_raw_orion.png T1_raw_orion.txt T1_raw_orion_PIL.txt
 		mv T1_raw_* ACPC/
-		flirt -in T1_raw.nii -applyxfm -init ACPC/T1_raw_FSL.mat -ref T1_raw.nii -out ACPC/T1_raw_ACPC.nii.gz
-		flirt -in ../Segmentation/Contrast_raw_coreg_24.nii.gz -applyxfm -init ACPC/T1_raw_FSL.mat -ref ../Segmentation/Contrast_raw_coreg_24.nii.gz -out ACPC/Contrast_raw_coreg_24_ACPC.nii.gz
+		flirt -in Contrast_raw_coreg_24_up.nii.gz -applyxfm -init ACPC/T1_raw_FSL.mat -ref Contrast_raw_coreg_24_up.nii.gz -out ACPC/Contrast_raw_coreg_24_up_ACPC.nii.gz
 		flirt -in mask_lesion_float_up.nii.gz -applyxfm -init ACPC/T1_raw_FSL.mat -ref mask_lesion_float_up.nii.gz -out ACPC/mask_lesion_float_up_ACPC.nii.gz
-		flirt -in track_ndDRTT_lh.nii.gz -applyxfm -init ACPC/T1_raw_FSL.mat -ref track_ndDRTT_lh.nii.gz -out ACPC/track_ndDRTT_lh_ACPC.nii.gz
-		flirt -in track_DRTT_lh.nii.gz -applyxfm -init ACPC/T1_raw_FSL.mat -ref track_DRTT_lh.nii.gz -out ACPC/track_DRTT_lh_ACPC.nii.gz
+		flirt -in track_ndDRTT_lh.nii.gz -applyxfm -init ACPC/T1_raw_FSL.mat -ref track_ndDRTT_lh.nii.gz -interp nearestneighbour -out ACPC/track_ndDRTT_lh_ACPC.nii.gz
+		flirt -in track_DRTT_lh.nii.gz -applyxfm -init ACPC/T1_raw_FSL.mat -ref track_DRTT_lh.nii.gz -interp nearestneighbour -out ACPC/track_DRTT_lh_ACPC.nii.gz
 		flirt -in track_CST_lh.nii.gz -applyxfm -init ACPC/T1_raw_FSL.mat -ref track_CST_lh.nii.gz -interp nearestneighbour -out ACPC/track_CST_lh_ACPC.nii.gz
-		flirt -in track_ML_lh.nii.gz -applyxfm -init ACPC/T1_raw_FSL.mat -ref track_ML_lh.nii.gz -out ACPC/track_ML_lh_ACPC.nii.gz
+		flirt -in track_ML_lh.nii.gz -applyxfm -init ACPC/T1_raw_FSL.mat -ref track_ML_lh.nii.gz -interp nearestneighbour -out ACPC/track_ML_lh_ACPC.nii.gz
 		#fslswapdim teste.nii.gz -x y z teste_corrigido.nii.gz
-		
-				
+						
         python "$SCRIPT_DIR/Python/results.py"
       else
         exit
