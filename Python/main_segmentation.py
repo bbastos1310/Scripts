@@ -57,7 +57,7 @@ data_seg[mask_left] = data_segleft[mask_left]
 
 del mask_right, mask_left
 
-# ## RIGHT HEMISPHERE
+## RIGHT HEMISPHERE
 
 ### Red Nucleus
 map_RN_rh = np.array(np.where(data_seg == 1385, True, False), dtype=bool)
@@ -119,6 +119,8 @@ map_CP_rh_filtered = functions.connectedComponents(map_CP_rh)
 ### Posterior subthalamic area
 map_PSA_rh = roi.handlePsa(data_seg,map_RN_rh_filtered, map_STN_rh_filtered,"right")
 map_PSA_rh_filtered = functions.connectedComponents(map_PSA_rh)
+# map_PSA_rh = roi.handlePsa(map_RN_rh_filtered, map_STN_rh_filtered, "right")
+# map_PSA_rh_filtered = functions.connectedComponents(map_PSA_rh)
 
 ### Posterior limb of internal capsule
 map_PostLimb_rh = roi.handlePosteriorLimb(data_seg,data_FAmap, data_thalamus_rh, "right")
@@ -186,6 +188,8 @@ map_CP_lh_filtered = functions.connectedComponents(map_CP_lh)
 ### Posterior subthalamic area
 map_PSA_lh = roi.handlePsa(data_seg,map_RN_lh_filtered, map_STN_lh_filtered,"left")
 map_PSA_lh_filtered = functions.connectedComponents(map_PSA_lh)
+# map_PSA_lh = roi.handlePsa(map_RN_lh_filtered, map_STN_lh_filtered, "left")
+# map_PSA_lh_filtered = functions.connectedComponents(map_PSA_lh)
 
 ### Posterior limb of internal capsule
 map_PostLimb_lh = roi.handlePosteriorLimb(data_seg,data_FAmap, data_thalamus_lh, "left")

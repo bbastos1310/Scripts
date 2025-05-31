@@ -38,7 +38,7 @@ def upperBound(data):
   IQR = Q3 - Q1
 
   # Limite superior
-  upper_bound = Q3 + 5 * IQR
+  upper_bound = Q3 + 10 * IQR
 
   return upper_bound
 
@@ -65,18 +65,34 @@ def mapTreatment(data, mask):
           num_outliers = num_outliers + 1
 
   data_norm = data/np.max(np.abs(data))
+  data_rgb = data_norm * 255
 
-  return data_norm
+  return data_norm, data_rgb
 
-def handleMaps(data_map, image, data24_map, image_24, data_mask, name):
-	map_treated = functions.mapTreatment(data_map, data_mask)
-	map24_treated = functions.mapTreatment(data24_map, data_mask)
+def handleMapsonechannel(data_map, image, data24_map, image_24, data_mask, name):
+	map_treated, _ = functions.mapTreatment(data_map, data_mask)
+	map24_treated, _ = functions.mapTreatment(data24_map, data_mask)
+	map_subtraction = map24_treated-map_treated
+	map_subtraction_norm = map_subtraction/np.max(np.abs(map_subtraction))
 	name_pre = "Maps/" + name + "(PRE)"
 	name_24 = "Maps/" + name + "(24H)"
 	name_sub = "Maps/" + name + "(Subtraction)"
 	functions.saveImage(map_treated, image, name_pre )
 	functions.saveImage(map24_treated, image_24, name_24 )
-	functions.saveImage(map24_treated-map_treated, image, name_sub)
+	functions.saveImage(map_subtraction_norm, image, name_sub)
+	print(f"{name} saved") 	
+
+def handleMapsthreechannel(data_map, image, data24_map, image_24, data_mask, name):
+	_, map_treated = functions.mapTreatment(data_map, data_mask)
+	_, map24_treated = functions.mapTreatment(data24_map, data_mask)
+	map_subtraction = map24_treated-map_treated
+	map_subtraction_norm = map_subtraction*255/np.max(np.abs(map_subtraction))
+	name_pre = "Maps/" + name + "(PRE)"
+	name_24 = "Maps/" + name + "(24H)"
+	name_sub = "Maps/" + name + "(Subtraction)"
+	functions.saveImage(map_treated, image, name_pre )
+	functions.saveImage(map24_treated, image_24, name_24 )
+	functions.saveImage(map_subtraction_norm, image, name_sub)
 	print(f"{name} saved") 	
 	
 def plotMaps(data_PRE, data_24, name):

@@ -6,6 +6,10 @@ from skimage.morphology import square, closing
 #from skimage.measure import label, regionprops
 from skimage import color, measure
 from scipy.ndimage import center_of_mass
+from scipy.spatial import ConvexHull
+from scipy.ndimage import distance_transform_edt, binary_erosion
+from scipy.spatial.distance import cdist
+
 
 #Local libraries
 import functions
@@ -109,7 +113,104 @@ def handleCerebralpeduncle(data_seg,data_synthseg,map_RN, map_SN,hemisphere):
 	
 	print(f"{mask_CP_filtered[mask_CP_filtered == True].size} voxels.")
 	return mask_CP_filtered
+
+# def handlePsa(data_seg,map_RN, map_STN,hemisphere):
+	# maskA = map_RN
+	# maskB = map_STN
+	# union_AB = maskA | maskB
+
+	# # 2. Extrai as coordenadas IJK de todos os voxels em A∪B
+	# ijk = np.array(np.nonzero(union_AB)).T  # shape (N,3)
+
+	# # 3. Calcula o convex hull diretamente nessas coordenadas IJK
+	# hull = ConvexHull(ijk)
+	# equations = hull.equations  # shape (n_facets, 4)
+
+	# # 4. Determina o bounding box de união A∪B para limitar o grid de teste
+	# mins = ijk.min(axis=0)  # [i_min, j_min, k_min]
+	# maxs = ijk.max(axis=0)  # [i_max, j_max, k_max]
+
+	# # 5. Monta grid de teste apenas dentro do bounding box
+	# I = np.arange(mins[0], maxs[0] + 1)
+	# J = np.arange(mins[1], maxs[1] + 1)
+	# K = np.arange(mins[2], maxs[2] + 1)
+	# grid_ijk = np.array(np.meshgrid(I, J, K, indexing="ij")).reshape(3, -1).T  # (M,3)
+
+	# # 6. Avalia inclusão no hull: para cada face, ai·x + bi ≥ 0
+	# vals = equations[:, :3].dot(grid_ijk.T) + equations[:, 3:4]  # (n_facets, M)
+	# inside = np.all(vals <= 0, axis=0)                             # (M,)
+	# print(inside[inside != False].size)
+
+	# # 7. Constrói a máscara “between” dentro do BB, excluindo A∪B
+	# between = np.zeros(data_seg.shape, dtype=bool)
+	# between_pts = grid_ijk[inside]       # coordenadas dentro do hull
+	# between[tuple(between_pts.T)] = True
+	# between &= ~union_AB                 # remove voxels de A ou B	
 	
+	# return between
+
+def auto_threshold(subA, subB):
+	surfaceA = np.argwhere(subA & ~binary_erosion(subA))
+	surfaceB = np.argwhere(subB & ~binary_erosion(subB))
+	
+	if len(surfaceA) == 0 or len(surfaceB) == 0:
+		return 3.0
+		
+	# Calcular distância mínima com broadcasting (mais eficiente)
+	diffs = surfaceA[:, np.newaxis, :] - surfaceB[np.newaxis, :, :]
+	dists = np.sqrt(np.sum(diffs**2, axis=2))
+	return np.min(dists) + 2.0
+
+
+# def handlePsa(maskA, maskB, hemisphere):
+    # print(f"Post Subthalamic Area ({hemisphere} hemisphere)")
+    # margin=10
+    
+    # # 1. Determinar o bounding box combinado com margem de segurança
+    # combined = maskA | maskB
+    # coords = np.argwhere(combined)
+    
+    # if len(coords) == 0:
+        # return np.zeros_like(maskA, dtype=bool)
+    
+    # mins = np.maximum(coords.min(axis=0) - margin, 0)
+    # maxs = np.minimum(coords.max(axis=0) + margin + 1, maskA.shape)
+    
+    # slices = tuple(slice(mins[i], maxs[i]) for i in range(3))
+    # maskA_bb = maskA[slices]
+    # maskB_bb = maskB[slices]
+    # distance_threshold = auto_threshold(maskA_bb, maskB_bb)
+    
+    # distA_bb = distance_transform_edt(~maskA_bb)
+    # distB_bb = distance_transform_edt(~maskB_bb)
+    
+    # proximity_mask_bb = (distA_bb <= distance_threshold) & (distB_bb <= distance_threshold)
+    
+    # combined_bb = maskA_bb | maskB_bb
+    # ijk_bb = np.array(np.nonzero(combined_bb)).T
+    
+    # if len(ijk_bb) < 4:
+        # hull_mask_bb = np.ones_like(combined_bb, dtype=bool)
+    # else:
+        # hull = ConvexHull(ijk_bb)
+        
+        # # Criar grid apenas dentro do bounding box
+        # grid_shape = tuple(maxs - mins)
+        # grid_coords = np.array(np.indices(grid_shape)).reshape(3, -1).T
+        
+        # # Testar pontos dentro do convex hull
+        # vals = hull.equations[:, :3].dot(grid_coords.T) + hull.equations[:, 3:4]
+        # inside = np.all(vals <= 0, axis=0)
+        # hull_mask_bb = inside.reshape(grid_shape)
+    
+    # between_bb = hull_mask_bb & proximity_mask_bb & ~combined_bb
+    
+    # between = np.zeros_like(maskA, dtype=bool)
+    # between[slices] = between_bb
+    # print(f"{between[between == True].size} voxels.")
+    
+    # return between
+    
 def handlePsa(data_seg,map_RN, map_STN,hemisphere):
 	print(f"Post Subthalamic Area ({hemisphere} hemisphere)")
 	mask_temp_RN = np.zeros((640,640), dtype=bool)
@@ -306,6 +407,7 @@ def handleLesionmask(data_Contrast, data_Contrast_24, data_rostral_lh, data_rost
 	# Lesion selection
 	closest_label = None
 	min_distance = float('inf')
+	lesion_hemisphere = "left"
 	center_rostral_lh = center_of_mass(data_rostral_lh)
 	center_rostral_rh = center_of_mass(data_rostral_rh)
 	
@@ -335,6 +437,7 @@ def handleLesionmask(data_Contrast, data_Contrast_24, data_rostral_lh, data_rost
 
 		# Atualiza o label mais central se a distância for menor
 		if distance_center < min_distance:
+			lesion_hemisphere = "right"
 			min_distance = distance_center
 			closest_label = label
 			center_lesion = center
@@ -359,7 +462,12 @@ def handleLesionmask(data_Contrast, data_Contrast_24, data_rostral_lh, data_rost
 	  lesion_data_binary[lesion_coordinates[point][0],lesion_coordinates[point][1],lesion_coordinates[point][2]] = 1
 	functions.saveImage(lesion_data_float, Contrast, "mask_lesion_float")
 	functions.saveImage(lesion_data_binary, Contrast, "mask_lesion_binary")
+	
+	with open("hemisphere.txt", "w") as file_hemisphere:
+		file_hemisphere.write(lesion_hemisphere)
+	
 	print("-mask_lesion.nii.gz salva")
+	print(f"lesion_hemisphere = {lesion_hemisphere}")
 	
 	return lesion_data_float, lesion_data_binary
 
@@ -395,9 +503,9 @@ def handlePosteriorLimb(data_seg, data_FAmap, data_thalamus, hemisphere):
 			# Limits mask
 			mask_limit[imin:imax, jmin:jmax] = True
 			# Threshold 
-			mask_red = np.where(data_FAmap[:,:,k_slice,0] < 50, True, False).astype(bool)
-			mask_green = np.where(data_FAmap[:,:,k_slice,1] < 50, True, False).astype(bool)
-			mask_blue = np.where(data_FAmap[:,:,k_slice,2] > 70, True, False).astype(bool)
+			mask_red = np.where(data_FAmap[:,:,k_slice,0] < 127, True, False).astype(bool)
+			mask_green = np.where(data_FAmap[:,:,k_slice,1] < 127, True, False).astype(bool)
+			mask_blue = np.where(data_FAmap[:,:,k_slice,2] > 178, True, False).astype(bool)
 			mask_threshold = mask_red & mask_green & mask_blue
 			# Intersection
 			mask_PostLimb[:,:,k_slice] = mask_limit & mask_threshold & map_wm[:,:,k_slice]
@@ -425,9 +533,9 @@ def handlePosteriorLimb(data_seg, data_FAmap, data_thalamus, hemisphere):
 			# Limits mask
 			mask_limit[imin:imax, jmin:jmax] = True
 			# Threshold 
-			mask_red = np.where(data_FAmap[:,:,k_slice,0] < 50, True, False).astype(bool)
-			mask_green = np.where(data_FAmap[:,:,k_slice,1] < 50, True, False).astype(bool)
-			mask_blue = np.where(data_FAmap[:,:,k_slice,2] > 70, True, False).astype(bool)
+			mask_red = np.where(data_FAmap[:,:,k_slice,0] < 127, True, False).astype(bool)
+			mask_green = np.where(data_FAmap[:,:,k_slice,1] < 127, True, False).astype(bool)
+			mask_blue = np.where(data_FAmap[:,:,k_slice,2] > 178, True, False).astype(bool)
 			mask_threshold = mask_red & mask_green & mask_blue
 			# Intersection
 			mask_PostLimb[:,:,k_slice] = mask_limit & mask_threshold & map_wm[:,:,k_slice]

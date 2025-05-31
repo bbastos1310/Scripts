@@ -58,6 +58,7 @@
 		mkdir -p ROIs
 		mrgrid gmwmSeed_coreg.mif regrid -template ../Segmentation/T1_upsampled.nii.gz gmwmSeed_coreg_subcortical.mif -interp linear -force
 		mrgrid gmwmSeed_coreg.mif regrid -template ../Segmentation/cortical_Julich.nii.gz gmwmSeed_coreg_cortical.mif -interp linear -force
+		mrgrid gmwmSeed_coreg.mif regrid -template ../Segmentation/T1_upsampled.nii.gz gmwmSeed_coreg_resampled.mif -interp linear -force
 		
 		# Left hemisphere
 		mrcalc ../Segmentation/ROIs_tracks.nii.gz 1001 -eq ROIs/ROI_ML_lh.mif -datatype uint8 -force
@@ -90,10 +91,10 @@
 		
 		mrconvert ../Segmentation/thalamus_mask_lh.nii.gz ROIs/ROI_thalamus_lh.mif -datatype uint8 -force
 		mrcalc gmwmSeed_coreg_resampled.mif ROIs/ROI_DN_lh.mif -mult ROIs/intersect_seed_DN_lh.mif -force
-		mrcalc gmwmSeed_coreg_cortical.mif ROIs/ROI_PreCG_lh.mif -mult ROIs/intersect_seed_DRTT_lh.mif -force
+		#mrcalc gmwmSeed_coreg_cortical.mif ROIs/ROI_PreCG_lh.mif -mult ROIs/intersect_seed_DRTT_lh.mif -force
 		mrcalc gmwmSeed_coreg_cortical.mif ROIs/ROI_PMC_lh.mif -mult ROIs/intersect_seed_CST_lh.mif -force
 		mrcalc gmwmSeed_coreg_cortical.mif ROIs/ROI_PostCG_PostCS_lh.mif -mult ROIs/intersect_seed_ML_lh.mif -force
-		mrcalc gmwmSeed_coreg_resampled.mif ROIs/ROI_WMc_rh.mif -mult ROIs/intersect_seed_DRTT_lh_teste.mif -force
+		#mrcalc gmwmSeed_coreg_resampled.mif ROIs/ROI_WMc_rh.mif -mult ROIs/intersect_seed_DRTT_lh_teste.mif -force
 		
 		# Right hemisphere
 		mrcalc ../Segmentation/ROIs_tracks.nii.gz 2001 -eq ROIs/ROI_ML_rh.mif -datatype uint8 -force
@@ -103,27 +104,34 @@
 		mrcalc ../Segmentation/ROIs_tracks.nii.gz 2007 -eq ROIs/ROI_STN_rh.mif -datatype uint8 -force
 		mrcalc ../Segmentation/ROIs_tracks.nii.gz 2008 -eq ROIs/ROI_PL_rh.mif -datatype uint8 -force
 		mrcalc ../Segmentation/ROIs_tracks.nii.gz 2009 -eq ROIs/ROI_BS_rh.mif -datatype uint8 -force
-		
+				
 		mrcalc ../Segmentation/cortical_Julich.nii.gz 3047 -eq ../Segmentation/cortical_Julich.nii.gz 3048 -eq -or \
 	    ../Segmentation/cortical_Julich.nii.gz 3086 -eq -or ../Segmentation/cortical_Julich.nii.gz 3087 -eq -or \
 	    ../Segmentation/cortical_Julich.nii.gz 3116 -eq -or ../Segmentation/cortical_Julich.nii.gz 3117 -eq -or ../Segmentation/cortical_Julich.nii.gz 3118 -eq -or \
 	    ../Segmentation/cortical_Julich.nii.gz 3146 -eq -or \
 	    ROIs/ROI_PreCG_rh.mif \
-	    -datatype uint8 -force  #Pre central gyrus regions
+	    -datatype uint8 -force  #Pre central gyrus regions 
 	    
-	    mrcalc ../Segmentation/cortical_Julich.nii.gz 3047 -eq ../Segmentation/cortical_Julich.nii.gz 3048 -eq -or ROIs/ROI_PMC_rh.mif -force  #Primary motor cortex
+	    mrcalc ../Segmentation/cortical_Julich.nii.gz 3047 -eq ../Segmentation/cortical_Julich.nii.gz 3048 -eq -or ROIs/ROI_PMC_rh.mif -force  #Primary motor cortex (4a e 4p)
 	    
 	    mrcalc ../Segmentation/cortical_Julich.nii.gz 3049 -eq ../Segmentation/cortical_Julich.nii.gz 3050 -eq -or \
 	    ../Segmentation/cortical_Julich.nii.gz 3051 -eq -or ../Segmentation/cortical_Julich.nii.gz 3081 -eq -or \
 	    ROIs/ROI_PostCG_PostCS_rh.mif \
-	    -datatype uint8 -force   #Somatosensorial region (PostCG + PostCS)
+	    -datatype uint8 -force   # Somatosensorial region (Post central gyrus + Post CS )
 		
 		mrcalc ../Segmentation/wm_nextbrain.nii.gz 2010 -eq ROIs/ROI_WMf_rh.mif -datatype uint8 -force
 		mrcalc ../Segmentation/wm_nextbrain.nii.gz 2011 -eq ROIs/ROI_WMh_rh.mif -datatype uint8 -force
 		mrcalc ../Segmentation/wm_nextbrain.nii.gz 2012 -eq ROIs/ROI_WMc_rh.mif -datatype uint8 -force
 		
+		mrcalc ../Segmentation/subcortical_nextbrain.nii.gz 1119 -eq ../Segmentation/subcortical_nextbrain.nii.gz 1206 -eq -or ROIs/ROI_GP_rh.mif -force
+		#mrcalc ../Segmentation/subcortical_nextbrain.nii.gz 1048 -eq ROIs/ROI_caudate_rh.mif -force
+		
 		mrconvert ../Segmentation/thalamus_mask_rh.nii.gz ROIs/ROI_thalamus_rh.mif -datatype uint8 -force
 		mrcalc gmwmSeed_coreg_resampled.mif ROIs/ROI_DN_rh.mif -mult ROIs/intersect_seed_DN_rh.mif -force
+		#mrcalc gmwmSeed_coreg_cortical.mif ROIs/ROI_PreCG_rh.mif -mult ROIs/intersect_seed_PreCG_rh.mif -force
+		mrcalc gmwmSeed_coreg_cortical.mif ROIs/ROI_PMC_rh.mif -mult ROIs/intersect_seed_CST_rh.mif -force
+		mrcalc gmwmSeed_coreg_cortical.mif ROIs/ROI_PostCG_PostCS_rh.mif -mult ROIs/intersect_seed_ML_rh.mif -force
+		#mrcalc gmwmSeed_coreg_resampled.mif ROIs/ROI_WMc_rh.mif -mult ROIs/intersect_seed_cerebellum_rh.mif -force
 					
       else
         exit
@@ -133,26 +141,52 @@
 	# 4A.Tract ndDRTT
 	handleTractndDRTT() {
       if [ $EXIST -eq 1 ]; then
+		if [[ "$hemisphere" == "left" ]]; then		
+			tckgen  \
+				-act 5tt_coreg.mif \
+				-backtrack \
+				-seed_gmwmi ROIs/intersect_seed_DN_lh.mif \
+				-select 1100 \
+				-seeds 50M \
+				-include ROIs/ROI_PSA_lh.mif \
+				-include ROIs/ROI_PreCG_lh.mif \
+				-exclude ROIs/ROI_WMf_rh.mif \
+				-exclude ROIs/ROI_WMh_rh.mif \
+				-exclude ROIs/ROI_WMc_rh.mif \
+				-minlength 40 \
+				-angle 30 \
+				-cutoff 0.1 \
+				-seed_unidirectional \
+				-samples 2 \
+				wmfod_norm.mif track_ndDRTT_lh_teste.tck \
+				-force
 				
-		tckgen  \
-			-act 5tt_coreg.mif \
-			-backtrack \
-			-seed_gmwmi ROIs/intersect_seed_DN_lh.mif \
-			-select 1100 \
-			-seeds 50M \
-			-include ROIs/ROI_PSA_lh.mif \
-			-include ROIs/ROI_PreCG_lh.mif \
-			-exclude ROIs/ROI_WMf_rh.mif \
-			-exclude ROIs/ROI_WMh_rh.mif \
-			-exclude ROIs/ROI_WMc_rh.mif \
-			-minlength 40 \
-			-angle 30 \
-			-cutoff 0.1 \
-			-seed_unidirectional \
-			-samples 2 \
-			wmfod_norm.mif track_ndDRTT_lh_teste.tck \
-			-force
-				
+		elif [[ "$hemisphere" == "right" ]]; then
+			tckgen  \
+				-act 5tt_coreg.mif \
+				-backtrack \
+				-seed_gmwmi ROIs/intersect_seed_DN_rh.mif \
+				-select 50 \
+				-seeds 50M \
+				-include ROIs/ROI_PSA_rh.mif \
+				-include ROIs/ROI_PreCG_rh.mif \
+				-exclude ROIs/ROI_WMf_lh.mif \
+				-exclude ROIs/ROI_WMh_lh.mif \
+				-exclude ROIs/ROI_WMc_lh.mif \
+				-minlength 70 \
+				-angle 30 \
+				-cutoff 0.1 \
+				-step 1 \
+				-trials 5000 \
+				-max_attempts_per_seed 5000 \
+				-seed_unidirectional \
+				-samples 2 \
+				wmfod_norm.mif track_ndDRTT_rh.tck \
+				-force
+		else
+			echo hemisfério não definido
+			exit	
+		fi			
       else
         exit
       fi
@@ -161,30 +195,53 @@
     # 4B.Tract DRTT
 	handleTractDRTT() {
       if [ $EXIST -eq 1 ]; then
-				
-		time tckgen  \
-			-act 5tt_coreg.mif \
-			-backtrack \
-			-seed_gmwmi ROIs/ROI_WMc_rh.mif \
-			-select 10 \
-			-seeds 100M \
-			-include ROIs/ROI_PSA_lh.mif \
-			-include ROIs/ROI_PreCG_lh.mif \
-			-exclude ROIs/ROI_WMf_rh.mif \
-			-exclude ROIs/ROI_WMh_lh.mif \
-			-exclude ROIs/ROI_WMc_lh.mif \
-			-exclude ROIs/ROI_GP_lh.mif \
-			-minlength 100 \
-			-angle 20 \
-			-cutoff 0.1 \
-			-step 1 \
-			-trials 5000 \
-			-max_attempts_per_seed 5000 \
-			-seed_unidirectional \
-			-samples 4 \
-			wmfod_norm.mif track_DRTT_lh_teste2.tck \
-			-force
-				
+		echo a
+		#if [[ "$hemisphere" == "left" ]]; then				
+			#time tckgen  \
+				#-act 5tt_coreg.mif \
+				#-backtrack \
+				#-seed_gmwmi ROIs/ROI_WMc_rh.mif \
+				#-select 10 \
+				#-seeds 100M \
+				#-include ROIs/ROI_PSA_lh.mif \
+				#-include ROIs/ROI_PreCG_lh.mif \
+				#-exclude ROIs/ROI_WMf_rh.mif \
+				#-exclude ROIs/ROI_WMh_lh.mif \
+				#-exclude ROIs/ROI_WMc_lh.mif \
+				#-exclude ROIs/ROI_GP_lh.mif \
+				#-minlength 100 \
+				#-angle 20 \
+				#-cutoff 0.1 \
+				#-step 1 \
+				#-trials 5000 \
+				#-max_attempts_per_seed 5000 \
+				#-seed_unidirectional \
+				#-samples 4 \
+				#wmfod_norm.mif track_DRTT_lh_teste2.tck \
+				#-force
+		#elif [[ "$hemisphere" == "right" ]]; then
+			#time tckgen  \
+				#-act 5tt_coreg.mif \
+				#-backtrack \
+				#-seed_gmwmi ROIs/ROI_WMc_lh.mif \
+				#-select 10 \
+				#-seeds 100M \
+				#-include ROIs/ROI_PSA_rh.mif \
+				#-include ROIs/ROI_PreCG_rh.mif \
+				#-exclude ROIs/ROI_WMf_lh.mif \
+				#-exclude ROIs/ROI_WMh_rh.mif \
+				#-exclude ROIs/ROI_WMc_rh.mif \
+				#-exclude ROIs/ROI_GP_rh.mif \
+				#-minlength 100 \
+				#-angle 20 \
+				#-cutoff 0.1 \
+				#-step 1 \
+				#-trials 5000 \
+				#-max_attempts_per_seed 5000 \
+				#-seed_unidirectional \
+				#-samples 4 \
+				#wmfod_norm.mif track_DRTT_rh.tck \
+				#-force
       else
         exit
       fi
@@ -311,7 +368,7 @@
 
     # MAIN FUNCTION
       
-      cd Tractography/
+      cd "$OUT_PRE/Tractography"
       read -p "Would you like to do all the tractography? (y/n):  " yn
       case $yn in
       
@@ -365,17 +422,18 @@
             2)
             FILE=$FILE_2
             fileExistence
-            handleFod;;          
+            handleFringe;;          
           
             3)
             FILE=$FILE_3
             fileExistence
             handleRoiextraction;;
           
-            4)		       
+            4)
+            hemisphere=$(< "../Segmentation/hemisphere.txt")		       
 			echo "Deseja criar uma estimativa de qual trato?"\
 			$'\n'"1.ndDRTT (non-decussating dentato-rubro-thalamic tract)"\
-			$'\n'"2.DRTT (decussating dentato-rubro-thalamic tract)"\
+			$'\n'"2.dDRTT (decussating dentato-rubro-thalamic tract)"\
 			$'\n'"3.CST (corticospinal tract)"\
 			$'\n'"4.ML (medial lemniscus tract)"
 			read -p "Opção: " tract
@@ -389,7 +447,7 @@
 			  2) 
 			  FILE=$FILE_4B
               fileExistence
-			  handleTractDRTT;;
+			  handleTractdDRTT;;
 			  
 			  3) 
 			  FILE=$FILE_4C

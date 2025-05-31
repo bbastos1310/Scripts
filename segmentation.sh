@@ -147,10 +147,8 @@
           mrcat FAmap_Red\(Subtraction\).nii.gz FAmap_Green\(Subtraction\).nii.gz FAmap_Blue\(Subtraction\).nii.gz FAmap\(Subtraction\).nii.gz -force
           mrcat FAmap_Red\(24H\).nii.gz FAmap_Green\(24H\).nii.gz FAmap_Blue\(24H\).nii.gz FAmap\(24H\).nii.gz -force
           
-          mrcalc FAmap\(PRE\).nii.gz 100 -mult -datatype uint8 FAmap_temp.nii.gz -force
-          mrgrid FAmap_temp.nii.gz regrid -template ../T1_upsampled.nii.gz -datatype uint8 -interp linear FAmap_up.nii.gz -force
+          mrgrid FAmap\(PRE\).nii.gz regrid -template ../T1_upsampled.nii.gz -datatype uint8 -interp linear FAmap_up.nii.gz -force
           
-          rm FAmap_temp.nii.gz
           rm FAmap_Red\(PRE\).nii.gz FAmap_Green\(PRE\).nii.gz FAmap_Blue\(PRE\).nii.gz
           rm FAmap_Red\(24H\).nii.gz FAmap_Green\(24H\).nii.gz FAmap_Blue\(24H\).nii.gz
           rm FAmap_Red\(Subtraction\).nii.gz FAmap_Green\(Subtraction\).nii.gz FAmap_Blue\(Subtraction\).nii.gz
@@ -166,9 +164,9 @@
     handleLabel2Image() {
         if [ $EXIST -eq 1 ]; then
           mri_surf2surf --srcsubject fsaverage --trgsubject "$PAT_NUM" --hemi lh --sval-annot "$SUBJECTS_DIR/fsaverage/label/lh.Julich.annot"  --tval "$SUBJECTS_DIR/"$PAT_NUM"/label/lh.JULICH.annot"  
-	  mri_surf2surf --srcsubject fsaverage --trgsubject "$PAT_NUM" --hemi rh --sval-annot "$SUBJECTS_DIR/fsaverage/label/rh.Julich.annot"  --tval "$SUBJECTS_DIR/"$PAT_NUM"/label/rh.JULICH.annot" 
-	  mri_aparc2aseg --new-ribbon --s "$PAT_NUM" --annot JULICH --o output_freesurfer.mgz
-	  mrconvert output_freesurfer.mgz output_freesurfer.nii.gz -force
+		  mri_surf2surf --srcsubject fsaverage --trgsubject "$PAT_NUM" --hemi rh --sval-annot "$SUBJECTS_DIR/fsaverage/label/rh.Julich.annot"  --tval "$SUBJECTS_DIR/"$PAT_NUM"/label/rh.JULICH.annot" 
+		  mri_aparc2aseg --new-ribbon --s "$PAT_NUM" --annot JULICH --o output_freesurfer.mgz
+		  mrconvert output_freesurfer.mgz output_freesurfer.nii.gz -force
 	      
           mrcalc "$HISTO_DIR/seg_left.nii.gz" 314 -eq ROI_rostral_lh.mif -datatype bit -force
           mrgrid ROI_rostral_lh.mif regrid -template Contrast_raw_coreg_24.nii.gz -datatype uint8 -oversample 1,1,1 ROI_rostral_lh_Contrast.nii.gz -force
@@ -177,6 +175,7 @@
           
           python "$SCRIPT_DIR/Python/main_segmentation.py"
           
+          rm ROI_rostral_lh.mif ROI_rostral_rh.mif
           mrgrid cortical_Julich.nii.gz regrid -template T1_upsampled.nii.gz -interp nearest -datatype uint16 cortical_Julich_upsampled.mif -force
           mrcalc cortical_Julich_upsampled.mif subcortical_nextbrain.nii.gz -and - | mrcalc - -not - | mrcalc cortical_Julich_upsampled.mif - -mult -datatype uint16 cortical_Julich_temp.mif -force
           mrcalc cortical_Julich_temp.mif subcortical_nextbrain.nii.gz -add -datatype uint16 full_segmentation.mif -force
