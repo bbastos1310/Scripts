@@ -162,192 +162,192 @@ def auto_threshold(subA, subB):
 	return np.min(dists) + 2.0
 
 
-# def handlePsa(maskA, maskB, hemisphere):
-    # print(f"Post Subthalamic Area ({hemisphere} hemisphere)")
-    # margin=10
+def handlePsa(maskA, maskB, hemisphere):
+    print(f"Post Subthalamic Area ({hemisphere} hemisphere)")
+    margin=10
     
-    # # 1. Determinar o bounding box combinado com margem de segurança
-    # combined = maskA | maskB
-    # coords = np.argwhere(combined)
+    # 1. Determinar o bounding box combinado com margem de segurança
+    combined = maskA | maskB
+    coords = np.argwhere(combined)
     
-    # if len(coords) == 0:
-        # return np.zeros_like(maskA, dtype=bool)
+    if len(coords) == 0:
+        return np.zeros_like(maskA, dtype=bool)
     
-    # mins = np.maximum(coords.min(axis=0) - margin, 0)
-    # maxs = np.minimum(coords.max(axis=0) + margin + 1, maskA.shape)
+    mins = np.maximum(coords.min(axis=0) - margin, 0)
+    maxs = np.minimum(coords.max(axis=0) + margin + 1, maskA.shape)
     
-    # slices = tuple(slice(mins[i], maxs[i]) for i in range(3))
-    # maskA_bb = maskA[slices]
-    # maskB_bb = maskB[slices]
-    # distance_threshold = auto_threshold(maskA_bb, maskB_bb)
+    slices = tuple(slice(mins[i], maxs[i]) for i in range(3))
+    maskA_bb = maskA[slices]
+    maskB_bb = maskB[slices]
+    distance_threshold = auto_threshold(maskA_bb, maskB_bb)
     
-    # distA_bb = distance_transform_edt(~maskA_bb)
-    # distB_bb = distance_transform_edt(~maskB_bb)
+    distA_bb = distance_transform_edt(~maskA_bb)
+    distB_bb = distance_transform_edt(~maskB_bb)
     
-    # proximity_mask_bb = (distA_bb <= distance_threshold) & (distB_bb <= distance_threshold)
+    proximity_mask_bb = (distA_bb <= distance_threshold) & (distB_bb <= distance_threshold)
     
-    # combined_bb = maskA_bb | maskB_bb
-    # ijk_bb = np.array(np.nonzero(combined_bb)).T
+    combined_bb = maskA_bb | maskB_bb
+    ijk_bb = np.array(np.nonzero(combined_bb)).T
     
-    # if len(ijk_bb) < 4:
-        # hull_mask_bb = np.ones_like(combined_bb, dtype=bool)
-    # else:
-        # hull = ConvexHull(ijk_bb)
+    if len(ijk_bb) < 4:
+        hull_mask_bb = np.ones_like(combined_bb, dtype=bool)
+    else:
+        hull = ConvexHull(ijk_bb)
         
-        # # Criar grid apenas dentro do bounding box
-        # grid_shape = tuple(maxs - mins)
-        # grid_coords = np.array(np.indices(grid_shape)).reshape(3, -1).T
+        # Criar grid apenas dentro do bounding box
+        grid_shape = tuple(maxs - mins)
+        grid_coords = np.array(np.indices(grid_shape)).reshape(3, -1).T
         
-        # # Testar pontos dentro do convex hull
-        # vals = hull.equations[:, :3].dot(grid_coords.T) + hull.equations[:, 3:4]
-        # inside = np.all(vals <= 0, axis=0)
-        # hull_mask_bb = inside.reshape(grid_shape)
+        # Testar pontos dentro do convex hull
+        vals = hull.equations[:, :3].dot(grid_coords.T) + hull.equations[:, 3:4]
+        inside = np.all(vals <= 0, axis=0)
+        hull_mask_bb = inside.reshape(grid_shape)
     
-    # between_bb = hull_mask_bb & proximity_mask_bb & ~combined_bb
+    between_bb = hull_mask_bb & proximity_mask_bb & ~combined_bb
     
-    # between = np.zeros_like(maskA, dtype=bool)
-    # between[slices] = between_bb
-    # print(f"{between[between == True].size} voxels.")
+    between = np.zeros_like(maskA, dtype=bool)
+    between[slices] = between_bb
+    print(f"{between[between == True].size} voxels.")
     
-    # return between
+    return between
     
-def handlePsa(data_seg,map_RN, map_STN,hemisphere):
-	print(f"Post Subthalamic Area ({hemisphere} hemisphere)")
-	mask_temp_RN = np.zeros((640,640), dtype=bool)
-	mask_temp_STN = np.zeros((640,640), dtype=bool)
-	mask_temp_regions = np.zeros((640,640), dtype=bool)
-	mask_temp_line = np.zeros((640,640), dtype=bool)
-	mask_temp_side = np.zeros((640,640), dtype=bool)
-	mask_PSA = np.zeros(data_seg.shape, dtype=bool)
+# def handlePsa(data_seg,map_RN, map_STN,hemisphere):
+	# print(f"Post Subthalamic Area ({hemisphere} hemisphere)")
+	# mask_temp_RN = np.zeros((640,640), dtype=bool)
+	# mask_temp_STN = np.zeros((640,640), dtype=bool)
+	# mask_temp_regions = np.zeros((640,640), dtype=bool)
+	# mask_temp_line = np.zeros((640,640), dtype=bool)
+	# mask_temp_side = np.zeros((640,640), dtype=bool)
+	# mask_PSA = np.zeros(data_seg.shape, dtype=bool)
 	
-	if hemisphere == 'left':
-		kmin_RN = np.where(map_RN != 0)[2].min()
-		kmax_RN = np.where(map_RN != 0)[2].max()
+	# if hemisphere == 'left':
+		# kmin_RN = np.where(map_RN != 0)[2].min()
+		# kmax_RN = np.where(map_RN != 0)[2].max()
 		
-		kmin_STN = np.where(map_STN != 0)[2].min()
-		kmax_STN = np.where(map_STN != 0)[2].max()
+		# kmin_STN = np.where(map_STN != 0)[2].min()
+		# kmax_STN = np.where(map_STN != 0)[2].max()
 		
-		min_k = max(kmin_RN, kmin_STN)
-		max_k = min(kmax_RN, kmax_STN)
+		# min_k = max(kmin_RN, kmin_STN)
+		# max_k = min(kmax_RN, kmax_STN)
 		
-		for k_slice in range(min_k, max_k + 1):
-			# min_dif = np.inf
-			# for k in range(min_k, max_k + 1):
-			  # len_RN = map_RN[:,:,k][map_RN[:,:,k] == True].size
-			  # len_STN = map_STN[:,:,k][map_STN[:,:,k] == True].size
-			  # dif = np.abs(len_RN - len_STN)
-			  # if dif < min_dif:
-				  # k_slice = k
-				  # min_dif = dif	
+		# for k_slice in range(min_k, max_k + 1):
+			# # min_dif = np.inf
+			# # for k in range(min_k, max_k + 1):
+			  # # len_RN = map_RN[:,:,k][map_RN[:,:,k] == True].size
+			  # # len_STN = map_STN[:,:,k][map_STN[:,:,k] == True].size
+			  # # dif = np.abs(len_RN - len_STN)
+			  # # if dif < min_dif:
+				  # # k_slice = k
+				  # # min_dif = dif	
 		
-			imin_RN = np.where(map_RN[:,:,k_slice])[0].min()
-			jmax_RN = np.where(map_RN[:,:,k_slice])[1].max()
-			mask_temp_RN[imin_RN:,:jmax_RN + 1] = True
+			# imin_RN = np.where(map_RN[:,:,k_slice])[0].min()
+			# jmax_RN = np.where(map_RN[:,:,k_slice])[1].max()
+			# mask_temp_RN[imin_RN:,:jmax_RN + 1] = True
 			
-			imax_STN = np.where(map_STN[:,:,k_slice])[0].max()
-			jmin_STN = np.where(map_STN[:,:,k_slice])[1].min()
-			mask_temp_STN[:imax_STN + 1,jmin_STN:] = True
+			# imax_STN = np.where(map_STN[:,:,k_slice])[0].max()
+			# jmin_STN = np.where(map_STN[:,:,k_slice])[1].min()
+			# mask_temp_STN[:imax_STN + 1,jmin_STN:] = True
 			
-			mask_temp_regions[data_seg[:,:,k_slice] == 435] = True
-			mask_temp_regions[data_seg[:,:,k_slice] == 384] = True
+			# mask_temp_regions[data_seg[:,:,k_slice] == 435] = True
+			# mask_temp_regions[data_seg[:,:,k_slice] == 384] = True
 			
-			i1_point = np.where(map_STN[:,:,k_slice] != 0)[1].max()
-			j1_point = np.where(map_STN[:,i1_point,k_slice] != 0)[0].min()
-			j2_point = np.where(map_STN[:,:,k_slice] != 0)[0].min()
-			i2_point = np.where(map_STN[j2_point,:,k_slice] != 0)[0].max()
-			i3_point = np.where(map_RN[:,:,k_slice] != 0)[1].max()
-			j3_point = np.where(map_RN[:,i3_point,k_slice] != 0)[0].max()
-			i4_point = np.where(map_RN[:,:,k_slice] != 0)[1].min()
-			j4_point = np.where(map_RN[:,i4_point,k_slice] != 0)[0].min()
-			x = np.arange(data_seg.shape[0])
-			y = np.arange(data_seg.shape[1])
-			i_grid, j_grid = np.meshgrid(x, y)	
-			if (i1_point != i2_point):
-				a,b = functions.linearfunctionPoints(i1_point,j1_point,i2_point,j2_point)
-				b2 = functions.linearfunctionCoeficient(-1/a,i3_point,j3_point)
-				b3 = functions.linearfunctionCoeficient(-1/a,i4_point,j4_point)
-				mask_temp_line = (j_grid < ((-1/a) * i_grid + b2)) & (j_grid > ((-1/a) * i_grid + b3))
-			else:
-				mask_temp_line = (i_grid < i1_point) & (i_grid > i3_point)
+			# i1_point = np.where(map_STN[:,:,k_slice] != 0)[1].max()
+			# j1_point = np.where(map_STN[:,i1_point,k_slice] != 0)[0].min()
+			# j2_point = np.where(map_STN[:,:,k_slice] != 0)[0].min()
+			# i2_point = np.where(map_STN[j2_point,:,k_slice] != 0)[0].max()
+			# i3_point = np.where(map_RN[:,:,k_slice] != 0)[1].max()
+			# j3_point = np.where(map_RN[:,i3_point,k_slice] != 0)[0].max()
+			# i4_point = np.where(map_RN[:,:,k_slice] != 0)[1].min()
+			# j4_point = np.where(map_RN[:,i4_point,k_slice] != 0)[0].min()
+			# x = np.arange(data_seg.shape[0])
+			# y = np.arange(data_seg.shape[1])
+			# i_grid, j_grid = np.meshgrid(x, y)	
+			# if (i1_point != i2_point):
+				# a,b = functions.linearfunctionPoints(i1_point,j1_point,i2_point,j2_point)
+				# b2 = functions.linearfunctionCoeficient(-1/a,i3_point,j3_point)
+				# b3 = functions.linearfunctionCoeficient(-1/a,i4_point,j4_point)
+				# mask_temp_line = (j_grid < ((-1/a) * i_grid + b2)) & (j_grid > ((-1/a) * i_grid + b3))
+			# else:
+				# mask_temp_line = (i_grid < i1_point) & (i_grid > i3_point)
 			
-			jmin_slice = np.where(map_RN[:,:,k_slice] != 0)[1].min()
-			jmax_slice = np.where(map_RN[:,:,k_slice] != 0)[1].max()
+			# jmin_slice = np.where(map_RN[:,:,k_slice] != 0)[1].min()
+			# jmax_slice = np.where(map_RN[:,:,k_slice] != 0)[1].max()
 
-			for j in range(jmin_slice, jmax_slice + 1):
-				try:
-					imin_line = np.where(map_RN[:,j,k_slice] != 0)[0].min()
-					mask_temp_side[:imin_line,j] = True
-				except ValueError:
-					imin_line = None
-					mask_temp_side[:,j] = True
+			# for j in range(jmin_slice, jmax_slice + 1):
+				# try:
+					# imin_line = np.where(map_RN[:,j,k_slice] != 0)[0].min()
+					# mask_temp_side[:imin_line,j] = True
+				# except ValueError:
+					# imin_line = None
+					# mask_temp_side[:,j] = True
 			  
-			mask_PSA[:,:,k_slice] = mask_temp_RN & mask_temp_STN & mask_temp_regions & mask_temp_line & ~mask_temp_side & ~map_RN[:,:,k_slice]
+			# mask_PSA[:,:,k_slice] = mask_temp_RN & mask_temp_STN & mask_temp_regions & mask_temp_line & ~mask_temp_side & ~map_RN[:,:,k_slice]
 	
-	if hemisphere == 'right':
-		kmin_RN = np.where(map_RN != 0)[2].min()
-		kmax_RN = np.where(map_RN != 0)[2].max()
+	# if hemisphere == 'right':
+		# kmin_RN = np.where(map_RN != 0)[2].min()
+		# kmax_RN = np.where(map_RN != 0)[2].max()
 		
-		kmin_STN = np.where(map_STN != 0)[2].min()
-		kmax_STN = np.where(map_STN != 0)[2].max()
+		# kmin_STN = np.where(map_STN != 0)[2].min()
+		# kmax_STN = np.where(map_STN != 0)[2].max()
 		
-		min_k = max(kmin_RN, kmin_STN)
-		max_k = min(kmax_RN, kmax_STN)
+		# min_k = max(kmin_RN, kmin_STN)
+		# max_k = min(kmax_RN, kmax_STN)
 		
-		for k_slice in range(min_k, max_k + 1):
-			# min_dif = np.inf
-			# for k in range(min_k, max_k + 1):
-			  # len_RN = map_RN[:,:,k][map_RN[:,:,k] == True].size
-			  # len_STN = map_STN[:,:,k][map_STN[:,:,k] == True].size
-			  # dif = np.abs(len_RN - len_STN)
-			  # if dif < min_dif:
-				  # k_slice = k
-				  # min_dif = dif
+		# for k_slice in range(min_k, max_k + 1):
+			# # min_dif = np.inf
+			# # for k in range(min_k, max_k + 1):
+			  # # len_RN = map_RN[:,:,k][map_RN[:,:,k] == True].size
+			  # # len_STN = map_STN[:,:,k][map_STN[:,:,k] == True].size
+			  # # dif = np.abs(len_RN - len_STN)
+			  # # if dif < min_dif:
+				  # # k_slice = k
+				  # # min_dif = dif
 
-			imax_RN = np.where(map_RN[:,:,k_slice])[0].max()
-			jmax_RN = np.where(map_RN[:,:,k_slice])[1].max()	
-			mask_temp_RN[:imax_RN + 1,:jmax_RN + 1] = True
+			# imax_RN = np.where(map_RN[:,:,k_slice])[0].max()
+			# jmax_RN = np.where(map_RN[:,:,k_slice])[1].max()	
+			# mask_temp_RN[:imax_RN + 1,:jmax_RN + 1] = True
 
-			imin_STN = np.where(map_STN[:,:,k_slice])[0].min()
-			jmin_STN = np.where(map_STN[:,:,k_slice])[1].min()
-			mask_temp_STN[imin_STN:,jmin_STN:] = True
+			# imin_STN = np.where(map_STN[:,:,k_slice])[0].min()
+			# jmin_STN = np.where(map_STN[:,:,k_slice])[1].min()
+			# mask_temp_STN[imin_STN:,jmin_STN:] = True
 
-			mask_temp_regions[data_seg[:,:,k_slice] == 1435] = True
-			mask_temp_regions[data_seg[:,:,k_slice] == 1384] = True
+			# mask_temp_regions[data_seg[:,:,k_slice] == 1435] = True
+			# mask_temp_regions[data_seg[:,:,k_slice] == 1384] = True
 			
-			i1_point = np.where(map_STN[:,:,k_slice] != 0)[1].max()
-			j1_point = np.where(map_STN[:,i1_point,k_slice] != 0)[0].max()
-			j2_point = np.where(map_STN[:,:,k_slice] != 0)[0].max()
-			i2_point = np.where(map_STN[j2_point,:,k_slice] != 0)[0].max()
-			i3_point = np.where(map_RN[:,:,k_slice] != 0)[1].max()
-			j3_point = np.where(map_RN[:,i3_point,k_slice] != 0)[0].min()
-			i4_point = np.where(map_RN[:,:,k_slice] != 0)[1].min()
-			j4_point = np.where(map_RN[:,i4_point,k_slice] != 0)[0].max()
-			x = np.arange(data_seg.shape[0])
-			y = np.arange(data_seg.shape[1])
-			i_grid, j_grid = np.meshgrid(x, y)	
-			if (i1_point != i2_point):
-				a,b = functions.linearfunctionPoints(i1_point,j1_point,i2_point,j2_point)
-				b2 = functions.linearfunctionCoeficient(-1/a,i3_point,j3_point)
-				b3 = functions.linearfunctionCoeficient(-1/a,i4_point,j4_point)
-				mask_temp_line = (j_grid > ((-1/a) * i_grid + b2)) & (j_grid < ((-1/a) * i_grid + b3))		
-			else:
-				mask_temp_line = (i_grid < i1_point) & (i_grid > i3_point)
+			# i1_point = np.where(map_STN[:,:,k_slice] != 0)[1].max()
+			# j1_point = np.where(map_STN[:,i1_point,k_slice] != 0)[0].max()
+			# j2_point = np.where(map_STN[:,:,k_slice] != 0)[0].max()
+			# i2_point = np.where(map_STN[j2_point,:,k_slice] != 0)[0].max()
+			# i3_point = np.where(map_RN[:,:,k_slice] != 0)[1].max()
+			# j3_point = np.where(map_RN[:,i3_point,k_slice] != 0)[0].min()
+			# i4_point = np.where(map_RN[:,:,k_slice] != 0)[1].min()
+			# j4_point = np.where(map_RN[:,i4_point,k_slice] != 0)[0].max()
+			# x = np.arange(data_seg.shape[0])
+			# y = np.arange(data_seg.shape[1])
+			# i_grid, j_grid = np.meshgrid(x, y)	
+			# if (i1_point != i2_point):
+				# a,b = functions.linearfunctionPoints(i1_point,j1_point,i2_point,j2_point)
+				# b2 = functions.linearfunctionCoeficient(-1/a,i3_point,j3_point)
+				# b3 = functions.linearfunctionCoeficient(-1/a,i4_point,j4_point)
+				# mask_temp_line = (j_grid > ((-1/a) * i_grid + b2)) & (j_grid < ((-1/a) * i_grid + b3))		
+			# else:
+				# mask_temp_line = (i_grid < i1_point) & (i_grid > i3_point)
 			
-			jmin_slice = np.where(map_RN[:,:,k_slice] != 0)[1].min()
-			jmax_slice = np.where(map_RN[:,:,k_slice] != 0)[1].max()
+			# jmin_slice = np.where(map_RN[:,:,k_slice] != 0)[1].min()
+			# jmax_slice = np.where(map_RN[:,:,k_slice] != 0)[1].max()
 			
-			for j in range(jmin_slice, jmax_slice + 1):
-				try:
-					imax_line = np.where(map_RN[:,j,k_slice] != 0)[0].max()
-					mask_temp_side[imax_line:,j] = True
-				except ValueError:
-					imax_line = None
-					mask_temp_side[:,j] = True 
+			# for j in range(jmin_slice, jmax_slice + 1):
+				# try:
+					# imax_line = np.where(map_RN[:,j,k_slice] != 0)[0].max()
+					# mask_temp_side[imax_line:,j] = True
+				# except ValueError:
+					# imax_line = None
+					# mask_temp_side[:,j] = True 
 			  
-			mask_PSA[:,:,k_slice] = mask_temp_RN & mask_temp_STN & mask_temp_regions & mask_temp_line & ~mask_temp_side & ~map_RN[:,:,k_slice]
+			# mask_PSA[:,:,k_slice] = mask_temp_RN & mask_temp_STN & mask_temp_regions & mask_temp_line & ~mask_temp_side & ~map_RN[:,:,k_slice]
 	
-	print(f"{mask_PSA[mask_PSA == True].size} voxels.")
-	return mask_PSA
+	# print(f"{mask_PSA[mask_PSA == True].size} voxels.")
+	# return mask_PSA
 	
 def handleLesionmask(data_Contrast, data_Contrast_24, data_rostral_lh, data_rostral_rh, Contrast):
 	print(f"Lesion's mask")
