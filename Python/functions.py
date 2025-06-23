@@ -180,7 +180,6 @@ def connectedComponents(mask):
 		largest_region = max(regions, key=lambda x: x.area)
 		mask_filtered = (labeled_mask == largest_region.label)
 	else:
-		print("Nenhum componente encontrado.")
 		mask_filtered = np.zeros_like(mask, dtype=bool)
 	
 	return mask_filtered

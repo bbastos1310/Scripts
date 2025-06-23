@@ -157,24 +157,69 @@
 	handleTractndDRTT() {
       if [ $EXIST -eq 1 ]; then
 		if [[ "$hemisphere" == "left" ]]; then		
+			TRACK="ndDRTT"
+			time tckgen  \
+				-act 5tt_coreg.mif \
+				-seed_image ROIs/ROI_DN_lh.mif \
+				-select 2000 \
+				-seeds 100M \
+				-include ROIs/ROI_PSA_lh.mif \
+				-include ROIs/ROI_VL_lh.mif \
+				-exclude ROIs/ROI_WMf_rh.mif \
+				-exclude ROIs/ROI_WMh_rh.mif \
+				-exclude ROIs/ROI_WMc_rh.mif \
+				-minlength 40 \
+				-angle 20 \
+				-cutoff 0.1 \
+				-step 1 \
+				-samples 2 \
+				-trials 500 \
+				-max_attempts_per_seed 500 \
+				-seed_unidirectional \
+				-stop \
+				wmfod_norm.mif track_ndDRTT_1_lh.tck \
+				-nthreads 4 \
+				-info \
+				-force
+				
+			tckmap track_ndDRTT_1_lh.tck \
+				-template ../Segmentation/T1_upsampled.nii.gz \
+				-ends_only \
+				partials_ends_only.mif \
+				-force
+			mrcalc partials_ends_only.mif ROIs/ROI_thalamus_lh.mif -mult ends_only.mif -force
+			rm partials_ends_only.mif
+			
+			#python "$SCRIPT_DIR/Python/tract_mask.py"	
+			#maskfilter mask_track_ndDRTT_rh.nii.gz dilate mask_dilated.nii.gz -npass 25 -force
+			#mrcalc mask_dilated.nii.gz 0 -eq mask_inf_sup.nii.gz 1 -eq -and mask_exclude_ndDRTT.mif -datatype uint8 -force
+			
 			time tckgen  \
 				-act 5tt_coreg.mif \
 				-backtrack \
-				-seed_gmwmi ROIs/intersect_seed_DN_lh.mif \
-				-select 1100 \
+				-seed_image ends_only.mif \
+				-select 2000 \
 				-seeds 50M \
-				-include ROIs/ROI_PSA_lh.mif \
+				-include ROIs/ROI_PL_lh.mif \
 				-include ROIs/ROI_PreCG_lh.mif \
 				-exclude ROIs/ROI_WMf_rh.mif \
 				-exclude ROIs/ROI_WMh_rh.mif \
 				-exclude ROIs/ROI_WMc_rh.mif \
 				-minlength 40 \
-				-angle 30 \
+				-angle 20 \
 				-cutoff 0.1 \
-				-seed_unidirectional \
+				-step 1 \
 				-samples 2 \
-				wmfod_norm.mif track_ndDRTT_lh_teste.tck \
+				-trials 500 \
+				-max_attempts_per_seed 500 \
+				-seed_unidirectional \
+				wmfod_norm.mif track_ndDRTT_2_lh.tck \
+				-nthreads 4 \
+				-info \
 				-force
+				
+			rm ends_only.mif
+			tckedit track_ndDRTT_1_lh.tck track_ndDRTT_2_lh.tck track_ndDRTT_lh.tck -force
 				
 		elif [[ "$hemisphere" == "right" ]]; then
 			TRACK="ndDRTT"
@@ -197,12 +242,12 @@
 				-max_attempts_per_seed 500 \
 				-seed_unidirectional \
 				-stop \
-				wmfod_norm.mif track_ndDRTT_rh_DN.tck \
+				wmfod_norm.mif track_ndDRTT_1_rh.tck \
 				-nthreads 4 \
 				-info \
 				-force
 				
-			tckmap track_ndDRTT_rh_DN.tck \
+			tckmap track_ndDRTT_1_rh.tck \
 				-template ../Segmentation/T1_upsampled.nii.gz \
 				-ends_only \
 				partials_ends_only.mif \
@@ -233,13 +278,13 @@
 				-trials 500 \
 				-max_attempts_per_seed 500 \
 				-seed_unidirectional \
-				wmfod_norm.mif track_ndDRTT_rh_VL.tck \
+				wmfod_norm.mif track_ndDRTT_2_rh.tck \
 				-nthreads 4 \
 				-info \
 				-force
 				
 			rm ends_only.mif
-			tckedit track_ndDRTT_rh_DN.tck track_ndDRTT_rh_VL.tck track_ndDRTT_rh.tck -force
+			tckedit track_ndDRTT_1_rh.tck track_ndDRTT_2_rh.tck track_ndDRTT_rh.tck -force
 
 		else
 			echo hemisfério não definido
@@ -254,27 +299,68 @@
 	handleTractdDRTT() {
       if [ $EXIST -eq 1 ]; then
 		if [[ "$hemisphere" == "left" ]]; then				
+			TRACK="dDRTT"
 			time tckgen  \
 				-act 5tt_coreg.mif \
-				-backtrack \
-				-seed_gmwmi ROIs/ROI_WMc_rh.mif \
-				-select 5 \
+				-seed_image ROIs/ROI_DN_rh.mif \
+				-select 2000 \
 				-seeds 100M \
 				-include ROIs/ROI_PSA_lh.mif \
-				-include ROIs/ROI_PreCG_lh.mif \
+				-include ROIs/ROI_VL_lh.mif \
 				-exclude ROIs/ROI_WMf_rh.mif \
 				-exclude ROIs/ROI_WMh_lh.mif \
 				-exclude ROIs/ROI_WMc_lh.mif \
-				-minlength 100 \
+				-minlength 60 \
 				-angle 20 \
 				-cutoff 0.1 \
 				-step 1 \
-				-trials 3000 \
-				-max_attempts_per_seed 3000 \
+				-trials 500 \
+				-max_attempts_per_seed 500 \
 				-seed_unidirectional \
+				-stop \
 				-samples 2 \
-				wmfod_norm.mif track_DRTT_lh_teste2.tck \
+				wmfod_norm.mif track_dDRTT_1_lh.tck \
+				-nthreads 4 \
+				-info \
 				-force
+			
+			tckmap track_dDRTT_1_lh.tck \
+				-template ../Segmentation/T1_upsampled.nii.gz \
+				-ends_only \
+				partials_ends_only.mif \
+				-force
+			mrcalc partials_ends_only.mif ROIs/ROI_thalamus_lh.mif -mult ends_only.mif -force
+			rm partials_ends_only.mif	
+			#python "$SCRIPT_DIR/Python/tract_mask.py" "$TRACK"	
+			#maskfilter mask_track_DRTT_rh.nii.gz dilate mask_dilated.nii.gz -npass 25 -force
+			#mrcalc mask_dilated.nii.gz 0 -eq mask_inf_sup.nii.gz 1 -eq -and mask_exclude_DRTT.mif -datatype uint8 -force
+			
+			time tckgen  \
+				-act 5tt_coreg.mif \
+				-backtrack \
+				-seed_image ends_only.mif \
+				-select 2000 \
+				-seeds 100M \
+				-include ROIs/ROI_PL_lh.mif \
+				-include ROIs/ROI_PreCG_lh.mif \
+				-exclude ROIs/ROI_WMf_rh.mif \
+				-exclude ROIs/ROI_WMh_rh.mif \
+				-exclude ROIs/ROI_WMc_rh.mif \
+				-minlength 40 \
+				-angle 20 \
+				-cutoff 0.1 \
+				-step 1 \
+				-samples 2 \
+				-trials 500 \
+				-max_attempts_per_seed 500 \
+				-seed_unidirectional \
+				wmfod_norm.mif track_dDRTT_2_lh.tck \
+				-nthreads 4 \
+				-info \
+				-force
+				
+			rm ends_only.mif
+			tckedit track_dDRTT_1_lh.tck track_dDRTT_2_lh.tck track_dDRTT_lh.tck -force
 		
 		elif [[ "$hemisphere" == "right" ]]; then
 			TRACK="dDRTT"
@@ -297,12 +383,12 @@
 				-seed_unidirectional \
 				-stop \
 				-samples 2 \
-				wmfod_norm.mif track_dDRTT_rh_DN.tck \
+				wmfod_norm.mif track_dDRTT_1_rh.tck \
 				-nthreads 4 \
 				-info \
 				-force
 			
-			tckmap track_dDRTT_rh_DN.tck \
+			tckmap track_dDRTT_1_rh.tck \
 				-template ../Segmentation/T1_upsampled.nii.gz \
 				-ends_only \
 				partials_ends_only.mif \
@@ -332,13 +418,13 @@
 				-trials 500 \
 				-max_attempts_per_seed 500 \
 				-seed_unidirectional \
-				wmfod_norm.mif track_dDRTT_rh_VL.tck \
+				wmfod_norm.mif track_dDRTT_2_rh.tck \
 				-nthreads 4 \
 				-info \
 				-force
 				
 			rm ends_only.mif
-			tckedit track_dDRTT_rh_DN.tck track_dDRTT_rh_VL.tck track_dDRTT_rh.tck -force
+			tckedit track_dDRTT_1_rh.tck track_dDRTT_2_rh.tck track_dDRTT_rh.tck -force
 			
 		else
 			echo hemisfério não definido
@@ -353,54 +439,40 @@
 	handleTractCST() {
       if [ $EXIST -eq 1 ]; then
 		if [[ "$hemisphere" == "left" ]]; then	
-			tckgen  \
+			TRACK="CST"
+							
+			#python "$SCRIPT_DIR/Python/tract_mask.py" "$TRACK"	
+			#maskfilter mask_track_CST_rh.nii.gz dilate mask_dilated.nii.gz -npass 25 -force
+			#mrcalc mask_dilated.nii.gz 0 -eq mask_inf_sup.nii.gz 1 -eq -and mask_exclude_CST.mif -datatype uint8 -force
+			
+			time tckgen  \
 				-act 5tt_coreg.mif \
 				-backtrack \
-				-seed_gmwmi ROIs/intersect_seed_CST_lh.mif \
-				-select 10500 \
-				-seeds 50M \
-				-include ROIs/ROI_CP_lh.mif \
+				-seed_gmwmi ROIs/ROI_PMC_lh.mif \
+				-select 2000 \
+				-seeds 100M \
 				-include ROIs/ROI_PL_lh.mif \
+				-include ROIs/ROI_CP_lh.mif \
 				-exclude ROIs/ROI_WMf_rh.mif \
 				-exclude ROIs/ROI_WMh_rh.mif \
 				-exclude ROIs/ROI_WMc_rh.mif \
 				-exclude ROIs/ROI_WMc_lh.mif \
-				-minlength 90 \
+				-minlength 60 \
 				-angle 20 \
-				-cutoff 0.2 \
+				-cutoff 0.1 \
 				-step 1 \
+				-trials 500 \
+				-max_attempts_per_seed 500 \
 				-seed_unidirectional \
 				-samples 2 \
 				wmfod_norm.mif track_CST_lh.tck \
+				-nthreads 4 \
+				-info \
 				-force
-		
+					
 		elif [[ "$hemisphere" == "right" ]]; then
 			TRACK="CST"
-			#time tckgen  \
-				#-act 5tt_coreg.mif \
-				#-backtrack \
-				#-seed_gmwmi ROIs/ROI_PMC_rh.mif \
-				#-select 20 \
-				#-seeds 1M \
-				#-include ROIs/ROI_CP_rh.mif \
-				#-include ROIs/ROI_PL_rh.mif \
-				#-exclude ROIs/ROI_WMf_lh.mif \
-				#-exclude ROIs/ROI_WMh_lh.mif \
-				#-exclude ROIs/ROI_WMc_lh.mif \
-				#-exclude ROIs/ROI_WMc_rh.mif \
-				#-minlength 60 \
-				#-angle 20 \
-				#-cutoff 0.1 \
-				#-step 1 \
-				#-trials 5000 \
-				#-max_attempts_per_seed 5000 \
-				#-seed_unidirectional \
-				#-samples 2 \
-				#wmfod_norm.mif track_CST_rh_tmp.tck \
-				#-nthreads 4 \
-				#-info \
-				#-force
-				
+							
 			#python "$SCRIPT_DIR/Python/tract_mask.py" "$TRACK"	
 			#maskfilter mask_track_CST_rh.nii.gz dilate mask_dilated.nii.gz -npass 25 -force
 			#mrcalc mask_dilated.nii.gz 0 -eq mask_inf_sup.nii.gz 1 -eq -and mask_exclude_CST.mif -datatype uint8 -force
@@ -411,8 +483,8 @@
 				-seed_gmwmi ROIs/ROI_PMC_rh.mif \
 				-select 2000 \
 				-seeds 100M \
-				-include ROIs/ROI_CP_rh.mif \
 				-include ROIs/ROI_PL_rh.mif \
+				-include ROIs/ROI_CP_rh.mif \
 				-exclude ROIs/ROI_WMf_lh.mif \
 				-exclude ROIs/ROI_WMh_lh.mif \
 				-exclude ROIs/ROI_WMc_lh.mif \
@@ -429,9 +501,7 @@
 				-nthreads 4 \
 				-info \
 				-force
-			
-			rm track_CST_rh_tmp.tck mask_track_CST_rh.nii.gz mask_exclude_CST.mif mask_inf_sup.nii.gz mask_dilated.nii.gz
-				
+							
 		else
 			echo hemisfério não definido
 			exit	
@@ -445,28 +515,72 @@
 	handleTractML() {
       if [ $EXIST -eq 1 ]; then
 		if [[ "$hemisphere" == "left" ]]; then		
+			TRACK="ML"
+						
 			time tckgen  \
 				-act 5tt_coreg.mif \
-				-backtrack \
-				-seed_gmwmi ROIs/intersect_seed_ML_lh.mif \
-				-select 20 \
+				-seed_image ROIs/ROI_MO_lh.mif \
+				-select 2000 \
 				-seeds 100M \
 				-include ROIs/ROI_ML_lh.mif \
-				-include ROIs/ROI_PL_lh.mif \
-				-include ROIs/ROI_BS_lh.mif \
+				-include ROIs/ROI_VPL_lh.mif \
 				-exclude ROIs/ROI_WMf_rh.mif \
 				-exclude ROIs/ROI_WMh_rh.mif \
 				-exclude ROIs/ROI_WMc_rh.mif \
 				-exclude ROIs/ROI_WMc_lh.mif \
 				-exclude ROIs/ROI_BS_rh.mif \
-				-minlength 40 \
+				-minlength 60 \
 				-angle 20 \
 				-cutoff 0.1 \
 				-step 1 \
+				-trials 500 \
+				-max_attempts_per_seed 500 \
+				-seed_direction 0,0,1 \
+				-seed_unidirectional \
+				-stop \
+				-samples 2 \
+				wmfod_norm.mif track_ML_1_lh.tck \
+				-nthreads 4 \
+				-info \
+				-force
+				
+			tckmap track_ML_1_lh.tck \
+				-template ../Segmentation/T1_upsampled.nii.gz \
+				-ends_only \
+				partials_ends_only.mif \
+				-force
+			mrcalc partials_ends_only.mif ROIs/ROI_thalamus_lh.mif -mult ends_only.mif -force
+			rm partials_ends_only.mif	
+				
+			time tckgen  \
+				-act 5tt_coreg.mif \
+				-backtrack \
+				-seed_image ends_only.mif \
+				-select 2000 \
+				-seeds 100M \
+				-include ROIs/ROI_PL_lh.mif \
+				-include ROIs/ROI_PostCG_PostCS_lh.mif \
+				-exclude ROIs/ROI_WMf_rh.mif \
+				-exclude ROIs/ROI_WMh_rh.mif \
+				-exclude ROIs/ROI_WMc_rh.mif \
+				-exclude ROIs/ROI_WMc_lh.mif \
+				-exclude ROIs/ROI_BS_rh.mif \
+				-minlength 60 \
+				-angle 20 \
+				-cutoff 0.1 \
+				-step 1 \
+				-trials 500 \
+				-max_attempts_per_seed 500 \
 				-seed_unidirectional \
 				-samples 2 \
-				wmfod_norm.mif track_ML_lh_teste.tck \
+				wmfod_norm.mif track_ML_2_lh.tck \
+				-nthreads 4 \
+				-info \
 				-force
+				
+			rm ends_only.mif
+			tckedit track_ML_1_lh.tck track_ML_2_lh.tck track_ML_lh.tck -force
+			
 		elif [[ "$hemisphere" == "right" ]]; then
 			TRACK="ML"
 						
@@ -492,12 +606,12 @@
 				-seed_unidirectional \
 				-stop \
 				-samples 2 \
-				wmfod_norm.mif track_ML_rh_MO.tck \
+				wmfod_norm.mif track_ML_1_rh.tck \
 				-nthreads 4 \
 				-info \
 				-force
 				
-			tckmap track_ML_rh_MO.tck \
+			tckmap track_ML_1_rh.tck \
 				-template ../Segmentation/T1_upsampled.nii.gz \
 				-ends_only \
 				partials_ends_only.mif \
@@ -526,13 +640,13 @@
 				-max_attempts_per_seed 500 \
 				-seed_unidirectional \
 				-samples 2 \
-				wmfod_norm.mif track_ML_rh_PL.tck \
+				wmfod_norm.mif track_ML_2_rh.tck \
 				-nthreads 4 \
 				-info \
 				-force
 				
 			rm ends_only.mif
-			tckedit track_ML_rh_MO.tck track_ML_rh_PL.tck track_ML_rh.tck -force
+			tckedit track_ML_1_rh.tck track_ML_2_rh.tck track_ML_rh.tck -force
 		else
 			echo hemisfério não definido
 			exit	
@@ -569,20 +683,38 @@
 		#AC-PC plan
 		mkdir -p ACPC
 		mrconvert ../Segmentation/T1_upsampled.nii.gz -datatype uint16 T1_raw.nii -force
-		export ARTHOME=/home/brunobastos/Downloads/acpc
+		export ARTHOME=/home/brunobastos/Mestrado/Dados/acpc
 		export PATH=$ARTHOME/bin:$PATH
 		acpcdetect -i T1_raw.nii -output-orient LPS -v
 		rm T1_raw.mrx T1_raw_ACPC_axial.png T1_raw_ACPC_sagittal.png T1_raw_orion.png T1_raw_orion.txt T1_raw_orion_PIL.txt
 		mv T1_raw_* ACPC/
-		flirt -in Contrast_raw_coreg_24_up.nii.gz -applyxfm -init ACPC/T1_raw_FSL.mat -ref Contrast_raw_coreg_24_up.nii.gz -out ACPC/Contrast_raw_coreg_24_up_ACPC.nii.gz
-		flirt -in mask_lesion_float_up.nii.gz -applyxfm -init ACPC/T1_raw_FSL.mat -ref mask_lesion_float_up.nii.gz -out ACPC/mask_lesion_float_up_ACPC.nii.gz
-		flirt -in track_ndDRTT_lh.nii.gz -applyxfm -init ACPC/T1_raw_FSL.mat -ref track_ndDRTT_lh.nii.gz -interp nearestneighbour -out ACPC/track_ndDRTT_lh_ACPC.nii.gz
-		flirt -in track_DRTT_lh.nii.gz -applyxfm -init ACPC/T1_raw_FSL.mat -ref track_DRTT_lh.nii.gz -interp nearestneighbour -out ACPC/track_DRTT_lh_ACPC.nii.gz
-		flirt -in track_CST_lh.nii.gz -applyxfm -init ACPC/T1_raw_FSL.mat -ref track_CST_lh.nii.gz -interp nearestneighbour -out ACPC/track_CST_lh_ACPC.nii.gz
-		flirt -in track_ML_lh.nii.gz -applyxfm -init ACPC/T1_raw_FSL.mat -ref track_ML_lh.nii.gz -interp nearestneighbour -out ACPC/track_ML_lh_ACPC.nii.gz
-		#fslswapdim teste.nii.gz -x y z teste_corrigido.nii.gz
-						
+		
+		if [[ "$hemisphere" == "left" ]]; then				
+			
+			flirt -in Contrast_raw_coreg_24_up.nii.gz -applyxfm -init ACPC/T1_raw_FSL.mat -ref Contrast_raw_coreg_24_up.nii.gz -out ACPC/Contrast_raw_coreg_24_up_ACPC.nii.gz
+			flirt -in mask_lesion_float_up.nii.gz -applyxfm -init ACPC/T1_raw_FSL.mat -ref mask_lesion_float_up.nii.gz -out ACPC/mask_lesion_float_up_ACPC.nii.gz
+			flirt -in track_ndDRTT_lh.nii.gz -applyxfm -init ACPC/T1_raw_FSL.mat -ref track_ndDRTT_lh.nii.gz -interp nearestneighbour -out ACPC/track_ndDRTT_lh_ACPC.nii.gz
+			flirt -in track_dDRTT_lh.nii.gz -applyxfm -init ACPC/T1_raw_FSL.mat -ref track_dDRTT_lh.nii.gz -interp nearestneighbour -out ACPC/track_dDRTT_lh_ACPC.nii.gz
+			flirt -in track_CST_lh.nii.gz -applyxfm -init ACPC/T1_raw_FSL.mat -ref track_CST_lh.nii.gz -interp nearestneighbour -out ACPC/track_CST_lh_ACPC.nii.gz
+			flirt -in track_ML_lh.nii.gz -applyxfm -init ACPC/T1_raw_FSL.mat -ref track_ML_lh.nii.gz -interp nearestneighbour -out ACPC/track_ML_lh_ACPC.nii.gz
+			#fslswapdim teste.nii.gz -x y z teste_corrigido.nii.gz
+	
+		elif [[ "$hemisphere" == "right" ]]; then
+			
+			flirt -in Contrast_raw_coreg_24_up.nii.gz -applyxfm -init ACPC/T1_raw_FSL.mat -ref Contrast_raw_coreg_24_up.nii.gz -out ACPC/Contrast_raw_coreg_24_up_ACPC.nii.gz
+			flirt -in mask_lesion_float_up.nii.gz -applyxfm -init ACPC/T1_raw_FSL.mat -ref mask_lesion_float_up.nii.gz -out ACPC/mask_lesion_float_up_ACPC.nii.gz
+			flirt -in track_ndDRTT_rh.nii.gz -applyxfm -init ACPC/T1_raw_FSL.mat -ref track_ndDRTT_rh.nii.gz -interp nearestneighbour -out ACPC/track_ndDRTT_rh_ACPC.nii.gz
+			flirt -in track_dDRTT_rh.nii.gz -applyxfm -init ACPC/T1_raw_FSL.mat -ref track_dDRTT_rh.nii.gz -interp nearestneighbour -out ACPC/track_dDRTT_rh_ACPC.nii.gz
+			flirt -in track_CST_rh.nii.gz -applyxfm -init ACPC/T1_raw_FSL.mat -ref track_CST_rh.nii.gz -interp nearestneighbour -out ACPC/track_CST_rh_ACPC.nii.gz
+			flirt -in track_ML_rh.nii.gz -applyxfm -init ACPC/T1_raw_FSL.mat -ref track_ML_rh.nii.gz -interp nearestneighbour -out ACPC/track_ML_rh_ACPC.nii.gz
+			
+		else
+			echo hemisfério não definido
+			exit	
+		fi	
+								
         python "$SCRIPT_DIR/Python/results.py"
+        
       else
         exit
       fi
@@ -651,8 +783,9 @@
           $'\n'"3.ROIs extraction"\
           $'\n'"4.Tract estimation"\
           $'\n'"5.Streamlines filter"\
-          $'\n'"6.Creation of streamlines for connectivity matrix (Optional)"\
-          $'\n'"7.Streamlines filtering (Optional)"
+          $'\n'"6.Tracks' contour"\
+          $'\n'"7.Creation of streamlines for connectivity matrix (Optional)"\
+          $'\n'"8.Streamlines filtering (Optional)"
           read -p "Opção: " step
           
             case $step in
@@ -718,7 +851,7 @@
             6)
             FILE=$FILE_6
             fileExistence
-            handleStreamlines;;
+            handleStatistics;;
             
             7)
             FILE=$FILE_7
