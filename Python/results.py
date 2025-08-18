@@ -273,6 +273,6 @@ print(".Data loaded(ACPC)")
 mask_lesion_filtered, data_reference = handleLesiondata(data_lesion, mask_lesion.affine)
 mask_lesion_filtered_ACPC, data_reference_ACPC = handleLesiondata(data_lesion_ACPC, mask_lesion_ACPC.affine)
 
-handleAxialcontour(mask_lesion_ACPC, hemisphere, "acpc", mask_lesion_filtered, data_ndDRTT_ACPC, data_DRTT_ACPC, data_CST_ACPC, data_ML_ACPC)
+handleAxialcontour(mask_lesion_ACPC, hemisphere, "acpc", mask_lesion_filtered_ACPC, data_ndDRTT_ACPC, data_DRTT_ACPC, data_CST_ACPC, data_ML_ACPC)
 handleAxialcontour(mask_lesion, hemisphere, "axial", mask_lesion_filtered, data_ndDRTT, data_DRTT, data_CST, data_ML)
 handleCoronalcontour(mask_lesion, hemisphere, mask_lesion_filtered, data_ndDRTT, data_DRTT, data_CST, data_ML)

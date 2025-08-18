@@ -14,7 +14,8 @@
       1) mrview Raw/dwi_raw.mif;;
       2) mrview Raw/T1_raw.mif;;
       3) mrview Raw/T2_raw.mif;;
-      4) mrview Raw/Contrast_raw.mif;;
+      4) 	echo $PWD
+			mrview Raw/Contrast_raw.mif;;
       esac
     } 
 	
@@ -160,7 +161,7 @@
               
               case $tract in
               1) mrview T2_resampled.nii.gz -tractography.load cst_track_lh.tck -plane 1 ;;
-              2) mrview T2_resampled.nii.gz -tractography.load DRTT_track_lh.tck -plane 1;;
+              2) 	;;
               3) mrview T2_resampled.nii.gz -tractography.load nDRTT_track_lh.tck  -plane 1;;
               4) mrview T2_resampled.nii.gz -tractography.load ml_track_lh.tck -plane 1;;
               5) mrview T2_resampled.nii.gz -tractography.load ml_track_lh.tck -tractography.load nDRTT_track_lh.tck -tractography.load cst_track_lh.tck -plane 1;;

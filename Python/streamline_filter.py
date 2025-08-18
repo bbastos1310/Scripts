@@ -4,6 +4,7 @@ import os
 from dipy.io.streamline import load_tractogram
 from dipy.io.streamline import save_tractogram
 from dipy.io.stateful_tractogram import StatefulTractogram, Space
+from dipy.tracking.streamline import length
 from scipy.spatial.distance import euclidean
 from scipy.stats import zscore
 from scipy.spatial import ConvexHull
@@ -188,6 +189,7 @@ def handleTck2nifti(track, mask_tract, affine, hem):
 	nifti_tract = nib.Nifti1Image(smoothed_binary, affine)
 	nib.save(nifti_tract,f"track_{track}_{hem}.nii.gz")
 
+
 	
 # def handleStreamlinefilterDRTT(im_ref, data_thalamus, hemisphere, limiar):
 	
@@ -337,10 +339,11 @@ elif (hemisphere == 'right'):
 	data_thalamus_rh = img_ref.get_fdata().astype(bool) 
 	del im_thalamus_rh
 	print("Data loaded")
-	handleStreamlinefilter("ndDRTT_1", img_ref, data_thalamus_rh, hemisphere, 2)
-	handleStreamlinefilter("dDRTT_1", img_ref, data_thalamus_rh, hemisphere, 2)
-	handleStreamlinefilter("CST", img_ref, data_thalamus_rh, hemisphere, 2)
-	handleStreamlinefilter("ML_1", img_ref, data_thalamus_rh, hemisphere, 2)
+	handleStreamlinefilter("ndDRTT_1", img_ref, data_thalamus_rh, hemisphere, 1)
+	handleStreamlinefilter("dDRTT_1", img_ref, data_thalamus_rh, hemisphere, 1)
+	handleStreamlinefilter("CST", img_ref, data_thalamus_rh, hemisphere, 1)
+	handleStreamlinefilter("ML_1", img_ref, data_thalamus_rh, hemisphere, 1)
+	
 
 
 # handleStreamlinefilter("ndDRTT", img_ref, data_thalamus_lh, hemisphere, 2)
