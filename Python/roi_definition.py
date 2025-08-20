@@ -503,9 +503,9 @@ def handlePosteriorLimb(data_seg, data_FAmap, data_thalamus, hemisphere):
 			# Limits mask
 			mask_limit[imin:imax, jmin:jmax] = True
 			# Threshold 
-			mask_red = np.where(data_FAmap[:,:,k_slice,0] < 127, True, False).astype(bool)
-			mask_green = np.where(data_FAmap[:,:,k_slice,1] < 127, True, False).astype(bool)
-			mask_blue = np.where(data_FAmap[:,:,k_slice,2] > 178, True, False).astype(bool)
+			mask_red = np.where(data_FAmap[:,:,k_slice,0] < 150, True, False).astype(bool)
+			mask_green = np.where(data_FAmap[:,:,k_slice,1] < 150, True, False).astype(bool)
+			mask_blue = np.where(data_FAmap[:,:,k_slice,2] > 200, True, False).astype(bool)
 			mask_threshold = mask_red & mask_green & mask_blue
 			# Intersection
 			mask_PostLimb[:,:,k_slice] = mask_limit & mask_threshold & map_wm[:,:,k_slice]
@@ -533,12 +533,13 @@ def handlePosteriorLimb(data_seg, data_FAmap, data_thalamus, hemisphere):
 			# Limits mask
 			mask_limit[imin:imax, jmin:jmax] = True
 			# Threshold 
-			mask_red = np.where(data_FAmap[:,:,k_slice,0] < 127, True, False).astype(bool)
-			mask_green = np.where(data_FAmap[:,:,k_slice,1] < 127, True, False).astype(bool)
-			mask_blue = np.where(data_FAmap[:,:,k_slice,2] > 178, True, False).astype(bool)
+			mask_red = np.where(data_FAmap[:,:,k_slice,0] < 150, True, False).astype(bool)
+			mask_green = np.where(data_FAmap[:,:,k_slice,1] < 150, True, False).astype(bool)
+			mask_blue = np.where(data_FAmap[:,:,k_slice,2] > 200, True, False).astype(bool)
 			mask_threshold = mask_red & mask_green & mask_blue
 			# Intersection
 			mask_PostLimb[:,:,k_slice] = mask_limit & mask_threshold & map_wm[:,:,k_slice]
+			
 	print(f"{mask_PostLimb[mask_PostLimb == True].size} voxels.")
-	return mask_PostLimb	
+	return mask_PostLimb
 		

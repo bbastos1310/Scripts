@@ -13,7 +13,6 @@ import matplotlib.pyplot as plt
 from skimage import measure
 import cv2
 
-
 # save nifti image
 def saveImage(data, image, name):
   data_nifti = nib.Nifti1Image(data, image.affine)
@@ -115,6 +114,24 @@ def plotMaps(data_PRE, data_24, name):
 
   plt.tight_layout()
   plt.close
+  
+def normalizeFAmap(img):
+	data = img.get_fdata()
+	normalized_data = np.zeros_like(data)
+	
+	# Calcular percentil 99 para cada volume e normalizar
+	for vol_idx in range(data.shape[3]):
+		volume_data = data[:, :, :, vol_idx]
+		p99 = np.percentile(volume_data, 99)
+		print(f"Volume {vol_idx}: p99 = {p99}")
+		
+		normalized_volume = volume_data*100 / p99
+		normalized_data[:, :, :, vol_idx] = normalized_volume
+
+	normalized_img = nib.Nifti1Image(normalized_data, img.affine, img.header)
+	output_path = 'Maps/FAmap_up_normalized.nii.gz'
+	nib.save(normalized_img, output_path)
+	print(f"Imagem FAmap normalizada salva como: {output_path}")
   
 def linearfunctionPoints(x1,y1,x2,y2):
 	a = (y1-y2)/(x1-x2)

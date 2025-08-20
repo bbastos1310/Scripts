@@ -8,6 +8,7 @@
       FILE_6="dwi_den_unr_preproc_unb_reg.mif"
       FLAG=0
       FLAG_CONTINUE=1
+      N_THREADS=20
       
       # FUNCTIONS
 
@@ -61,10 +62,10 @@
 	    echo "Os arquivos AP e PA possuem um número diferente de cortes, será feito um resample do arquivo AP para que fiquem com o mesmo número de cortes. Isso é necessário para o cálculo da média, confira o arquivo de saída."
 		mrgrid mean_b0_AP.mif regrid -template mean_b0_PA.mif mean_b0_AP_resampled.mif -force
 		mrcat mean_b0_AP_resampled.mif mean_b0_PA.mif -axis 3 b0_pair.mif -force
-        time dwifslpreproc dwi_den_unr.mif dwi_den_unr_preproc.mif -pe_dir AP -rpe_pair -se_epi b0_pair.mif -eddy_options " --slm=linear --data_is_shelled" -force
+        time dwifslpreproc dwi_den_unr.mif dwi_den_unr_preproc.mif -pe_dir AP -rpe_pair -se_epi b0_pair.mif -nthreads $N_THREADS -eddy_options " --slm=linear --data_is_shelled" -force
 	  else
 	  	mrcat mean_b0_AP.mif mean_b0_PA.mif -axis 3 b0_pair.mif -force
-        time dwifslpreproc dwi_den_unr.mif dwi_den_unr_preproc.mif -pe_dir AP -rpe_pair -se_epi b0_pair.mif -eddy_options " --slm=linear --data_is_shelled" -force
+        time dwifslpreproc dwi_den_unr.mif dwi_den_unr_preproc.mif -pe_dir AP -rpe_pair -se_epi b0_pair.mif -nthreads $N_THREADS -eddy_options " --slm=linear --data_is_shelled" -force
 	  fi
           
         else

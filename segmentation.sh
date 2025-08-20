@@ -1,3 +1,4 @@
+   
     SUBJECTS_DIR="$BASE_DIR/fs_subjects"
     HISTO_DIR="$SUBJECTS_DIR/$PAT_NUM/next_brain_segmentation"
     ATLAS_DIR="$BASE_DIR/Atlas" 
@@ -61,11 +62,16 @@
           rm Contrast_raw_24_T1.nii.gz
           
           mrgrid Contrast_raw_coreg.nii.gz regrid -template Contrast_raw_coreg_24.nii.gz Contrast_raw_coreg_resampled.nii.gz -force
-                   
+          
+          (
+          source "$FREESURFER_HOME/SetUpFreeSurfer.sh"
           # Reconstruction
           recon-all -s "$PAT_NUM" -i "$OUT_PRE/Preprocess/T1_raw.nii.gz" -T2 T2_raw_coreg.nii.gz -all
+          )
+          
           mrconvert "$SUBJECTS_DIR/$PAT_NUM/mri/T1.mgz" "$OUT_PRE/Segmentation/T1_resampled.mif" -force
           mrconvert T1_resampled.mif -stride -1,-2,3 T1_resampled.nii.gz -force
+          
         else
           exit
         fi
@@ -81,12 +87,14 @@
 		  mrconvert Contrast_coreg_resampled.mif Contrast_coreg_resampled.nii.gz -force          
 		  
 		  export FREESURFER_HOME=/usr/local/freesurfer_dev/7-dev # Versão dev do freesurfer
-		  source $FREESURFER_HOME/SetUpFreeSurfer.sh
 		  
+		  (
+		  source $FREESURFER_HOME/SetUpFreeSurfer.sh		  
 		  mri_histo_atlas_segment_fast T2_raw_coreg.nii.gz "$HISTO_DIR" 0 -1
+		  )
 		  
 		  export FREESURFER_HOME=/usr/local/freesurfer/7.4.1  #versão padrão do freesurfer
-		  source $FREESURFER_HOME/SetUpFreeSurfer.sh
+		  #source $FREESURFER_HOME/SetUpFreeSurfer.sh
 					   
 		  # Upsample da imagem T1 para usar como template (a imagem resultante da segmentação tem voxels de aproxidamente 0.4 mm, mas os dois hemisférios tem resoluções diferentes) 
 		  mrgrid T1_resampled.nii.gz regrid -voxel 0.4 T1_upsampled.nii.gz -force
@@ -131,7 +139,7 @@
 
     handleMapscreation() {
         if [ $EXIST -eq 1 ]; then
-          # Create maps (PRE)   
+          # Create maps (PRE)  
           mkdir -p Maps
           dwi2tensor "$OUT_PRE/Preprocess/dwi_den_unr_preproc_unb_reg.mif" -mask "$OUT_PRE/Preprocess/dwi_mask_up_reg.mif" Maps/tensor.nii.gz -force
           tensor2metric Maps/tensor.nii.gz -vec Maps/fa_map.nii.gz -adc Maps/adc_map.nii.gz -cl Maps/cl_map.nii.gz -cs Maps/cs_map.nii.gz -cp Maps/cp_map.nii.gz -ad Maps/ad_map.nii.gz -rd Maps/rd_map.nii.gz -force
@@ -148,7 +156,7 @@
           mrcat FAmap_Red\(24H\).nii.gz FAmap_Green\(24H\).nii.gz FAmap_Blue\(24H\).nii.gz FAmap\(24H\).nii.gz -force
           
           mrgrid FAmap\(PRE\).nii.gz regrid -template ../T1_upsampled.nii.gz -datatype uint8 -interp linear FAmap_up.nii.gz -force
-          
+                
           rm FAmap_Red\(PRE\).nii.gz FAmap_Green\(PRE\).nii.gz FAmap_Blue\(PRE\).nii.gz
           rm FAmap_Red\(24H\).nii.gz FAmap_Green\(24H\).nii.gz FAmap_Blue\(24H\).nii.gz
           rm FAmap_Red\(Subtraction\).nii.gz FAmap_Green\(Subtraction\).nii.gz FAmap_Blue\(Subtraction\).nii.gz
@@ -163,9 +171,14 @@
       
     handleLabel2Image() {
         if [ $EXIST -eq 1 ]; then
+          
+          (
+          source $FREESURFER_HOME/SetUpFreeSurfer.sh
           mri_surf2surf --srcsubject fsaverage --trgsubject "$PAT_NUM" --hemi lh --sval-annot "$SUBJECTS_DIR/fsaverage/label/lh.Julich.annot"  --tval "$SUBJECTS_DIR/"$PAT_NUM"/label/lh.JULICH.annot"  
 		  mri_surf2surf --srcsubject fsaverage --trgsubject "$PAT_NUM" --hemi rh --sval-annot "$SUBJECTS_DIR/fsaverage/label/rh.Julich.annot"  --tval "$SUBJECTS_DIR/"$PAT_NUM"/label/rh.JULICH.annot" 
 		  mri_aparc2aseg --new-ribbon --s "$PAT_NUM" --annot JULICH --o output_freesurfer.mgz
+		  )
+		  
 		  mrconvert output_freesurfer.mgz output_freesurfer.nii.gz -force
 	      
           mrcalc "$HISTO_DIR/seg_left.nii.gz" 314 -eq ROI_rostral_lh.mif -datatype bit -force
@@ -205,8 +218,7 @@
     # Definition of the fs_subjects folder
     export FREESURFER_HOME="/usr/local/freesurfer/7.4.1"
     export SUBJECTS_DIR="$SUBJECTS_DIR"
-    source "$FREESURFER_HOME/SetUpFreeSurfer.sh"
-    
+        
     cd "$OUT_PRE/Segmentation"
     
     if [ -d "$SUBJECTS_DIR" ]; then

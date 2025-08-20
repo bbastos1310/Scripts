@@ -57,6 +57,12 @@ data_seg[mask_left] = data_segleft[mask_left]
 
 del mask_right, mask_left
 
+# Normalizar FAmap
+functions.normalizeFAmap(im_FAmap)
+del data_FAmap, im_FAmap
+im_FAmap = nib.load("Maps/FAmap_up_normalized.nii.gz")
+data_FAmap = im_FAmap.get_fdata().astype(np.uint16)
+
 ## RIGHT HEMISPHERE
 
 ### Red Nucleus
