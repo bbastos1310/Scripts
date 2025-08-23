@@ -46,6 +46,8 @@
     # 2.Mask between GM and WM
     handleFringe() {
       if [ $EXIST -eq 1 ]; then
+		export FREESURFER_HOME="/usr/local/freesurfer/7.4.1"
+		export SUBJECTS_DIR="$SUBJECTS_DIR"
       	5ttgen freesurfer "$SUBJECTS_DIR/$PAT_NUM/mri/aparc+aseg.mgz" 5tt_coreg.mif -force
         5tt2gmwmi 5tt_coreg.mif gmwmSeed_coreg.mif -force
         mrconvert 5tt_coreg.mif -coord 3 1 5tt_coreg_thalamus.mif -force
@@ -474,8 +476,8 @@
 				-act 5tt_coreg.mif \
 				-backtrack \
 				-seed_gmwmi ROIs/ROI_PMC_lh.mif \
-				-select 2000 \
-				-seeds 100M \
+				-select 1500 \
+				-seeds 60M \
 				-include ROIs/ROI_PL_lh.mif \
 				-include ROIs/ROI_CP_lh.mif \
 				-include ROIs/ROI_MO_lh.mif \
@@ -491,10 +493,38 @@
 				-max_attempts_per_seed 500 \
 				-seed_unidirectional \
 				-samples 2 \
-				wmfod_norm.mif track_CST_lh.tck \
+				wmfod_norm.mif track_CST_1_lh.tck \
 				-nthreads $N_THREADS \
 				-info \
 				-force
+				
+			time tckgen  \
+				-act 5tt_coreg.mif \
+				-backtrack \
+				-seed_image ROIs/ROI_MO_lh.mif \
+				-select 1500 \
+				-seeds 60M \
+				-include ROIs/ROI_CP_lh.mif \
+				-include ROIs/ROI_PL_lh.mif \
+				-include ROIs/ROI_PMC_lh.mif \
+				-exclude ROIs/ROI_WMf_rh.mif \
+				-exclude ROIs/ROI_WMh_rh.mif \
+				-exclude ROIs/ROI_WMc_rh.mif \
+				-exclude ROIs/ROI_WMc_lh.mif \
+				-minlength 60 \
+				-angle 20 \
+				-cutoff 0.1 \
+				-step 1 \
+				-trials 500 \
+				-max_attempts_per_seed 500 \
+				-seed_direction 0,0,1 \
+				-samples 2 \
+				wmfod_norm.mif track_CST_2_lh.tck \
+				-nthreads $N_THREADS \
+				-info \
+				-force
+			
+			tckedit track_CST_1_lh.tck track_CST_2_lh.tck track_CST_lh.tck -force
 					
 		elif [[ "$hemisphere" == "right" ]]; then
 			TRACK="CST"
@@ -503,8 +533,8 @@
 				-act 5tt_coreg.mif \
 				-backtrack \
 				-seed_gmwmi ROIs/ROI_PMC_rh.mif \
-				-select 2000 \
-				-seeds 100M \
+				-select 1500 \
+				-seeds 60M \
 				-include ROIs/ROI_PL_rh.mif \
 				-include ROIs/ROI_CP_rh.mif \
 				-include ROIs/ROI_MO_rh.mif \
@@ -520,10 +550,38 @@
 				-max_attempts_per_seed 500 \
 				-seed_unidirectional \
 				-samples 2 \
-				wmfod_norm.mif track_CST_rh.tck \
+				wmfod_norm.mif track_CST_1_rh.tck \
 				-nthreads $N_THREADS \
 				-info \
 				-force
+				
+			time tckgen  \
+				-act 5tt_coreg.mif \
+				-backtrack \
+				-seed_image ROIs/ROI_MO_rh.mif \
+				-select 1500 \
+				-seeds 60M \
+				-include ROIs/ROI_CP_rh.mif \
+				-include ROIs/ROI_PL_rh.mif \
+				-include ROIs/ROI_PMC_rh.mif \
+				-exclude ROIs/ROI_WMf_lh.mif \
+				-exclude ROIs/ROI_WMh_lh.mif \
+				-exclude ROIs/ROI_WMc_lh.mif \
+				-exclude ROIs/ROI_WMc_rh.mif \
+				-minlength 60 \
+				-angle 20 \
+				-cutoff 0.1 \
+				-step 1 \
+				-trials 500 \
+				-max_attempts_per_seed 500 \
+				-seed_direction 0,0,1 \
+				-samples 2 \
+				wmfod_norm.mif track_CST_2_rh.tck \
+				-nthreads $N_THREADS \
+				-info \
+				-force
+			
+			tckedit track_CST_1_rh.tck track_CST_2_rh.tck track_CST_rh.tck -force
 							
 		else
 			echo hemisfério não definido

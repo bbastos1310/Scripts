@@ -28,6 +28,7 @@
       }
     
     #Functions
+    #1 
     handleReconstruction() {
         if [ $EXIST -eq 1 ]; then
                              
@@ -76,7 +77,8 @@
           exit
         fi
       }
-      
+    
+    #2
     handleHistoSegmentation() {
         if [ $EXIST -eq 1 ]; then
 		  mrconvert "$OUT_PRE/Raw/Contrast_raw.mif" Contrast.nii.gz -force
@@ -132,11 +134,69 @@
 		  
 		  mrgrid thalamus_mask_lh.nii.gz regrid -template dwi_mask_up_reg.nii.gz thalamus_mask_dwi_lh.nii.gz -datatype bit -force
 		  mrgrid thalamus_mask_rh.nii.gz regrid -template dwi_mask_up_reg.nii.gz thalamus_mask_dwi_rh.nii.gz -datatype bit -force
+		  
+		  dDRTT_labels=(219 220 221 252 222 283 314 350 381 382)
+				  
+		  cmd_lh="mrcalc"
+		  cmd_rh="mrcalc"
+
+		  # Primeiro termo (sem -or)
+		  first=1
+		  for label in "${dDRTT_labels[@]}"; do
+		    if [ $first -eq 1 ]; then
+			    cmd_lh="$cmd_lh seg_left_resampled.nii.gz $label -eq"
+			    cmd_rh="$cmd_rh seg_right_resampled.nii.gz $label -eq"
+			    first=0
+		    else
+			    cmd_lh="$cmd_lh seg_left_resampled.nii.gz $label -eq -or"
+			    cmd_rh="$cmd_rh seg_right_resampled.nii.gz $label -eq -or"
+		    fi
+		  done
+
+		  # Adiciona a saída e força bit
+		  cmd_lh="$cmd_lh dDRTT_nucleus_lh.nii.gz -datatype bit -force"
+		  cmd_rh="$cmd_rh dDRTT_nucleus_rh.nii.gz -datatype bit -force"
+
+		  # Mostra e executa
+		  echo "Executando: $cmd_lh"
+		  eval "$cmd_lh"
+		  echo "Executando: $cmd_rh"
+		  eval "$cmd_rh"
+
+		  ndDRTT_labels=(224 225 253 284 285 286 303 312 313 379 380 396 397 398 441 454 478 479 508 517 519 578 811 813)
+				  
+		  cmd_lh="mrcalc"
+		  cmd_rh="mrcalc"
+
+		  # Primeiro termo (sem -or)
+		  first=1
+		  for label in "${ndDRTT_labels[@]}"; do
+		    if [ $first -eq 1 ]; then
+			    cmd_lh="$cmd_lh seg_left_resampled.nii.gz $label -eq"
+			    cmd_rh="$cmd_rh seg_right_resampled.nii.gz $label -eq"
+			    first=0
+		    else
+			    cmd_lh="$cmd_lh seg_left_resampled.nii.gz $label -eq -or"
+			  cmd_rh="$cmd_rh seg_right_resampled.nii.gz $label -eq -or"
+		    fi
+		  done
+
+		  # Adiciona a saída e força bit
+		  cmd_lh="$cmd_lh ndDRTT_nucleus_lh.nii.gz -datatype bit -force"
+		  cmd_rh="$cmd_rh ndDRTT_nucleus_rh.nii.gz -datatype bit -force"
+
+		  # Mostra e executa
+		  echo "Executando: $cmd_lh"
+		  eval "$cmd_lh"
+		  echo "Executando: $cmd_rh"
+		  eval "$cmd_rh"
+
         else
           exit
         fi
       }
-
+	
+	#3
     handleMapscreation() {
         if [ $EXIST -eq 1 ]; then
           # Create maps (PRE)  
@@ -168,7 +228,8 @@
           exit
         fi
       }
-      
+     
+    #4  
     handleLabel2Image() {
         if [ $EXIST -eq 1 ]; then
           

@@ -11,11 +11,10 @@
       read -p "Opção: " raw
       
       case $raw in
-      1) mrview Raw/dwi_raw.mif;;
-      2) mrview Raw/T1_raw.mif;;
-      3) mrview Raw/T2_raw.mif;;
-      4) 	echo $PWD
-			mrview Raw/Contrast_raw.mif;;
+      1) mrview dwi_raw.mif;;
+      2) mrview T1_raw.mif;;
+      3) mrview T2_raw.mif;;
+      4) mrview Contrast_raw.mif;;
       esac
     } 
 	
@@ -29,13 +28,13 @@
       read -p "Opção: " denoising
       
       case $denoising in
-      1) mrview Preprocess/dwi_den.mif;;
-      2) mrview Preprocess/noise.mif;;
+      1) mrview dwi_den.mif;;
+      2) mrview noise.mif;;
       esac
     }
 
     # 2.Unringing
-    handleUnringing() { mrview Preprocess/dwi_den_unr.mif -overlay.load Preprocess/residualUnringed.mif -overlay.opacity 0.7; }
+    handleUnringing() { mrview dwi_den_unr.mif -overlay.load residualUnringed.mif -overlay.opacity 0.7; }
 
     # 3.Motion correction
     handleMotion() {
@@ -45,17 +44,17 @@
       read -p "Opção: " motion
       
       case $motion in
-      1) mrview Preprocess/dwi_den_unr_preproc.mif -overlay.load Preprocess/dwi_den_unr.mif -overlay.opacity 0.5;;
-      2) mrview Preprocess/mean_b0_AP.mif -overlay.load Preprocess/mean_b0_PA.mif -overlay.opacity 0.5;;
+      1) mrview dwi_den_unr_preproc.mif -overlay.load dwi_den_unr.mif -overlay.opacity 0.5;;
+      2) mrview mean_b0_AP.mif -overlay.load mean_b0_PA.mif -overlay.opacity 0.5;;
       esac
     }
 
     # 4.Bias correction
 
-    handleBias() { mrview Preprocess/bias.mif -colourmap 2 -overlay.load Preprocess/dwi_den_unr_preproc_unbiased.mif -overlay.opacity 0.5 -overlay.colourmap 0 ; }
+    handleBias() { mrview bias.mif -colourmap 2 -overlay.load dwi_den_unr_preproc_unbiased.mif -overlay.opacity 0.5 -overlay.colourmap 0 ; }
 
     # 5.Brain mask
-    handleMask() { mrview Preprocess/dwi_den_unr_preproc_unbiased.mif -overlay.load Preprocess/dwi_mask.mif -overlay.opacity 0.5; }
+    handleMask() { mrview dwi_den_unr_preproc_unbiased.mif -overlay.load dwi_mask.mif -overlay.opacity 0.5; }
     
     # 6.Coregister
     handleCoregister() {
@@ -66,9 +65,9 @@
       read -p "Opção: " coreg
       
       case $coreg in
-      1) mrview Preprocess/5tt_coreg.mif -overlay.load Raw/T1_raw.mif -overlay.opacity 0.5;;
-      2) mrview Preprocess/dwi_den_unr_preproc_unb_reg.mif -overlay.load Raw/T1_raw.mif -overlay.opacity 0.3;;
-      3) mrview Preprocess/dwi_den_unr_preproc_unb_reg.mif -overlay.load Preprocess/5tt_coreg.mif -overlay.colourmap 2 -overlay.opacity 0.3;;
+      1) mrview $OUT_PRE/Preprocess/5tt_coreg.mif -overlay.load $OUT_PRE/Raw/T1_raw.mif -overlay.opacity 0.5 -plane 1;;
+      2) mrview dwi_den_unr_preproc_unb_reg.mif -overlay.load $OUT_PRE/Raw/T1_raw.mif -overlay.opacity 0.3 -plane 1;;
+      3) mrview dwi_den_unr_preproc_unb_reg.mif -overlay.load $OUT_PRE/Preprocess/5tt_coreg.mif -overlay.colourmap 2 -overlay.opacity 0.3 -plane 1;;
       esac
     }
          
@@ -95,12 +94,12 @@
         
         case $map in
         1) mrview Contrast_raw_coreg_24.mif -colourmap 1 -overlay.load "Maps/FAmap(PRE).nii.gz" -overlay.colourmap 6 -overlay.opacity 0.8 ;;
-        2) mrview "Maps/ADCmap(PRE).nii.gz" ;;
-        3) mrview "Maps/ADmap(PRE).nii.gz" ;;
-        4) mrview "Maps/CLmap(PRE).nii.gz" ;;
-        5) mrview "Maps/CPmap(PRE).nii.gz" ;;
-        6) mrview "Maps/CSmap(PRE).nii.gz" ;;
-        7) mrview "Maps/RDmap(PRE).nii.gz" ;;
+        2) mrview "Maps/ADCmap(PRE).nii.gz" -colourmap 4 -overlay.load Contrast_raw_coreg_24.mif -overlay.opacity 0.5 ;;
+        3) mrview "Maps/ADmap(PRE).nii.gz" -colourmap 4 -overlay.load Contrast_raw_coreg_24.mif -overlay.opacity 0.5 ;;
+        4) mrview "Maps/CLmap(PRE).nii.gz" -colourmap 4 -overlay.load Contrast_raw_coreg_24.mif -overlay.opacity 0.5 ;;
+        5) mrview "Maps/CPmap(PRE).nii.gz" -colourmap 4 -overlay.load Contrast_raw_coreg_24.mif -overlay.opacity 0.5 ;;
+        6) mrview "Maps/CSmap(PRE).nii.gz" -colourmap 4 -overlay.load Contrast_raw_coreg_24.mif -overlay.opacity 0.5 ;;
+        7) mrview "Maps/RDmap(PRE).nii.gz" -colourmap 4 -overlay.load Contrast_raw_coreg_24.mif -overlay.opacity 0.5 ;;
         
         esac
 	}
@@ -150,23 +149,34 @@
      
     # 3. Visualização dos tratos
     handleTracks() {
-   	      cd "$OUT_PRE"
 		echo "Deseja visualizar qual trato:"\
-              $'\n'"1.Corticospinal tract (CST)"\
-              $'\n'"2.Decussating Dentatorubrothalamic Tract (DRTT)"\
-              $'\n'"3.Non-Decussating Dentatorubrothalamic Tract (ndDRTT)"\
-              $'\n'"Medial lemniscus (ML)"\
-              $'\n'"All"
-              read -p "Opção: " tract
-              
-              case $tract in
-              1) mrview T2_resampled.nii.gz -tractography.load cst_track_lh.tck -plane 1 ;;
-              2) 	;;
-              3) mrview T2_resampled.nii.gz -tractography.load nDRTT_track_lh.tck  -plane 1;;
-              4) mrview T2_resampled.nii.gz -tractography.load ml_track_lh.tck -plane 1;;
-              5) mrview T2_resampled.nii.gz -tractography.load ml_track_lh.tck -tractography.load nDRTT_track_lh.tck -tractography.load cst_track_lh.tck -plane 1;;
-              esac 
-     } 
+			  $'\n'"1.Corticospinal tract (CST)"\
+			  $'\n'"2.Decussating Dentatorubrothalamic Tract (dDRTT)"\
+			  $'\n'"3.Non-Decussating Dentatorubrothalamic Tract (ndDRTT)"\
+			  $'\n'"4.Medial lemniscus (ML)"\
+			  $'\n'"5.All"
+			  read -p "Opção: " tract
+			  
+			  if [[ "$hemisphere" == "left" ]]; then
+				  case $tract in
+				  1) mrview ../Segmentation/Contrast_raw_coreg_24.mif -tractography.load track_CST_lh.tck -tractography.colour 0,255,0 -plane 1 ;;
+				  2) mrview ../Segmentation/Contrast_raw_coreg_24.mif -tractography.load track_dDRTT_lh.tck -plane 1	;;
+				  3) mrview ../Segmentation/Contrast_raw_coreg_24.mif -tractography.load track_ndDRTT_lh.tck  -plane 1 ;;
+				  4) mrview ../Segmentation/Contrast_raw_coreg_24.mif -tractography.load track_ML_lh.tck -plane 1 ;;
+				  5) mrview ../Segmentation/Contrast_raw_coreg_24.mif -tractography.load track_CST_lh.tck -tractography.load track_dDRTT_lh.tck -tractography.load track_ML_lh.tck -plane 1 ;;
+				  esac 
+				  
+			  elif [[ "$hemisphere" == "right" ]]; then
+				  case $tract in
+				  1) mrview ../Segmentation/Contrast_raw_coreg_24.mif -tractography.load track_CST_rh.tck -plane 1 ;;
+				  2) mrview ../Segmentation/Contrast_raw_coreg_24.mif -tractography.load track_dDRTT_rh.tck -plane 1	;;
+				  3) mrview ../Segmentation/Contrast_raw_coreg_24.mif -tractography.load track_ndDRTT_rh.tck  -plane 1;;
+				  4) mrview ../Segmentation/Contrast_raw_coreg_24.mif -tractography.load track_ML_rh.tck -plane 1;;
+				  5) mrview ../Segmentation/Contrast_raw_coreg_24.mif -tractography.load track_CST_rh.tck -tractography.load track_dDRTT_rh.tck -tractography.load track_ndDRTT_rh.tck -tractography.load track_ML_rh.tck -plane 1;;
+				  esac 
+			  fi
+	 } 
+	 
     
     handleConnectivitymatrix() { xdg-open "$ANALYSIS_DIR/Results/connectivitymatrix.png" ; }
     
@@ -187,6 +197,7 @@
       
       # RAW FILES
       0)
+      cd "Raw/"
       while [ $FLAG_CONTINUE -eq 1 ]; do
           handleRaw       
           read -p "Deseja visualizar mais imagens do preprocessing (y/n)? " option
@@ -201,7 +212,7 @@
       
       # PREPROCESSING
       1)
-      cd "$OUT_PRE/Preprocess/"
+      cd "Preprocess/"
       while [ $FLAG_CONTINUE -eq 1 ]; do
           echo "Deseja visualizar a imagem de qual dos processos:"\
           $'\n'"1.Denoising"\
@@ -238,7 +249,7 @@
       export SUBJECTS_DIR="$SUBJECTS_DIR"
       source "$FREESURFER_HOME/SetUpFreeSurfer.sh"
       
-      cd "$OUT_PRE/Segmentation/"
+      cd "Segmentation/"
       
       while [ $FLAG_CONTINUE -eq 1 ]; do    
           echo "Deseja visualizar a imagem de qual dos processos:"\
@@ -246,8 +257,7 @@
           $'\n'"2.Segmentação do atlas Nextbrain"\
           $'\n'"3.Visualização dos mapas de difusão"\
           $'\n'"4.Visualização 3D da segmentação cortical (Julich atlas)"
-          
-         			
+                   			
           read -p "Opção: " segmentation
           
             case $segmentation in
@@ -269,20 +279,21 @@
       
       # TRACTOGRAPHY
       3)
+      cd "$Tractography/"
+      hemisphere=$(< ../Segmentation/hemisphere.txt)
       while [ $FLAG_CONTINUE -eq 1 ]; do    
           echo "Deseja visualizar a imagem de qual dos processos:"\
-          $'\n'"1.Response function"\
-          $'\n'"2.Fiber orientation distribution"\
-          $'\n'"3.Mask GM/WM"\
-          $'\n'"4.Streamlines"\
-          $'\n'"5.Streamlines filtering (SIFT)"
+          $'\n'"1.Response function and Fiber orientation distribution (FOD)"\
+          $'\n'"2.Mask GM/WM"\
+          $'\n'"3.Streamlines"\
+          $'\n'"4.Streamlines' volume"\
+          $'\n'"5.Streamlines' contour"
           read -p "Opção: " tract
           
             case $tract in
             1) handleRF;;
-            2) handleFod;;
-            3) handleFringe;;
-            4) handleStreamlines;;
+            2) handleFringe;;
+            3) handleTracks;;
             esac
             
       read -p "Deseja visualizar mais imagens da tractografia (y/n)? " option
