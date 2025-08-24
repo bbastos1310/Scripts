@@ -145,34 +145,95 @@
     }
 
     # 2.Mask between GM/WM
-    handleFringe() { mrview ../Segmentation/Contrast_raw_coreg_24.mif -overlay.load gmwmSeed_coreg.mif -overlay.opacity 0.3; }
+    handleROI() { mrview ../Segmentation/Contrast_raw_coreg_24.mif -overlay.load gmwmSeed_coreg.mif -overlay.opacity 0.3; }
      
     # 3. Visualização dos tratos
     handleTracks() {
 		echo "Deseja visualizar qual trato:"\
-			  $'\n'"1.Corticospinal tract (CST)"\
+			  $'\n'"1.Non-Decussating Dentatorubrothalamic Tract (ndDRTT)"\
 			  $'\n'"2.Decussating Dentatorubrothalamic Tract (dDRTT)"\
-			  $'\n'"3.Non-Decussating Dentatorubrothalamic Tract (ndDRTT)"\
+			  $'\n'"3.Corticospinal tract (CST)"\
 			  $'\n'"4.Medial lemniscus (ML)"\
 			  $'\n'"5.All"
 			  read -p "Opção: " tract
 			  
 			  if [[ "$hemisphere" == "left" ]]; then
 				  case $tract in
-				  1) mrview ../Segmentation/Contrast_raw_coreg_24.mif -tractography.load track_CST_lh.tck -tractography.colour 0,255,0 -plane 1 ;;
+				  1) mrview ../Segmentation/Contrast_raw_coreg_24.mif -tractography.load track_ndDRTT_lh.tck -plane 1 ;;
 				  2) mrview ../Segmentation/Contrast_raw_coreg_24.mif -tractography.load track_dDRTT_lh.tck -plane 1	;;
-				  3) mrview ../Segmentation/Contrast_raw_coreg_24.mif -tractography.load track_ndDRTT_lh.tck  -plane 1 ;;
+				  3) mrview ../Segmentation/Contrast_raw_coreg_24.mif -tractography.load track_CST_lh.tck  -plane 1 ;;
 				  4) mrview ../Segmentation/Contrast_raw_coreg_24.mif -tractography.load track_ML_lh.tck -plane 1 ;;
 				  5) mrview ../Segmentation/Contrast_raw_coreg_24.mif -tractography.load track_CST_lh.tck -tractography.load track_dDRTT_lh.tck -tractography.load track_ML_lh.tck -plane 1 ;;
 				  esac 
 				  
 			  elif [[ "$hemisphere" == "right" ]]; then
 				  case $tract in
-				  1) mrview ../Segmentation/Contrast_raw_coreg_24.mif -tractography.load track_CST_rh.tck -plane 1 ;;
+				  1) mrview ../Segmentation/Contrast_raw_coreg_24.mif -tractography.load track_ndDRTT_rh.tck -plane 2 ;;
 				  2) mrview ../Segmentation/Contrast_raw_coreg_24.mif -tractography.load track_dDRTT_rh.tck -plane 1	;;
-				  3) mrview ../Segmentation/Contrast_raw_coreg_24.mif -tractography.load track_ndDRTT_rh.tck  -plane 1;;
+				  3) mrview ../Segmentation/Contrast_raw_coreg_24.mif -tractography.load track_CST_rh.tck  -plane 1;;
 				  4) mrview ../Segmentation/Contrast_raw_coreg_24.mif -tractography.load track_ML_rh.tck -plane 1;;
 				  5) mrview ../Segmentation/Contrast_raw_coreg_24.mif -tractography.load track_CST_rh.tck -tractography.load track_dDRTT_rh.tck -tractography.load track_ndDRTT_rh.tck -tractography.load track_ML_rh.tck -plane 1;;
+				  esac 
+			  fi
+	 } 
+	 
+	 # 4. Visualização dos volumes  
+	 handleVolumes() {
+		echo "Deseja visualizar qual trato:"\
+			  $'\n'"1.Non-Decussating Dentatorubrothalamic Tract (ndDRTT)"\
+			  $'\n'"2.Decussating Dentatorubrothalamic Tract (dDRTT)"\
+			  $'\n'"3.Corticospinal tract (CST)"\
+			  $'\n'"4.Medial lemniscus (ML)"
+			  read -p "Opção: " tract_volume
+			  
+			  if [[ "$hemisphere" == "left" ]]; then
+				  case $tract_volume in
+				  1) mrview track_ndDRTT_lh.nii.gz -overlay.load ../Segmentation/Contrast_raw_coreg_24.mif -overlay.opacity 0.5 -plane 2 ;;
+				  2) mrview track_dDRTT_lh.nii.gz -overlay.load ../Segmentation/Contrast_raw_coreg_24.mif -overlay.opacity 0.5 -plane 2 ;;
+				  3) mrview track_CST_lh.nii.gz -overlay.load ../Segmentation/Contrast_raw_coreg_24.mif -overlay.opacity 0.5 -plane 2 ;;
+				  4) mrview track_ML_lh.nii.gz -overlay.load ../Segmentation/Contrast_raw_coreg_24.mif -overlay.opacity 0.5 -plane 2 ;;
+				  esac 
+				  
+			  elif [[ "$hemisphere" == "right" ]]; then
+				  case $tract_volume in
+				  1) mrview track_ndDRTT_rh.nii.gz -overlay.load ../Segmentation/Contrast_raw_coreg_24.mif -overlay.opacity 0.5 -plane 2 ;;
+				  2) mrview track_dDRTT_rh.nii.gz -overlay.load ../Segmentation/Contrast_raw_coreg_24.mif -overlay.opacity 0.5 -plane 2 ;;
+				  3) mrview track_CST_rh.nii.gz -overlay.load ../Segmentation/Contrast_raw_coreg_24.mif -overlay.opacity 0.5 -plane 2 ;;
+				  4) mrview track_ML_rh.nii.gz -overlay.load ../Segmentation/Contrast_raw_coreg_24.mif -overlay.opacity 0.5 -plane 2 ;;
+				  esac 
+			  fi
+	 } 
+	 
+	 # 5. Visualização dos contornos
+	 handleContours() {
+		 (
+		 export FREESURFER_HOME="$FREESURFER_HOME_STAND"
+         export SUBJECTS_DIR="$SUBJECTS_DIR"
+         source "$FREESURFER_HOME/SetUpFreeSurfer.sh"
+         
+         )
+		echo "Deseja visualizar qual trato:"\
+			  $'\n'"1.Non-Decussating Dentatorubrothalamic Tract (ndDRTT)"\
+			  $'\n'"2.Decussating Dentatorubrothalamic Tract (dDRTT)"\
+			  $'\n'"3.Corticospinal tract (CST)"\
+			  $'\n'"4.Medial lemniscus (ML)"\
+			  $'\n'"5.All"
+			  read -p "Opção: " tract
+			  
+			  if [[ "$hemisphere" == "left" ]]; then
+				  case $tract in
+				  1) mrview track_ndDRTT_lh.nii.gz -overlay.load ../Segmentation/Contrast_raw_coreg_24.mif -plane 1 ;;
+				  2) mrview track_dDRTT_lh.nii.gz -overlay.load ../Segmentation/Contrast_raw_coreg_24.mif -plane 1 ;;
+				  3) mrview track_CST_lh.nii.gz -overlay.load ../Segmentation/Contrast_raw_coreg_24.mif -plane 1 ;;
+				  4) mrview track_ML_lh.nii.gz -overlay.load ../Segmentation/Contrast_raw_coreg_24.mif -plane 1 ;;
+				  esac 
+				  
+			  elif [[ "$hemisphere" == "right" ]]; then
+				  case $tract in
+				  1) mrview track_ndDRTT_rh.nii.gz -overlay.load ../Segmentation/Contrast_raw_coreg_24.mif -plane 1 ;;
+				  2) mrview track_dDRTT_rh.nii.gz -overlay.load ../Segmentation/Contrast_raw_coreg_24.mif -plane 1 ;;
+				  3) mrview track_CST_rh.nii.gz -overlay.load ../Segmentation/Contrast_raw_coreg_24.mif -plane 1 ;;
+				  4) mrview track_ML_rh.nii.gz -overlay.load ../Segmentation/Contrast_raw_coreg_24.mif -plane 1 ;;
 				  esac 
 			  fi
 	 } 
@@ -245,7 +306,7 @@
            
       # SEGMENTATION
       2)
-      export FREESURFER_HOME="/usr/local/freesurfer/7.4.1"
+      export FREESURFER_HOME="$FREESURFER_HOME_STAND"
       export SUBJECTS_DIR="$SUBJECTS_DIR"
       source "$FREESURFER_HOME/SetUpFreeSurfer.sh"
       
@@ -279,7 +340,7 @@
       
       # TRACTOGRAPHY
       3)
-      cd "$Tractography/"
+      cd "Tractography/"
       hemisphere=$(< ../Segmentation/hemisphere.txt)
       while [ $FLAG_CONTINUE -eq 1 ]; do    
           echo "Deseja visualizar a imagem de qual dos processos:"\
@@ -292,8 +353,10 @@
           
             case $tract in
             1) handleRF;;
-            2) handleFringe;;
+            2) handleROI;;
             3) handleTracks;;
+            4) handleVolumes;;
+            5) handleContours;;
             esac
             
       read -p "Deseja visualizar mais imagens da tractografia (y/n)? " option

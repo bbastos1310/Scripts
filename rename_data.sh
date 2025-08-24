@@ -34,6 +34,8 @@
               elif [ "$dir" == "$PAT_DIR_PRE/021/" ]; then
               mrconvert ../021/ ../Output_tract/Raw/Contrast_raw.mif -force
               mrconvert "$OUT_PRE/Raw/Contrast_raw.mif" "$OUT_PRE/Segmentation/Contrast_raw.nii.gz" -force
+              elif [ "$dir" == "$PAT_DIR_PRE/019/" ]; then
+              mrconvert ../019/ ../Output_tract/Raw/dwi_PA_raw.mif -force
               elif [ "$size_x" -eq 1 ] || [ "$size_y" -eq 1 ] || [ "$size_z" -eq 1 ] ; then
               mrconvert "$dir" ../Output_general/${PWD##*/}_raw.mif -force
               else
@@ -80,6 +82,8 @@
               elif [ "$dir" == "$PAT_DIR_24/021/" ]; then
               mrconvert ../021/ ../Output_tract/Raw/Contrast_raw.mif -force
               mrconvert "$OUT_24/Raw/Contrast_raw.mif" "$OUT_24/Segmentation/Contrast_raw.nii.gz" -force
+              elif [ "$dir" == "$PAT_DIR_24/019/" ]; then
+              mrconvert ../019/ ../Output_tract/Raw/dwi_PA_raw.mif -force
               elif [ "$size_x" -eq 1 ] || [ "$size_y" -eq 1 ] || [ "$size_z" -eq 1 ] ; then
               mrconvert "$dir" ../Output_general/${PWD##*/}_raw.mif -force
               else

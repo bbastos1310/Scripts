@@ -65,9 +65,11 @@
           mrgrid Contrast_raw_coreg.nii.gz regrid -template Contrast_raw_coreg_24.nii.gz Contrast_raw_coreg_resampled.nii.gz -force
           
           (
+          export SUBJECTS_DIR="$SUBJECTS_DIR"
+		  export FREESURFER_HOME="$FREESURFER_HOME_STAND" # Versão padrão do freesurfer
           source "$FREESURFER_HOME/SetUpFreeSurfer.sh"
           # Reconstruction
-          recon-all -s "$PAT_NUM" -i "$OUT_PRE/Preprocess/T1_raw.nii.gz" -T2 T2_raw_coreg.nii.gz -all
+          time recon-all -s "$PAT_NUM" -i "$OUT_PRE/Preprocess/T1_raw.nii.gz" -T2 "$OUT_PRE/Preprocess/T2_raw_coreg.nii.gz" -all
           )
           
           mrconvert "$SUBJECTS_DIR/$PAT_NUM/mri/T1.mgz" "$OUT_PRE/Segmentation/T1_resampled.mif" -force
@@ -88,14 +90,14 @@
 		  mrgrid Contrast_coreg.mif regrid -template T1_resampled.mif Contrast_coreg_resampled.mif -force
 		  mrconvert Contrast_coreg_resampled.mif Contrast_coreg_resampled.nii.gz -force          
 		  
-		  export FREESURFER_HOME=/usr/local/freesurfer_dev/7-dev # Versão dev do freesurfer
-		  
 		  (
+		  export SUBJECTS_DIR="$SUBJECTS_DIR"
+		  export FREESURFER_HOME="$FREESURFER_HOME_DEV" # Versão dev do freesurfer
 		  source $FREESURFER_HOME/SetUpFreeSurfer.sh		  
-		  mri_histo_atlas_segment_fast T2_raw_coreg.nii.gz "$HISTO_DIR" 0 -1
+		  time mri_histo_atlas_segment_fast T2_raw_coreg.nii.gz "$HISTO_DIR" 0 -1
 		  )
 		  
-		  export FREESURFER_HOME=/usr/local/freesurfer/7.4.1  #versão padrão do freesurfer
+		  export FREESURFER_HOME="$FREESURFER_HOME_STAND" #versão padrão do freesurfer
 		  #source $FREESURFER_HOME/SetUpFreeSurfer.sh
 					   
 		  # Upsample da imagem T1 para usar como template (a imagem resultante da segmentação tem voxels de aproxidamente 0.4 mm, mas os dois hemisférios tem resoluções diferentes) 
@@ -234,7 +236,9 @@
         if [ $EXIST -eq 1 ]; then
           
           (
-          source $FREESURFER_HOME/SetUpFreeSurfer.sh
+          export SUBJECTS_DIR="$SUBJECTS_DIR"
+		  export FREESURFER_HOME="$FREESURFER_HOME_STAND" # Versão padrão do freesurfer
+          source "$FREESURFER_HOME/SetUpFreeSurfer.sh"
           mri_surf2surf --srcsubject fsaverage --trgsubject "$PAT_NUM" --hemi lh --sval-annot "$SUBJECTS_DIR/fsaverage/label/lh.Julich.annot"  --tval "$SUBJECTS_DIR/"$PAT_NUM"/label/lh.JULICH.annot"  
 		  mri_surf2surf --srcsubject fsaverage --trgsubject "$PAT_NUM" --hemi rh --sval-annot "$SUBJECTS_DIR/fsaverage/label/rh.Julich.annot"  --tval "$SUBJECTS_DIR/"$PAT_NUM"/label/rh.JULICH.annot" 
 		  mri_aparc2aseg --new-ribbon --s "$PAT_NUM" --annot JULICH --o output_freesurfer.mgz
@@ -277,7 +281,7 @@
     
     # MAIN FUNCTION
     # Definition of the fs_subjects folder
-    export FREESURFER_HOME="/usr/local/freesurfer/7.4.1"
+    export FREESURFER_HOME="$FREESURFER_HOME_STAND"
     export SUBJECTS_DIR="$SUBJECTS_DIR"
         
     cd "$OUT_PRE/Segmentation"

@@ -9,6 +9,7 @@
       FLAG=0
       FLAG_CONTINUE=1
       N_THREADS=20
+      MASK_THRESHOLD = 0.6
       
       # FUNCTIONS
 
@@ -54,7 +55,7 @@
         if [ $EXIST -eq 1 ]; then
           dwiextract dwi_den_unr.mif - -bzero | mrmath - mean mean_b0_AP.mif -axis 3 -force
           #mrconvert ../019/ raw_19.mif -force
-          mrmath ../../Output_general/019_raw.mif mean mean_b0_PA.mif -axis 3 -force
+          mrmath ../Raw/dwi_PA_raw.mif mean mean_b0_PA.mif -axis 3 -force
           MEAN1=$(mrinfo mean_b0_AP.mif -size)
 	      MEAN2=$(mrinfo mean_b0_PA.mif -size)
 	  if [ "$MEAN1" != "$MEAN2" ]; then
@@ -85,7 +86,7 @@
       handleMask() {
         if [ $EXIST -eq 1 ]; then
           mrconvert dwi_den_unr_preproc_unbiased.mif dwi_unbiased.nii.gz -force
-          bet2 dwi_unbiased.nii.gz masked -m -f 0.6
+          bet2 dwi_unbiased.nii.gz masked -m -f $MASK_THRESHOLD
           mrconvert masked_mask.nii.gz dwi_mask.mif -force
         else
           exit

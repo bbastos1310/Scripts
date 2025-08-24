@@ -1,15 +1,20 @@
     # Files 
     FILE_1="wmfod.mif"
-    FILE_2="gmwmSeed_coreg.mif"    
-    FILE_3="ROIs/intersect_seed_rh.mif"
-    FILE_4A="track_ndDRTT_lh.tck"
-    FILE_4B="track_DRTT_lh.tck"
-    FILE_4C="track_CST_lh.tck"
-    FILE_4D="track_ML_lh.tck"
-    FILE_5="track_ML_lh.nii.gz"
+    FILE_2="ROIs/ROI_thalamus_rh.mif"    
+    FILE_3A_lh="track_ndDRTT_lh.tck"
+    FILE_3A_rh="track_ndDRTT_rh.tck"
+    FILE_3B_lh="track_dDRTT_lh.tck"
+    FILE_3B_rh="track_dDRTT_rh.tck"
+    FILE_3C_lh="track_CST_lh.tck"
+    FILE_3C_rh="track_CST_rh.tck"
+    FILE_3D_lh="track_ML_lh.tck"
+    FILE_3D_rh="track_ML_rh.tck"
+    FILE_3_lh="track_ML_lh.tck"
+    FILE_3_rh="track_ML_rh.tck"
+    FILE_4_lh="track_ML_lh.nii.gz"
+    FILE_4_rh="track_ML_rh.nii.gz"
     FLAG=0
     FLAG_CONTINUE=1
-    N_THREADS=20
 
     # FUNCTIONS
 
@@ -44,22 +49,30 @@
 
           
     # 2.Mask between GM and WM
-    handleFringe() {
-      if [ $EXIST -eq 1 ]; then
-		export FREESURFER_HOME="/usr/local/freesurfer/7.4.1"
-		export SUBJECTS_DIR="$SUBJECTS_DIR"
-      	5ttgen freesurfer "$SUBJECTS_DIR/$PAT_NUM/mri/aparc+aseg.mgz" 5tt_coreg.mif -force
-        5tt2gmwmi 5tt_coreg.mif gmwmSeed_coreg.mif -force
-        mrconvert 5tt_coreg.mif -coord 3 1 5tt_coreg_thalamus.mif -force
+    #handleFringe() {
+      #if [ $EXIST -eq 1 ]; then
+		
+        #export SUBJECTS_DIR="$SUBJECTS_DIR"
+		#export FREESURFER_HOME="$FREESURFER_HOME_STAND" # Versão padrão do freesurfer
+		#5ttgen freesurfer "$SUBJECTS_DIR/$PAT_NUM/mri/aparc+aseg.mgz" 5tt_coreg.mif -force
+        #5tt2gmwmi 5tt_coreg.mif gmwmSeed_coreg.mif -force        
+        #mrconvert 5tt_coreg.mif -coord 3 1 5tt_coreg_thalamus.mif -force
         
-      else
-        exit
-      fi
-    }
+      #else
+        #exit
+      #fi
+    #}
 	
-	# 3.ROI extraction
+	# 2.ROI extraction
 	handleRoiextraction() {
       if [ $EXIST -eq 1 ]; then
+      
+		export SUBJECTS_DIR="$SUBJECTS_DIR"
+		export FREESURFER_HOME="$FREESURFER_HOME_STAND" # Versão padrão do freesurfer
+		5ttgen freesurfer "$SUBJECTS_DIR/$PAT_NUM/mri/aparc+aseg.mgz" 5tt_coreg.mif -force
+        5tt2gmwmi 5tt_coreg.mif gmwmSeed_coreg.mif -force        
+        mrconvert 5tt_coreg.mif -coord 3 1 5tt_coreg_thalamus.mif -force
+        
 		mkdir -p ROIs
 		mrgrid gmwmSeed_coreg.mif regrid -template ../Segmentation/T1_upsampled.nii.gz gmwmSeed_coreg_subcortical.mif -interp linear -force
 		mrgrid gmwmSeed_coreg.mif regrid -template ../Segmentation/cortical_Julich.nii.gz gmwmSeed_coreg_cortical.mif -interp linear -force
@@ -166,7 +179,7 @@
       fi
     }
     
-	# 4A.Tract ndDRTT
+	# 3A.Tract ndDRTT
 	handleTractndDRTT() {
       if [ $EXIST -eq 1 ]; then
 		if [[ "$hemisphere" == "left" ]]; then		
@@ -175,7 +188,7 @@
 				-act 5tt_coreg.mif \
 				-seed_image ROIs/ROI_DN_lh.mif \
 				-select 2400 \
-				-seeds 100M \
+				-seeds 200M \
 				-include ROIs/ROI_RN_lh.mif \
 				-include ROIs/ROI_ndDRTTnucleus_lh.mif \
 				-exclude ROIs/ROI_WMf_rh.mif \
@@ -185,8 +198,8 @@
 				-angle 20 \
 				-cutoff 0.1 \
 				-step 1 \
-				-samples 2 \
-				-trials 500 \
+				-samples 4 \
+				-trials 2000 \
 				-max_attempts_per_seed 500 \
 				-seed_unidirectional \
 				-stop \
@@ -218,7 +231,7 @@
 				-angle 20 \
 				-cutoff 0.1 \
 				-step 1 \
-				-samples 2 \
+				-samples 4 \
 				-trials 500 \
 				-max_attempts_per_seed 500 \
 				-seed_unidirectional \
@@ -244,7 +257,7 @@
 				-act 5tt_coreg.mif \
 				-seed_image ROIs/ROI_DN_rh.mif \
 				-select 2400 \
-				-seeds 100M \
+				-seeds 200M \
 				-include ROIs/ROI_RN_rh.mif \
 				-include ROIs/ROI_ndDRTTnucleus_rh.mif \
 				-exclude ROIs/ROI_WMf_lh.mif \
@@ -254,8 +267,8 @@
 				-angle 20 \
 				-cutoff 0.1 \
 				-step 1 \
-				-samples 2 \
-				-trials 500 \
+				-samples 4 \
+				-trials 2000 \
 				-max_attempts_per_seed 500 \
 				-seed_unidirectional \
 				-stop \
@@ -287,7 +300,7 @@
 				-angle 20 \
 				-cutoff 0.1 \
 				-step 1 \
-				-samples 2 \
+				-samples 4 \
 				-trials 500 \
 				-max_attempts_per_seed 500 \
 				-seed_unidirectional \
@@ -301,7 +314,7 @@
 				-template 5tt_coreg_thalamus.mif \
 				-ends_only \
 				filter_partial_ends.mif \
-				-force
+				-force				
 			mrcalc filter_partial_ends.mif 5tt_coreg_thalamus.mif -and filter_ends_only.mif -force
 			tckedit track_ndDRTT_1_rh_temp.tck -ends_only -include filter_ends_only.mif track_ndDRTT_1_rh.tck -force
 			tckedit track_ndDRTT_1_rh.tck track_ndDRTT_2_rh.tck track_ndDRTT_rh.tck -force
@@ -316,7 +329,7 @@
       fi
     }
     
-    # 4B.Tract DRTT
+    # 3B.Tract DRTT
 	handleTractdDRTT() {
       if [ $EXIST -eq 1 ]; then
 		if [[ "$hemisphere" == "left" ]]; then				
@@ -325,21 +338,21 @@
 				-act 5tt_coreg.mif \
 				-seed_image ROIs/ROI_DN_rh.mif \
 				-select 2400 \
-				-seeds 100M \
+				-seeds 200M \
 				-include ROIs/ROI_RN_lh.mif \
 				-include ROIs/ROI_dDRTTnucleus_lh.mif \
 				-exclude ROIs/ROI_WMf_rh.mif \
 				-exclude ROIs/ROI_WMh_lh.mif \
 				-exclude ROIs/ROI_WMc_lh.mif \
-				-minlength 60 \
+				-minlength 40 \
 				-angle 20 \
 				-cutoff 0.1 \
 				-step 1 \
-				-trials 500 \
+				-trials 2000 \
 				-max_attempts_per_seed 500 \
 				-seed_unidirectional \
 				-stop \
-				-samples 2 \
+				-samples 4 \
 				wmfod_norm.mif track_dDRTT_1_lh_temp.tck \
 				-nthreads $N_THREADS \
 				-info \
@@ -368,7 +381,7 @@
 				-angle 20 \
 				-cutoff 0.1 \
 				-step 1 \
-				-samples 2 \
+				-samples 4 \
 				-trials 500 \
 				-max_attempts_per_seed 500 \
 				-seed_unidirectional \
@@ -394,21 +407,21 @@
 				-act 5tt_coreg.mif \
 				-seed_image ROIs/ROI_DN_lh.mif \
 				-select 2400 \
-				-seeds 100M \
+				-seeds 200M \
 				-include ROIs/ROI_RN_rh.mif \
 				-include ROIs/ROI_dDRTTnucleus_rh.mif \
 				-exclude ROIs/ROI_WMf_lh.mif \
 				-exclude ROIs/ROI_WMh_rh.mif \
 				-exclude ROIs/ROI_WMc_rh.mif \
-				-minlength 60 \
+				-minlength 40 \
 				-angle 20 \
 				-cutoff 0.1 \
 				-step 1 \
-				-trials 500 \
+				-trials 2000 \
 				-max_attempts_per_seed 500 \
 				-seed_unidirectional \
 				-stop \
-				-samples 2 \
+				-samples 4 \
 				wmfod_norm.mif track_dDRTT_1_rh_temp.tck \
 				-nthreads $N_THREADS \
 				-info \
@@ -437,7 +450,7 @@
 				-angle 20 \
 				-cutoff 0.1 \
 				-step 1 \
-				-samples 2 \
+				-samples 4 \
 				-trials 500 \
 				-max_attempts_per_seed 500 \
 				-seed_unidirectional \
@@ -466,7 +479,7 @@
       fi
     }
     
-    # 4C.Tract CST
+    # 3C.Tract CST
 	handleTractCST() {
       if [ $EXIST -eq 1 ]; then
 		if [[ "$hemisphere" == "left" ]]; then	
@@ -489,10 +502,10 @@
 				-angle 20 \
 				-cutoff 0.1 \
 				-step 1 \
-				-trials 500 \
+				-trials 2000 \
 				-max_attempts_per_seed 500 \
 				-seed_unidirectional \
-				-samples 2 \
+				-samples 4 \
 				wmfod_norm.mif track_CST_1_lh.tck \
 				-nthreads $N_THREADS \
 				-info \
@@ -515,10 +528,10 @@
 				-angle 20 \
 				-cutoff 0.1 \
 				-step 1 \
-				-trials 500 \
+				-trials 2000 \
 				-max_attempts_per_seed 500 \
 				-seed_direction 0,0,1 \
-				-samples 2 \
+				-samples 4 \
 				wmfod_norm.mif track_CST_2_lh.tck \
 				-nthreads $N_THREADS \
 				-info \
@@ -546,10 +559,10 @@
 				-angle 20 \
 				-cutoff 0.1 \
 				-step 1 \
-				-trials 500 \
+				-trials 2000 \
 				-max_attempts_per_seed 500 \
 				-seed_unidirectional \
-				-samples 2 \
+				-samples 4 \
 				wmfod_norm.mif track_CST_1_rh.tck \
 				-nthreads $N_THREADS \
 				-info \
@@ -572,10 +585,10 @@
 				-angle 20 \
 				-cutoff 0.1 \
 				-step 1 \
-				-trials 500 \
+				-trials 2000 \
 				-max_attempts_per_seed 500 \
 				-seed_direction 0,0,1 \
-				-samples 2 \
+				-samples 4 \
 				wmfod_norm.mif track_CST_2_rh.tck \
 				-nthreads $N_THREADS \
 				-info \
@@ -592,7 +605,7 @@
       fi
     }
     
-    # 4D.Tract ML
+    # 3D.Tract ML
 	handleTractML() {
       if [ $EXIST -eq 1 ]; then
 		if [[ "$hemisphere" == "left" ]]; then		
@@ -601,7 +614,7 @@
 				-act 5tt_coreg.mif \
 				-seed_image ROIs/ROI_MO_lh.mif \
 				-select 2400 \
-				-seeds 100M \
+				-seeds 200M \
 				-include ROIs/ROI_ML_lh.mif \
 				-include ROIs/ROI_MLcortex_lh.mif \
 				-exclude ROIs/ROI_WMf_rh.mif \
@@ -609,16 +622,15 @@
 				-exclude ROIs/ROI_WMc_rh.mif \
 				-exclude ROIs/ROI_WMc_lh.mif \
 				-exclude ROIs/ROI_BS_rh.mif \
-				-minlength 60 \
+				-minlength 40 \
 				-angle 20 \
 				-cutoff 0.1 \
 				-step 1 \
-				-trials 500 \
+				-trials 2000 \
 				-max_attempts_per_seed 500 \
 				-seed_direction 0,0,1 \
-				-seed_unidirectional \
 				-stop \
-				-samples 2 \
+				-samples 4 \
 				wmfod_norm.mif track_ML_1_lh_temp.tck \
 				-nthreads $N_THREADS \
 				-info \
@@ -645,14 +657,14 @@
 				-exclude ROIs/ROI_WMc_rh.mif \
 				-exclude ROIs/ROI_WMc_lh.mif \
 				-exclude ROIs/ROI_BS_rh.mif \
-				-minlength 60 \
+				-minlength 40 \
 				-angle 20 \
 				-cutoff 0.1 \
 				-step 1 \
 				-trials 500 \
 				-max_attempts_per_seed 500 \
 				-seed_unidirectional \
-				-samples 2 \
+				-samples 4 \
 				wmfod_norm.mif track_ML_2_lh.tck \
 				-nthreads $N_THREADS \
 				-info \
@@ -676,7 +688,7 @@
 				-act 5tt_coreg.mif \
 				-seed_image ROIs/ROI_MO_rh.mif \
 				-select 2400 \
-				-seeds 100M \
+				-seeds 200M \
 				-include ROIs/ROI_ML_rh.mif \
 				-include ROIs/ROI_MLcortex_rh.mif \
 				-exclude ROIs/ROI_WMf_lh.mif \
@@ -684,16 +696,15 @@
 				-exclude ROIs/ROI_WMc_lh.mif \
 				-exclude ROIs/ROI_WMc_rh.mif \
 				-exclude ROIs/ROI_BS_lh.mif \
-				-minlength 60 \
+				-minlength 40 \
 				-angle 20 \
 				-cutoff 0.1 \
 				-step 1 \
-				-trials 500 \
+				-trials 2000 \
 				-max_attempts_per_seed 500 \
 				-seed_direction 0,0,1 \
-				-seed_unidirectional \
 				-stop \
-				-samples 2 \
+				-samples 4 \
 				wmfod_norm.mif track_ML_1_rh_temp.tck \
 				-nthreads $N_THREADS \
 				-info \
@@ -720,14 +731,14 @@
 				-exclude ROIs/ROI_WMc_lh.mif \
 				-exclude ROIs/ROI_WMc_rh.mif \
 				-exclude ROIs/ROI_BS_lh.mif \
-				-minlength 60 \
+				-minlength 40 \
 				-angle 20 \
 				-cutoff 0.1 \
 				-step 1 \
 				-trials 500 \
 				-max_attempts_per_seed 500 \
 				-seed_unidirectional \
-				-samples 2 \
+				-samples 4 \
 				wmfod_norm.mif track_ML_2_rh.tck \
 				-nthreads $N_THREADS \
 				-info \
@@ -752,7 +763,7 @@
       fi
     }
     
-    # 4E.All tracts
+    # 3E.All tracts
 	handleAlltracts() {
 		handleTractndDRTT
 		handleTractdDRTT
@@ -760,7 +771,7 @@
 		handleTractML
 	}
     
-    # 5.Streamlines' filter
+    # 4.Streamlines' filter
     handleStreamlinesfilter() {
       if [ $EXIST -eq 1 ]; then
         python "$SCRIPT_DIR/Python/streamline_filter.py"
@@ -769,8 +780,8 @@
       fi
     }
     
-    # 6.Statistics
-    handleStatistics() {
+    # 5.Contour
+    handleContour() {
       if [ $EXIST -eq 1 ]; then
 		mkdir -p Contour
 		mrgrid ../Segmentation/mask_lesion_float.nii.gz regrid -template ../Segmentation/T1_upsampled.nii.gz mask_lesion_float_up.nii.gz -interp linear -force
@@ -816,7 +827,7 @@
       fi
     }
     
-    # 7.Streamlines creation
+    # 6.Streamlines creation
     handleStreamlines() {
       if [ $EXIST -eq 1 ]; then
         time tckgen -act 5tt_coreg.mif -backtrack -seed_gmwmi gmwmSeed_coreg.mif -select 10000000 wmfod_norm.mif tracks_10mio.tck -force
@@ -839,6 +850,22 @@
       
       cd "$OUT_PRE/Tractography"
       hemisphere=$(< ../Segmentation/hemisphere.txt)
+      if [[ "$hemisphere" == "left" ]]; then
+		FILE_3A=$FILE_3A_lh
+		FILE_3B=$FILE_3B_lh
+		FILE_3C=$FILE_3C_lh
+		FILE_3D=$FILE_3D_lh
+		FILE_3=$FILE_3_lh
+		FILE_4=$FILE_4_lh
+	  elif [[ "$hemisphere" == "right" ]]; then
+		FILE_3A=$FILE_3A_rh
+		FILE_3B=$FILE_3B_rh
+		FILE_3C=$FILE_3C_rh
+		FILE_3D=$FILE_3D_rh
+		FILE_3=$FILE_3_rh
+		FILE_4=$FILE_4_rh
+	  fi	
+      
       read -p "Would you like to do all the tractography? (y/n):  " yn
       case $yn in
       
@@ -875,13 +902,12 @@
         while [ $FLAG_CONTINUE -eq 1 ]; do
           echo "Deseja realizar qual das etapas?"\
           $'\n'"1.Response function and Fiber orientation distribution"\
-          $'\n'"2.Mask GM/WM"\
-          $'\n'"3.ROIs extraction"\
-          $'\n'"4.Tract estimation"\
-          $'\n'"5.Streamlines filter"\
-          $'\n'"6.Tracks' contour"\
-          $'\n'"7.Creation of streamlines for connectivity matrix (Optional)"\
-          $'\n'"8.Streamlines filtering (Optional)"
+          $'\n'"2.ROIs extraction"\
+          $'\n'"3.Tract estimation"\
+          $'\n'"4.Streamlines filter"\
+          $'\n'"5.Tracks' contour"\
+          $'\n'"6.Creation of streamlines for connectivity matrix (Optional)"\
+          $'\n'"7.Streamlines filtering (Optional)"
           read -p "Opção: " step
           
             case $step in
@@ -893,15 +919,9 @@
             2)
             FILE=$FILE_2
             fileExistence
-            handleFringe;;          
-          
-            3)
-            FILE=$FILE_3
-            fileExistence
             handleRoiextraction;;
           
-            4)
-            hemisphere=$(< "../Segmentation/hemisphere.txt")		       
+            3)
 			echo "Deseja criar uma estimativa de qual trato?"\
 			$'\n'"1.ndDRTT (non-decussating dentato-rubro-thalamic tract)"\
 			$'\n'"2.dDRTT (decussating dentato-rubro-thalamic tract)"\
@@ -912,45 +932,45 @@
 		  
 			  case $tract in
 			  1)
-			  FILE=$FILE_4A
+			  FILE=$FILE_3A
 			  fileExistence
 			  handleTractndDRTT;;
 			  
 			  2) 
-			  FILE=$FILE_4B
+			  FILE=$FILE_3B
               fileExistence
 			  handleTractdDRTT;;
 			  
 			  3) 
-			  FILE=$FILE_4C
+			  FILE=$FILE_3C
               fileExistence
 			  handleTractCST;;
 			  
 			  4) 
-			  FILE=$FILE_4D
+			  FILE=$FILE_3D
               fileExistence
 			  handleTractML;;
 			  
 			  5)
-			  FILE=$FILE_4D
+			  FILE=$FILE_3D
               fileExistence
 			  handleAlltracts;;
 			  
 			  esac  
             ;;
 			
-			5)
-            FILE=$FILE_5
+			4)
+            FILE=$FILE_4
             fileExistence
             handleStreamlinesfilter;;
             
+            5)
+            FILE=$FILE_5
+            fileExistence
+            handleContour;;
+            
             6)
             FILE=$FILE_6
-            fileExistence
-            handleStatistics;;
-            
-            7)
-            FILE=$FILE_7
             fileExistence
             handleSift;;
           
