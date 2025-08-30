@@ -783,18 +783,27 @@
     # 5.Contour
     handleContour() {
       if [ $EXIST -eq 1 ]; then
-		mkdir -p Contour
-		mrgrid ../Segmentation/mask_lesion_float.nii.gz regrid -template ../Segmentation/T1_upsampled.nii.gz mask_lesion_float_up.nii.gz -interp linear -force
-		mrgrid ../Segmentation/Contrast_raw_coreg_24.nii.gz regrid -template ../Segmentation/T1_upsampled.nii.gz Contrast_raw_coreg_24_up.nii.gz -force
+		#mkdir -p Contour
+		#mrgrid ../Segmentation/mask_lesion_float.nii.gz regrid -template ../Segmentation/T1_upsampled.nii.gz mask_lesion_float_up.nii.gz -interp linear -force
+		#mrgrid ../Segmentation/Contrast_raw_coreg_24.nii.gz regrid -template ../Segmentation/T1_upsampled.nii.gz Contrast_raw_coreg_24_up.nii.gz -force
 		
-		#AC-PC plan
+		##AC-PC plan
 		mkdir -p ACPC
-		mrconvert ../Segmentation/T1_upsampled.nii.gz -datatype uint16 T1_raw.nii -force
+		mrconvert ../Segmentation/T1_resampled.nii.gz T1_raw.nii -datatype uint16 -force
+		
 		export ARTHOME=$ACPC_DIR
 		export PATH=$ARTHOME/bin:$PATH
-		acpcdetect -i T1_raw.nii -output-orient LPS -v
+		acpcdetect -i T1_raw.nii -v -output-orient LPS 
 		rm T1_raw.mrx T1_raw_ACPC_axial.png T1_raw_ACPC_sagittal.png T1_raw_orion.png T1_raw_orion.txt T1_raw_orion_PIL.txt
 		mv T1_raw_* ACPC/
+		
+		mrconvert ACPC/T1_raw_LPS.nii -coord 3 0 -axes 0,1,2 ACPC/T1_raw_LPS_3D.nii -force
+
+		flirt -in T1_raw.nii -ref ACPC/T1_raw_LPS_3D.nii -dof 6 -omat t12acpc.mat
+		transformconvert t12acpc.mat T1_raw.nii ACPC/T1_raw_LPS_3D.nii flirt_import t12acpc_mrtrix.txt -force
+		mrtransform T1_raw.nii -linear t12acpc_mrtrix.txt ACPC/T1_raw_ACPC.nii -force
+		mrtransform ACPC/T1_raw_ACPC.nii -template ACPC/T1_raw_LPS_3D.nii ACPC/T1_raw_ACPC_aligned.nii -datatype float32 -force
+		mrgrid ACPC/T1_raw_ACPC_aligned.nii regrid -voxel 0.4 ACPC/T1_raw_ACPC_aligned_up.nii -force
 		
 		if [[ "$hemisphere" == "left" ]]; then				
 			
@@ -807,20 +816,29 @@
 			#fslswapdim teste.nii.gz -x y z teste_corrigido.nii.gz
 	
 		elif [[ "$hemisphere" == "right" ]]; then
-			
-			flirt -in Contrast_raw_coreg_24_up.nii.gz -applyxfm -init ACPC/T1_raw_FSL.mat -ref Contrast_raw_coreg_24_up.nii.gz -out ACPC/Contrast_raw_coreg_24_up_ACPC.nii.gz
-			flirt -in mask_lesion_float_up.nii.gz -applyxfm -init ACPC/T1_raw_FSL.mat -ref mask_lesion_float_up.nii.gz -out ACPC/mask_lesion_float_up_ACPC.nii.gz
-			flirt -in track_ndDRTT_rh.nii.gz -applyxfm -init ACPC/T1_raw_FSL.mat -ref track_ndDRTT_rh.nii.gz -interp nearestneighbour -out ACPC/track_ndDRTT_rh_ACPC.nii.gz
-			flirt -in track_dDRTT_rh.nii.gz -applyxfm -init ACPC/T1_raw_FSL.mat -ref track_dDRTT_rh.nii.gz -interp nearestneighbour -out ACPC/track_dDRTT_rh_ACPC.nii.gz
-			flirt -in track_CST_rh.nii.gz -applyxfm -init ACPC/T1_raw_FSL.mat -ref track_CST_rh.nii.gz -interp nearestneighbour -out ACPC/track_CST_rh_ACPC.nii.gz
-			flirt -in track_ML_rh.nii.gz -applyxfm -init ACPC/T1_raw_FSL.mat -ref track_ML_rh.nii.gz -interp nearestneighbour -out ACPC/track_ML_rh_ACPC.nii.gz
-			
+			mrtransform Contrast_raw_coreg_24_up.nii.gz -linear t12acpc_mrtrix.txt ACPC/Contrast_raw_coreg_24_up_ACPC.nii.gz -force
+			mrtransform ACPC/Contrast_raw_coreg_24_up_ACPC.nii.gz -template ACPC/T1_raw_ACPC_aligned_up.nii ACPC/Contrast_raw_coreg_24_up_ACPC_aligned.nii.gz -datatype float32 -force
+
+			mrtransform mask_lesion_float_up.nii.gz -linear t12acpc_mrtrix.txt ACPC/mask_lesion_float_up_ACPC.nii.gz -force
+			mrtransform ACPC/mask_lesion_float_up_ACPC.nii.gz -template ACPC/T1_raw_ACPC_aligned_up.nii ACPC/mask_lesion_float_up_ACPC_aligned.nii.gz -datatype float32 -force
+
+			mrtransform track_ndDRTT_rh.nii.gz -linear t12acpc_mrtrix.txt ACPC/track_ndDRTT_rh_ACPC.nii.gz -force
+			mrtransform ACPC/track_ndDRTT_rh_ACPC.nii.gz -template ACPC/T1_raw_ACPC_aligned_up.nii ACPC/track_ndDRTT_rh_ACPC_aligned.nii.gz -datatype float32 -force
+
+			mrtransform track_dDRTT_rh.nii.gz -linear t12acpc_mrtrix.txt ACPC/track_dDRTT_rh_ACPC.nii.gz -force
+			mrtransform ACPC/track_dDRTT_rh_ACPC.nii.gz -template ACPC/T1_raw_ACPC_aligned_up.nii ACPC/track_dDRTT_rh_ACPC_aligned.nii.gz -datatype float32 -force
+
+			mrtransform track_CST_rh.nii.gz -linear t12acpc_mrtrix.txt ACPC/track_CST_rh_ACPC.nii.gz -force
+			mrtransform ACPC/track_CST_rh_ACPC.nii.gz -template ACPC/T1_raw_ACPC_aligned_up.nii ACPC/track_CST_rh_ACPC_aligned.nii.gz -datatype float32 -force
+
+			mrtransform track_ML_rh.nii.gz -linear t12acpc_mrtrix.txt ACPC/track_ML_rh_ACPC.nii.gz -force
+			mrtransform ACPC/track_ML_rh_ACPC.nii.gz -template ACPC/T1_raw_ACPC_aligned_up.nii ACPC/track_ML_rh_ACPC_aligned.nii.gz -datatype float32 -force
 		else
 			echo hemisfério não definido
 			exit	
 		fi	
 								
-        python "$SCRIPT_DIR/Python/results.py"
+        #python "$SCRIPT_DIR/Python/results.py"
         
       else
         exit
