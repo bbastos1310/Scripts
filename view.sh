@@ -204,38 +204,64 @@
 			  fi
 	 } 
 	 
-	 # 5. Visualização dos contornos
+	 # 5. Visualização do plano AC/PC
+	 handleCoregister() {
+      echo "Qual das imagens deseja visualizar?:"\
+      $'\n'"1.Imagem T1"\
+      $'\n'"2.Imagem WMnull"
+      read -p "Opção: " acpc_view
+      
+      case $acpc_view in
+      1) mrview ACPC/T1_raw_LPS_3D.nii ;;
+      2) mrview ACPC/Contrast_raw_coreg_24_up_ACPC_aligned.nii.gz ;;
+      esac
+    }
+	 
+	 # 6. Visualização dos contornos
 	 handleContours() {
 		 (
 		 export FREESURFER_HOME="$FREESURFER_HOME_STAND"
          export SUBJECTS_DIR="$SUBJECTS_DIR"
          source "$FREESURFER_HOME/SetUpFreeSurfer.sh"
-         
-         )
-		echo "Deseja visualizar qual trato:"\
-			  $'\n'"1.Non-Decussating Dentatorubrothalamic Tract (ndDRTT)"\
-			  $'\n'"2.Decussating Dentatorubrothalamic Tract (dDRTT)"\
-			  $'\n'"3.Corticospinal tract (CST)"\
-			  $'\n'"4.Medial lemniscus (ML)"\
-			  $'\n'"5.All"
-			  read -p "Opção: " tract
+                  
+		 echo "Deseja visualizar qual contorno?:"\
+			  $'\n'"1.Axial"\
+			  $'\n'"2.Coronal"
+			  read -p "Opção: " contour_view
 			  
 			  if [[ "$hemisphere" == "left" ]]; then
-				  case $tract in
-				  1) mrview track_ndDRTT_lh.nii.gz -overlay.load ../Segmentation/Contrast_raw_coreg_24.mif -plane 1 ;;
-				  2) mrview track_dDRTT_lh.nii.gz -overlay.load ../Segmentation/Contrast_raw_coreg_24.mif -plane 1 ;;
-				  3) mrview track_CST_lh.nii.gz -overlay.load ../Segmentation/Contrast_raw_coreg_24.mif -plane 1 ;;
-				  4) mrview track_ML_lh.nii.gz -overlay.load ../Segmentation/Contrast_raw_coreg_24.mif -plane 1 ;;
+				  case $contour_view in
+				  1) freeview -v ACPC/Contrast_raw_coreg_24_up_ACPC_aligned.nii.gz \
+					 -v Contour/acpc_contour_CST.nii.gz:colormap=LUT:lut="$ATLAS_DIR/LUT_tracks.txt" \
+					 -v Contour/acpc_contour_ML.nii.gz:colormap=LUT:lut="$ATLAS_DIR/LUT_tracks.txt" \
+					 -v Contour/acpc_contour_ndDRTT.nii.gz:colormap=LUT:lut="$ATLAS_DIR/LUT_tracks.txt" \
+					 -v Contour/acpc_contour_dDRTT.nii.gz:colormap=LUT:lut="$ATLAS_DIR/LUT_tracks.txt" \
+					 --viewport axial ;;
+				  2) freeview -v ACPC/Contrast_raw_coreg_24_up_ACPC_aligned.nii.gz \
+					 -v Contour/coronal_contour_CST.nii.gz:colormap=LUT:lut="$ATLAS_DIR/LUT_tracks.txt" \
+					 -v Contour/coronal_contour_ML.nii.gz:colormap=LUT:lut="$ATLAS_DIR/LUT_tracks.txt" \
+					 -v Contour/coronal_contour_ndDRTT.nii.gz:colormap=LUT:lut="$ATLAS_DIR/LUT_tracks.txt" \
+					 -v Contour/coronal_contour_dDRTT.nii.gz:colormap=LUT:lut="$ATLAS_DIR/LUT_tracks.txt" \
+					 --viewport coronal ;;
 				  esac 
 				  
 			  elif [[ "$hemisphere" == "right" ]]; then
-				  case $tract in
-				  1) mrview track_ndDRTT_rh.nii.gz -overlay.load ../Segmentation/Contrast_raw_coreg_24.mif -plane 1 ;;
-				  2) mrview track_dDRTT_rh.nii.gz -overlay.load ../Segmentation/Contrast_raw_coreg_24.mif -plane 1 ;;
-				  3) mrview track_CST_rh.nii.gz -overlay.load ../Segmentation/Contrast_raw_coreg_24.mif -plane 1 ;;
-				  4) mrview track_ML_rh.nii.gz -overlay.load ../Segmentation/Contrast_raw_coreg_24.mif -plane 1 ;;
+				  case $contour_view in
+				  1) freeview -v ACPC/Contrast_raw_coreg_24_up_ACPC_aligned.nii.gz \
+					 -v Contour/acpc_contour_CST.nii.gz:colormap=LUT:lut="$ATLAS_DIR/LUT_tracks.txt" \
+					 -v Contour/acpc_contour_ML.nii.gz:colormap=LUT:lut="$ATLAS_DIR/LUT_tracks.txt" \
+					 -v Contour/acpc_contour_ndDRTT.nii.gz:colormap=LUT:lut="$ATLAS_DIR/LUT_tracks.txt" \
+					 -v Contour/acpc_contour_dDRTT.nii.gz:colormap=LUT:lut="$ATLAS_DIR/LUT_tracks.txt" \
+					 --viewport axial ;;
+				  2) freeview -v ACPC/Contrast_raw_coreg_24_up_ACPC_aligned.nii.gz \
+					 -v Contour/coronal_contour_CST.nii.gz:colormap=LUT:lut="$ATLAS_DIR/LUT_tracks.txt" \
+					 -v Contour/coronal_contour_ML.nii.gz:colormap=LUT:lut="$ATLAS_DIR/LUT_tracks.txt" \
+					 -v Contour/coronal_contour_ndDRTT.nii.gz:colormap=LUT:lut="$ATLAS_DIR/LUT_tracks.txt" \
+					 -v Contour/coronal_contour_dDRTT.nii.gz:colormap=LUT:lut="$ATLAS_DIR/LUT_tracks.txt" \
+					 --viewport coronal ;;
 				  esac 
 			  fi
+		 )
 	 } 
 	 
     
@@ -348,7 +374,8 @@
           $'\n'"2.Mask GM/WM"\
           $'\n'"3.Streamlines"\
           $'\n'"4.Streamlines' volume"\
-          $'\n'"5.Streamlines' contour"
+          $'\n'"5.AC/PC plane"\
+          $'\n'"6.Streamlines' contour"
           read -p "Opção: " tract
           
             case $tract in
@@ -356,7 +383,8 @@
             2) handleROI;;
             3) handleTracks;;
             4) handleVolumes;;
-            5) handleContours;;
+            5) handleAcpcView;;
+            6) handleContours;;
             esac
             
       read -p "Deseja visualizar mais imagens da tractografia (y/n)? " option

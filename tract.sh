@@ -780,25 +780,39 @@
       fi
     }
     
-    # 5.Contour
-    handleContour() {
+    # 5.ACPC
+    handleAcpc() {
       if [ $EXIST -eq 1 ]; then
-		#mkdir -p Contour
-		#mrgrid ../Segmentation/mask_lesion_float.nii.gz regrid -template ../Segmentation/T1_upsampled.nii.gz mask_lesion_float_up.nii.gz -interp linear -force
-		#mrgrid ../Segmentation/Contrast_raw_coreg_24.nii.gz regrid -template ../Segmentation/T1_upsampled.nii.gz Contrast_raw_coreg_24_up.nii.gz -force
+	    mkdir -p ACPC
+	    echo "Método para resample AC/PC:"\
+	    $'\n'"1.Manual"\
+	    $'\n'"2.Automático"
+	    read -p "Opção: " acpc_resample
+	  
+	    if [[ "$acpc_resample" == "1" ]]; then
+		  if [[ -a "ACPC/T1_raw_LPS.nii" ]]; then
+		  	echo "..."
+		  else
+			echo "T1_raw_LPS_3D.nii não foi encontrado, faça o resample AC/PC usando a imagem T1_upsampled.nii.gz"\
+			" e salve na pasta Tractography/ACPC/ como T1_raw_LPS_3D.nii"
+			exit
+		fi
 		
-		##AC-PC plan
-		mkdir -p ACPC
 		mrconvert ../Segmentation/T1_resampled.nii.gz T1_raw.nii -datatype uint16 -force
-		
-		export ARTHOME=$ACPC_DIR
-		export PATH=$ARTHOME/bin:$PATH
-		acpcdetect -i T1_raw.nii -v -output-orient LPS 
-		rm T1_raw.mrx T1_raw_ACPC_axial.png T1_raw_ACPC_sagittal.png T1_raw_orion.png T1_raw_orion.txt T1_raw_orion_PIL.txt
-		mv T1_raw_* ACPC/
-		
-		mrconvert ACPC/T1_raw_LPS.nii -coord 3 0 -axes 0,1,2 ACPC/T1_raw_LPS_3D.nii -force
-
+	    elif [[ "$acpc_resample" == "2" ]]; then
+		  ##AC-PC plan
+		  
+		  export ARTHOME=$ACPC_DIR
+		  export PATH=$ARTHOME/bin:$PATH
+		  acpcdetect -i T1_raw.nii -v -output-orient LPS 
+		  rm T1_raw.mrx T1_raw_ACPC_axial.png T1_raw_ACPC_sagittal.png T1_raw_orion.png T1_raw_orion.txt T1_raw_orion_PIL.txt
+		  mv T1_raw_* ACPC/
+		  mrconvert ACPC/T1_raw_LPS.nii -coord 3 0 -axes 0,1,2 ACPC/T1_raw_LPS_3D.nii -force
+	    fi
+	  
+	    mrgrid ../Segmentation/mask_lesion_float.nii.gz regrid -template ../Segmentation/T1_upsampled.nii.gz mask_lesion_float_up.nii.gz -interp linear -force
+	    mrgrid ../Segmentation/Contrast_raw_coreg_24.nii.gz regrid -template ../Segmentation/T1_upsampled.nii.gz Contrast_raw_coreg_24_up.nii.gz -force
+	  	
 		flirt -in T1_raw.nii -ref ACPC/T1_raw_LPS_3D.nii -dof 6 -omat t12acpc.mat
 		transformconvert t12acpc.mat T1_raw.nii ACPC/T1_raw_LPS_3D.nii flirt_import t12acpc_mrtrix.txt -force
 		mrtransform T1_raw.nii -linear t12acpc_mrtrix.txt ACPC/T1_raw_ACPC.nii -force
@@ -807,12 +821,31 @@
 		
 		if [[ "$hemisphere" == "left" ]]; then				
 			
-			flirt -in Contrast_raw_coreg_24_up.nii.gz -applyxfm -init ACPC/T1_raw_FSL.mat -ref Contrast_raw_coreg_24_up.nii.gz -out ACPC/Contrast_raw_coreg_24_up_ACPC.nii.gz
-			flirt -in mask_lesion_float_up.nii.gz -applyxfm -init ACPC/T1_raw_FSL.mat -ref mask_lesion_float_up.nii.gz -out ACPC/mask_lesion_float_up_ACPC.nii.gz
-			flirt -in track_ndDRTT_lh.nii.gz -applyxfm -init ACPC/T1_raw_FSL.mat -ref track_ndDRTT_lh.nii.gz -interp nearestneighbour -out ACPC/track_ndDRTT_lh_ACPC.nii.gz
-			flirt -in track_dDRTT_lh.nii.gz -applyxfm -init ACPC/T1_raw_FSL.mat -ref track_dDRTT_lh.nii.gz -interp nearestneighbour -out ACPC/track_dDRTT_lh_ACPC.nii.gz
-			flirt -in track_CST_lh.nii.gz -applyxfm -init ACPC/T1_raw_FSL.mat -ref track_CST_lh.nii.gz -interp nearestneighbour -out ACPC/track_CST_lh_ACPC.nii.gz
-			flirt -in track_ML_lh.nii.gz -applyxfm -init ACPC/T1_raw_FSL.mat -ref track_ML_lh.nii.gz -interp nearestneighbour -out ACPC/track_ML_lh_ACPC.nii.gz
+			mrtransform Contrast_raw_coreg_24_up.nii.gz -linear t12acpc_mrtrix.txt ACPC/Contrast_raw_coreg_24_up_ACPC.nii.gz -force
+			mrtransform ACPC/Contrast_raw_coreg_24_up_ACPC.nii.gz -template ACPC/T1_raw_ACPC_aligned_up.nii ACPC/Contrast_raw_coreg_24_up_ACPC_aligned.nii.gz -datatype float32 -force
+
+			mrtransform mask_lesion_float_up.nii.gz -linear t12acpc_mrtrix.txt ACPC/mask_lesion_float_up_ACPC.nii.gz -force
+			mrtransform ACPC/mask_lesion_float_up_ACPC.nii.gz -template ACPC/T1_raw_ACPC_aligned_up.nii ACPC/mask_lesion_float_up_ACPC_aligned.nii.gz -datatype float32 -force
+
+			mrtransform track_ndDRTT_lh.nii.gz -linear t12acpc_mrtrix.txt ACPC/track_ndDRTT_lh_ACPC.nii.gz -force
+			mrtransform ACPC/track_ndDRTT_lh_ACPC.nii.gz -template ACPC/T1_raw_ACPC_aligned_up.nii ACPC/track_ndDRTT_lh_ACPC_aligned_temp.nii.gz -datatype float32 -force
+			mrcalc ACPC/track_ndDRTT_lh_ACPC_aligned_temp.nii.gz 0.5 -gt ACPC/track_ndDRTT_lh_ACPC_aligned.nii.gz -force
+			rm ACPC/track_ndDRTT_lh_ACPC_aligned_temp.nii.gz
+
+			mrtransform track_dDRTT_lh.nii.gz -linear t12acpc_mrtrix.txt ACPC/track_dDRTT_lh_ACPC.nii.gz -force
+			mrtransform ACPC/track_dDRTT_lh_ACPC.nii.gz -template ACPC/T1_raw_ACPC_aligned_up.nii ACPC/track_dDRTT_lh_ACPC_aligned_temp.nii.gz -datatype float32 -force
+			mrcalc ACPC/track_dDRTT_lh_ACPC_aligned_temp.nii.gz 0.5 -gt ACPC/track_dDRTT_lh_ACPC_aligned.nii.gz -force
+			rm ACPC/track_dDRTT_lh_ACPC_aligned_temp.nii.gz
+			
+			mrtransform track_CST_lh.nii.gz -linear t12acpc_mrtrix.txt ACPC/track_CST_lh_ACPC.nii.gz -force
+			mrtransform ACPC/track_CST_lh_ACPC.nii.gz -template ACPC/T1_raw_ACPC_aligned_up.nii ACPC/track_CST_lh_ACPC_aligned_temp.nii.gz -datatype float32 -force
+			mrcalc ACPC/track_CST_lh_ACPC_aligned_temp.nii.gz 0.5 -gt ACPC/track_CST_lh_ACPC_aligned.nii.gz -force
+			rm ACPC/track_CST_lh_ACPC_aligned_temp.nii.gz
+			
+			mrtransform track_ML_lh.nii.gz -linear t12acpc_mrtrix.txt ACPC/track_ML_lh_ACPC.nii.gz -force
+			mrtransform ACPC/track_ML_lh_ACPC.nii.gz -template ACPC/T1_raw_ACPC_aligned_up.nii ACPC/track_ML_lh_ACPC_aligned_temp.nii.gz -datatype float32 -force
+			mrcalc ACPC/track_ML_lh_ACPC_aligned_temp.nii.gz 0.5 -gt ACPC/track_ML_lh_ACPC_aligned.nii.gz -force
+			rm ACPC/track_ML_lh_ACPC_aligned_temp.nii.gz
 			#fslswapdim teste.nii.gz -x y z teste_corrigido.nii.gz
 	
 		elif [[ "$hemisphere" == "right" ]]; then
@@ -823,29 +856,47 @@
 			mrtransform ACPC/mask_lesion_float_up_ACPC.nii.gz -template ACPC/T1_raw_ACPC_aligned_up.nii ACPC/mask_lesion_float_up_ACPC_aligned.nii.gz -datatype float32 -force
 
 			mrtransform track_ndDRTT_rh.nii.gz -linear t12acpc_mrtrix.txt ACPC/track_ndDRTT_rh_ACPC.nii.gz -force
-			mrtransform ACPC/track_ndDRTT_rh_ACPC.nii.gz -template ACPC/T1_raw_ACPC_aligned_up.nii ACPC/track_ndDRTT_rh_ACPC_aligned.nii.gz -datatype float32 -force
+			mrtransform ACPC/track_ndDRTT_rh_ACPC.nii.gz -template ACPC/T1_raw_ACPC_aligned_up.nii ACPC/track_ndDRTT_rh_ACPC_aligned_temp.nii.gz -datatype float32 -force
+			mrcalc ACPC/track_ndDRTT_rh_ACPC_aligned_temp.nii.gz 0.5 -gt ACPC/track_ndDRTT_rh_ACPC_aligned.nii.gz -force
+			rm ACPC/track_ndDRTT_rh_ACPC_aligned_temp.nii.gz
 
 			mrtransform track_dDRTT_rh.nii.gz -linear t12acpc_mrtrix.txt ACPC/track_dDRTT_rh_ACPC.nii.gz -force
-			mrtransform ACPC/track_dDRTT_rh_ACPC.nii.gz -template ACPC/T1_raw_ACPC_aligned_up.nii ACPC/track_dDRTT_rh_ACPC_aligned.nii.gz -datatype float32 -force
-
+			mrtransform ACPC/track_dDRTT_rh_ACPC.nii.gz -template ACPC/T1_raw_ACPC_aligned_up.nii ACPC/track_dDRTT_rh_ACPC_aligned_temp.nii.gz -datatype float32 -force
+			mrcalc ACPC/track_dDRTT_rh_ACPC_aligned_temp.nii.gz 0.5 -gt ACPC/track_dDRTT_rh_ACPC_aligned.nii.gz -force
+			rm ACPC/track_dDRTT_rh_ACPC_aligned_temp.nii.gz
+			
 			mrtransform track_CST_rh.nii.gz -linear t12acpc_mrtrix.txt ACPC/track_CST_rh_ACPC.nii.gz -force
-			mrtransform ACPC/track_CST_rh_ACPC.nii.gz -template ACPC/T1_raw_ACPC_aligned_up.nii ACPC/track_CST_rh_ACPC_aligned.nii.gz -datatype float32 -force
-
+			mrtransform ACPC/track_CST_rh_ACPC.nii.gz -template ACPC/T1_raw_ACPC_aligned_up.nii ACPC/track_CST_rh_ACPC_aligned_temp.nii.gz -datatype float32 -force
+			mrcalc ACPC/track_CST_rh_ACPC_aligned_temp.nii.gz 0.5 -gt ACPC/track_CST_rh_ACPC_aligned.nii.gz -force
+			rm ACPC/track_CST_rh_ACPC_aligned_temp.nii.gz
+			
 			mrtransform track_ML_rh.nii.gz -linear t12acpc_mrtrix.txt ACPC/track_ML_rh_ACPC.nii.gz -force
-			mrtransform ACPC/track_ML_rh_ACPC.nii.gz -template ACPC/T1_raw_ACPC_aligned_up.nii ACPC/track_ML_rh_ACPC_aligned.nii.gz -datatype float32 -force
+			mrtransform ACPC/track_ML_rh_ACPC.nii.gz -template ACPC/T1_raw_ACPC_aligned_up.nii ACPC/track_ML_rh_ACPC_aligned_temp.nii.gz -datatype float32 -force
+			mrcalc ACPC/track_ML_rh_ACPC_aligned_temp.nii.gz 0.5 -gt ACPC/track_ML_rh_ACPC_aligned.nii.gz -force
+			rm ACPC/track_ML_rh_ACPC_aligned_temp.nii.gz
+			
 		else
 			echo hemisfério não definido
 			exit	
 		fi	
-								
-        #python "$SCRIPT_DIR/Python/results.py"
+								        
+      else
+        exit
+      fi
+    }
+    
+    # 6.Contour
+    handleContour() {
+      if [ $EXIST -eq 1 ]; then
+		mkdir -p Contour
+		python "$SCRIPT_DIR/Python/results.py"
         
       else
         exit
       fi
     }
     
-    # 6.Streamlines creation
+    # 7.Streamlines creation
     handleStreamlines() {
       if [ $EXIST -eq 1 ]; then
         time tckgen -act 5tt_coreg.mif -backtrack -seed_gmwmi gmwmSeed_coreg.mif -select 10000000 wmfod_norm.mif tracks_10mio.tck -force
@@ -855,7 +906,7 @@
       fi
     }
 
-    # 7.SIFT (Streamlines filtering)
+    # 8.SIFT (Streamlines filtering)
     handleSift() {
       if [ $EXIST -eq 1 ]; then
         time tcksift2 -act 5tt_coreg.mif -out_mu sift_mu.txt -out_coeffs sift_coeffs.txt -nthreads $N_THREADS tracks_10mio.tck wmfod_norm.mif sift_weights.txt -force
@@ -923,9 +974,10 @@
           $'\n'"2.ROIs extraction"\
           $'\n'"3.Tract estimation"\
           $'\n'"4.Streamlines filter"\
-          $'\n'"5.Tracks' contour"\
-          $'\n'"6.Creation of streamlines for connectivity matrix (Optional)"\
-          $'\n'"7.Streamlines filtering (Optional)"
+          $'\n'"5.AC/PC plane"\
+          $'\n'"6.Tracks' contour"\
+          $'\n'"7.Creation of streamlines for connectivity matrix (Optional)"\
+          $'\n'"8.Streamlines filtering (Optional)"
           read -p "Opção: " step
           
             case $step in
@@ -985,9 +1037,14 @@
             5)
             FILE=$FILE_5
             fileExistence
-            handleContour;;
+            handleAcpc;;
             
             6)
+            FILE=$FILE_5
+            fileExistence
+            handleContour;;
+            
+            7)
             FILE=$FILE_6
             fileExistence
             handleSift;;
