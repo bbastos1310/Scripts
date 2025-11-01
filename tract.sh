@@ -13,6 +13,10 @@
     FILE_3_rh="track_ML_rh.tck"
     FILE_4_lh="track_ML_lh.nii.gz"
     FILE_4_rh="track_ML_rh.nii.gz"
+    FILE_5_lh="ACPC/track_ML_lh_ACPC_aligned.nii.gz"
+    FILE_5_rh="ACPC/track_ML_rh_ACPC_aligned.nii.gz"
+    FILE_6_lh="Contour/coronal_contour_CST"
+    FILE_6_rh="Contour/coronal_contour_CST"
     FLAG=0
     FLAG_CONTINUE=1
 
@@ -798,10 +802,11 @@
 			exit
 		fi
 		
-		mrconvert ../Segmentation/T1_resampled.nii.gz T1_raw.nii -datatype uint16 -force
+		
 	    elif [[ "$acpc_resample" == "2" ]]; then
 		  ##AC-PC plan
 		  
+		  mrconvert ../Segmentation/T1_resampled.nii.gz T1_raw.nii -datatype uint16 -force
 		  export ARTHOME=$ACPC_DIR
 		  export PATH=$ARTHOME/bin:$PATH
 		  acpcdetect -i T1_raw.nii -v -output-orient LPS 
@@ -926,6 +931,8 @@
 		FILE_3D=$FILE_3D_lh
 		FILE_3=$FILE_3_lh
 		FILE_4=$FILE_4_lh
+		FILE_5=$FILE_5_lh
+		FILE_6=$FILE_6_lh
 	  elif [[ "$hemisphere" == "right" ]]; then
 		FILE_3A=$FILE_3A_rh
 		FILE_3B=$FILE_3B_rh
@@ -933,6 +940,8 @@
 		FILE_3D=$FILE_3D_rh
 		FILE_3=$FILE_3_rh
 		FILE_4=$FILE_4_rh
+		FILE_5=$FILE_5_rh
+		FILE_6=$FILE_6_rh
 	  fi	
       
       read -p "Would you like to do all the tractography? (y/n):  " yn
@@ -955,10 +964,11 @@
             
             [Yy])
             handleFunction
-            handleFod            
-            handleFringe
-            handleStreamlines
-            handleSift;;
+            handleRoiextraction            
+            handleAlltracts
+            handleStreamlinesfilter
+            handleAcpc
+            handleContour;;
             
             [Nn])
             exit;;

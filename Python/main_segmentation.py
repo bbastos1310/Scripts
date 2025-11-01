@@ -20,6 +20,7 @@ im_rostral_rh = nib.load("ROI_rostral_rh_Contrast.nii.gz")
 im_thalamus_lh = nib.load("thalamus_mask_lh.nii.gz")
 im_thalamus_rh = nib.load("thalamus_mask_rh.nii.gz")
 im_FAmap = nib.load("Maps/FAmap_up.nii.gz")
+im_CLmap = nib.load("Maps/CLmap_up.nii.gz")
 print(".Files loaded")
 
 ## Extract data from image
@@ -34,6 +35,7 @@ data_rostral_rh = im_rostral_rh.get_fdata().astype(bool)
 data_thalamus_lh = im_thalamus_lh.get_fdata().astype(bool) 
 data_thalamus_rh = im_thalamus_rh.get_fdata().astype(bool) 
 data_FAmap = im_FAmap.get_fdata().astype(np.uint8) 
+data_CLmap = im_CLmap.get_fdata().astype(np.uint8)
 print(".Data loaded")
 
 # Armazenar o affine das imagens para uso posterior
@@ -41,7 +43,7 @@ affine_segleft = im_segleft.affine
 affine_segright = im_segright.affine
 affine_synthseg = im_synthseg.affine
 
-del im_segleft, im_segright, im_synthseg, im_Contrast_24 # deletar as imagens da memória já que possuem resolução alta 
+del im_segleft, im_segright, im_synthseg, im_Contrast_24, im_CLmap # deletar as imagens da memória já que possuem resolução alta 
 
 # Matriz para armazenar as informações dos dois hemisférios juntos 
 data_seg = np.zeros(data_segleft.shape, dtype=np.uint16)
@@ -116,7 +118,8 @@ print(f"Brainstem (Right hemisphere)")
 print(f"{map_brainstem_rh[map_brainstem_rh == True].size} voxels.")
 
 ### Medial Lemniscus
-map_ML_rh = roi.handleMediallemniscus(data_seg,map_RN_rh,"right")
+map_ML_rh = roi.handleMediallemniscus(data_seg,map_RN_rh,data_CLmap,"right")
+map_ML_rh_filtered = functions.connectedComponents(map_ML_rh)
 
 ### Cerebral Peduncle
 map_CP_rh = roi.handleCerebralpeduncle(data_seg, data_synthseg, map_RN_rh_filtered, map_SN_rh_filtered,"right")
@@ -185,7 +188,8 @@ print(f"Brainstem (Left hemisphere)")
 print(f"{map_brainstem_lh[map_brainstem_lh == True].size} voxels.")
 
 ### Medial Lemniscus
-map_ML_lh = roi.handleMediallemniscus(data_seg,map_RN_lh,"left")
+map_ML_lh = roi.handleMediallemniscus(data_seg,map_RN_lh,data_CLmap,"left")
+map_ML_lh_filtered = functions.connectedComponents(map_ML_lh)
 
 ### Cerebral Peduncle
 map_CP_lh = roi.handleCerebralpeduncle(data_seg, data_synthseg, map_RN_lh_filtered, map_SN_lh_filtered,"left")
@@ -208,7 +212,7 @@ map_lesion_float, map_lesion_binary = roi.handleLesionmask(data_Contrast,data_Co
 data_roi = np.zeros(data_segleft.shape, dtype=np.uint16)
 data_wm = np.zeros(data_segleft.shape, dtype=np.uint16)
 
-data_roi[map_ML_lh == True] = 1001
+data_roi[map_ML_lh_filtered == True] = 1001
 data_roi[map_CP_lh_filtered == True] = 1002
 data_roi[map_RN_lh_filtered == True] = 1003
 data_roi[map_SN_lh_filtered == True] = 1004
@@ -221,7 +225,7 @@ data_wm[map_WMf_lh == True] = 1010
 data_wm[map_WMh_lh == True] = 1011
 data_wm[map_WMc_lh == True] = 1012
 
-data_roi[map_ML_rh == True] = 2001
+data_roi[map_ML_rh_filtered == True] = 2001
 data_roi[map_CP_rh_filtered == True] = 2002
 data_roi[map_RN_rh_filtered == True] = 2003
 data_roi[map_SN_rh_filtered == True] = 2004

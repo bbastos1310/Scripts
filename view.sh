@@ -65,8 +65,8 @@
       read -p "Opção: " coreg
       
       case $coreg in
-      1) mrview $OUT_PRE/Preprocess/5tt_coreg.mif -overlay.load $OUT_PRE/Raw/T1_raw.mif -overlay.opacity 0.5 -plane 1;;
-      2) mrview dwi_den_unr_preproc_unb_reg.mif -overlay.load $OUT_PRE/Raw/T1_raw.mif -overlay.opacity 0.3 -plane 1;;
+      1) mrview $OUT_PRE/Preprocess/5tt_coreg.mif -overlay.load $OUT_PRE/Raw/T1_raw.mif -overlay.opacity 0.5 -plane 2;;
+      2) mrview dwi_den_unr_preproc_unb_reg.mif -overlay.load $OUT_PRE/Raw/T1_raw.mif -overlay.opacity 0.3 -plane 2;;
       3) mrview dwi_den_unr_preproc_unb_reg.mif -overlay.load $OUT_PRE/Preprocess/5tt_coreg.mif -overlay.colourmap 2 -overlay.opacity 0.3 -plane 1;;
       esac
     }
@@ -205,7 +205,7 @@
 	 } 
 	 
 	 # 5. Visualização do plano AC/PC
-	 handleCoregister() {
+	 handleAcpcView() {
       echo "Qual das imagens deseja visualizar?:"\
       $'\n'"1.Imagem T1"\
       $'\n'"2.Imagem WMnull"

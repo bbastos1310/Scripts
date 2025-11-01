@@ -9,7 +9,7 @@
       FLAG=0
       FLAG_CONTINUE=1
       N_THREADS=20
-      MASK_THRESHOLD = 0.6
+      MASK_THRESHOLD=0.4
       
       # FUNCTIONS
 
@@ -113,7 +113,7 @@
           if [ "$moment" -eq 1 ]; then
             mrtransform dwi_den_unr_preproc_unb_up.mif -linear matrix_dwi2t1.txt dwi_den_unr_preproc_unb_reg.mif -force
             mrtransform dwi_mask_up.mif -linear matrix_dwi2t1.txt dwi_mask_up_reg.mif -force
-            mrconvert dwi_mask_up_reg.mif Segmentation/dwi_mask_up_reg.nii.gz -force
+            mrconvert dwi_mask_up_reg.mif ../Segmentation/dwi_mask_up_reg.nii.gz -force
           elif [ "$moment" -eq 2 ]; then
             MEAN1=$(mrinfo "$OUT_PRE/Preprocess/dwi_mask_up_reg.mif" -size)
             MEAN2=$(mrinfo "$OUT_24/Preprocess/dwi_den_unr_preproc_unb_up.mif" -size)
@@ -126,7 +126,43 @@
             	mrtransform dwi_den_unr_preproc_unb_up.mif -linear matrix_dwi2t1.txt dwi_den_unr_preproc_unb_reg.mif -force
             	mrtransform dwi_mask_up.mif -linear matrix_dwi2t1.txt dwi_mask_up_reg_24.mif -force
 			  fi
-          fi           
+          fi
+          
+          # Coregister T2_raw with T1_raw
+          cd ../Segmentation
+          mrgrid "$OUT_PRE/Segmentation/T2_raw.nii.gz" regrid -template T1_raw.nii.gz T2_raw_T1.nii.gz -force
+          flirt -in T2_raw_T1.nii.gz -ref "$OUT_PRE/Segmentation/T1_raw.nii.gz" -dof 6 -omat t22t1.mat
+          transformconvert t22t1.mat "$OUT_PRE/Segmentation/T2_raw.nii.gz" "$OUT_PRE/Segmentation/T1_raw.nii.gz" flirt_import t22t1_mrtrix.txt -force
+          mrtransform "$OUT_PRE/Raw/T2_raw.mif" -linear t22t1_mrtrix.txt T2_raw_coreg.mif -force
+          mrconvert T2_raw_coreg.mif T2_raw_coreg.nii.gz -force
+          rm T2_raw_T1.nii.gz
+          
+          # Coregister T2_raw_24 with T1_raw
+          mrgrid "$OUT_24/Segmentation/T2_raw.nii.gz" regrid -template T1_raw.nii.gz T2_raw_24_T1.nii.gz -force
+          flirt -in T2_raw_24_T1.nii.gz -ref "$OUT_PRE/Segmentation/T1_raw.nii.gz" -dof 6 -omat t22t1_24.mat
+          transformconvert t22t1_24.mat T2_raw_24_T1.nii.gz "$OUT_PRE/Segmentation/T1_raw.nii.gz" flirt_import t22t1_24_mrtrix.txt -force
+          mrtransform "$OUT_24/Raw/T2_raw.mif" -linear t22t1_24_mrtrix.txt T2_raw_24_coreg.mif -force
+          mrconvert T2_raw_24_coreg.mif T2_raw_24_coreg.nii.gz -force
+          rm T2_raw_24_T1.nii.gz
+          
+          # Coregister Contrast_raw with T1_raw
+          mrgrid Contrast_raw.nii.gz regrid -template T1_raw.nii.gz Contrast_raw_T1.nii.gz -force
+          flirt -in Contrast_raw_T1.nii.gz -ref "$OUT_PRE/Segmentation/T1_raw.nii.gz" -dof 6 -omat Contrast2t1.mat
+          transformconvert Contrast2t1.mat Contrast_raw_T1.nii.gz "$OUT_PRE/Segmentation/T1_raw.nii.gz" flirt_import Contrast2t1_mrtrix.txt -force
+          mrtransform "$OUT_PRE/Raw/Contrast_raw.mif" -linear Contrast2t1_mrtrix.txt Contrast_raw_coreg.mif -force
+          mrconvert Contrast_raw_coreg.mif -stride -1,-2,3 Contrast_raw_coreg.nii.gz -force
+          rm Contrast_raw_T1.nii.gz
+          
+          # Coregister Contrast_raw_24 with T1_raw
+          mrgrid "$OUT_24/Segmentation/Contrast_raw.nii.gz" regrid -template T1_raw.nii.gz Contrast_raw_24_T1.nii.gz -force
+          flirt -in Contrast_raw_24_T1.nii.gz -ref "$OUT_PRE/Segmentation/T1_raw.nii.gz" -dof 6 -omat Contrast2t1_24.mat
+          transformconvert Contrast2t1_24.mat Contrast_raw_24_T1.nii.gz "$OUT_PRE/Segmentation/T1_raw.nii.gz" flirt_import Contrast2t1_24_mrtrix.txt -force
+          mrtransform "$OUT_24/Raw/Contrast_raw.mif" -linear Contrast2t1_24_mrtrix.txt Contrast_raw_coreg_24.mif -force
+          mrconvert Contrast_raw_coreg_24.mif -stride -1,-2,3 Contrast_raw_coreg_24.nii.gz -force      
+          rm Contrast_raw_24_T1.nii.gz
+          
+          mrgrid Contrast_raw_coreg.nii.gz regrid -template Contrast_raw_coreg_24.nii.gz Contrast_raw_coreg_resampled.nii.gz -force     
+          cd ../Preprocess      
       else
         exit
       fi

@@ -14,8 +14,9 @@ from scipy.spatial.distance import cdist
 #Local libraries
 import functions
 	
-def handleMediallemniscus(data_seg,map_RN,hemisphere):
+def handleMediallemniscus(data_seg,map_RN,data_CLmap,hemisphere):
 	print(f"Medial Lemniscus ({hemisphere} hemisphere)")
+	mask_ML_region = np.zeros(data_seg.shape, dtype=bool)
 	mask_ML = np.zeros(data_seg.shape, dtype=bool)
 	
 	if hemisphere == 'left':
@@ -28,11 +29,23 @@ def handleMediallemniscus(data_seg,map_RN,hemisphere):
 		  mask_temp_RN = np.zeros((640,640), dtype=bool)
 		  mask_temp_midbrain = np.zeros((640,640), dtype=bool)
 		  mask_temp_intersection = np.zeros((640,640), dtype=bool)
-		  		  
+		  
+		  # Region between RN and SN	  
 		  imax_RN_temp = np.where(map_RN[:,:,k] != 0)[0].max()
 		  mask_temp_RN[imax_RN_temp + 1:,:] = True
 		  mask_temp_midbrain = np.where(data_seg[:,:,k] == 384, True, False)
-		  mask_ML[:,:,k] = mask_temp_RN & mask_temp_midbrain
+		  mask_ML_region[:,:,k] = mask_temp_RN & mask_temp_midbrain
+		 
+		#Threshold
+		z_score = np.zeros((640,640))
+		sum_region = np.sum(data_CLmap[mask_ML_region])
+		#print(f"sum_region = {sum_region}")
+		mean = sum_region/mask_ML_region.sum()
+		#print(f"mean = {mean}")
+		std_region = np.std(data_CLmap[mask_ML_region])
+		#print(f"std = {std_region}")
+		z_score = np.where((mask_ML_region == True), (data_CLmap-mean)/std_region, 0)
+		mask_ML = np.where((z_score > 0.5), True, 0)
 	
 	if hemisphere == 'right':
 		
@@ -44,12 +57,24 @@ def handleMediallemniscus(data_seg,map_RN,hemisphere):
 		  mask_temp_RN = np.zeros((640,640), dtype=bool)
 		  mask_temp_midbrain = np.zeros((640,640), dtype=bool)
 		  mask_temp_intersection = np.zeros((640,640), dtype=bool)
-
+		  
+		  # Region between RN and SN
 		  imin_RN_temp = np.where(map_RN[:,:,k] != 0)[0].min()
 		  mask_temp_RN[:imin_RN_temp,:] = True
 		  mask_temp_midbrain = np.where(data_seg[:,:,k] == 1384, True, False)
-		  mask_ML[:,:,k] = mask_temp_RN & mask_temp_midbrain
-	
+		  mask_ML_region[:,:,k] = mask_temp_RN & mask_temp_midbrain
+		  
+		#Threshold
+		z_score = np.zeros((640,640))
+		sum_region = np.sum(data_CLmap[mask_ML_region])
+		#print(f"sum_region = {sum_region}")
+		mean = sum_region/mask_ML_region.sum()
+		#print(f"mean = {mean}")
+		std_region = np.std(data_CLmap[mask_ML_region])
+		#print(f"std = {std_region}")
+		z_score = np.where((mask_ML_region == True), (data_CLmap-mean)/std_region, 0)
+		mask_ML = np.where((z_score > 0.5), True, 0)
+			
 	print(f"{mask_ML[mask_ML == True].size} voxels.")
 	return mask_ML	
 	
