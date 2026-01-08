@@ -183,7 +183,8 @@
         $'\n'"    Results of preprocessing"\
         $'\n'"    Results of segmentation"\
         $'\n'"    Results of tractography"\
-        $'\n'"    Results of analysis"
+        $'\n'"    Results of analysis"\
+      $'\n'"6.Rascunho"
        read -p "Opção: " script
        
         case $script in               
@@ -201,6 +202,9 @@
         
         5)
         . "$SCRIPT_DIR/view.sh";;
+        
+        6)
+        . "$SCRIPT_DIR/rascunho.sh";;
                  
         *)
         echo "invalid response"

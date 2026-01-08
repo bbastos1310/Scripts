@@ -106,7 +106,7 @@
 	    mrcalc ../Segmentation/cortical_Julich.nii.gz 2049 -eq ../Segmentation/cortical_Julich.nii.gz 2050 -eq -or \
 	    ../Segmentation/cortical_Julich.nii.gz 2051 -eq -or ../Segmentation/cortical_Julich.nii.gz 2081 -eq -or \
 	    ROIs/ROI_PostCG_PostCS_lh.mif \
-	    -datatype uint8 -force   # Somatosensorial region (Post central gyrus + Post CS )
+	    -datatype uint8 -force   # Somatosensorial region (Post central gyrus + Post CS = 1,2,3a,3b)
 		
 		mrcalc ../Segmentation/wm_nextbrain.nii.gz 1010 -eq ROIs/ROI_WMf_lh.mif -datatype uint8 -force
 		mrcalc ../Segmentation/wm_nextbrain.nii.gz 1011 -eq ROIs/ROI_WMh_lh.mif -datatype uint8 -force
@@ -116,12 +116,9 @@
 		mrcalc ../Segmentation/subcortical_nextbrain.nii.gz 662 -eq ROIs/ROI_MO_lh.mif -force  # medulla oblongata
 		
 		mrcalc ../Segmentation/subcortical_nextbrain.nii.gz 394 -eq ../Segmentation/subcortical_nextbrain.nii.gz 458 -eq -or \
-		../Segmentation/subcortical_nextbrain.nii.gz 423 -eq -or ROIs/ROI_MLcortex_lh.mif -force # ventral posterolateral nucleus (VPL) + ventral posteromedial (VPM)
-
-		#mrcalc ../Segmentation/subcortical_nextbrain.nii.gz 1314 -eq ../Segmentation/subcortical_nextbrain.nii.gz 1350 -eq -or \
-				#../Segmentation/subcortical_nextbrain.nii.gz 1381 -eq -or ../Segmentation/subcortical_nextbrain.nii.gz 1382 -eq -or \
-				#ROIs/ROI_VL_lh.mif \
-				#-datatype uint8 -force  # ventral lateral nucleus
+		../Segmentation/subcortical_nextbrain.nii.gz 423 -eq -or ROIs/ROI_MLthalamus_lh.mif -force # ventral posterolateral nucleus (VPL) + ventral posteromedial (VPM)
+		
+		mrcalc ../Segmentation/subcortical_nextbrain.nii.gz 531 -eq ROIs/ROI_SCP_lh.mif -force -datatype uint8 -force
 				
 		mrconvert ../Segmentation/thalamus_mask_lh.nii.gz ROIs/ROI_thalamus_lh.mif -datatype uint8 -force
 		#mrcalc gmwmSeed_coreg_resampled.mif ROIs/ROI_DN_lh.mif -mult ROIs/intersect_seed_DN_lh.mif -force
@@ -164,12 +161,14 @@
 		mrcalc ../Segmentation/subcortical_nextbrain.nii.gz 1662 -eq ROIs/ROI_MO_rh.mif -force  # medulla oblongata
 		
 		mrcalc ../Segmentation/subcortical_nextbrain.nii.gz 1394 -eq ../Segmentation/subcortical_nextbrain.nii.gz 1458 -eq -or \
-		../Segmentation/subcortical_nextbrain.nii.gz 1423 -eq -or ROIs/ROI_MLcortex_rh.mif -force # ventral posterolateral nucleus (VPL) + ventral posteromedial (VPM)
+		../Segmentation/subcortical_nextbrain.nii.gz 1423 -eq -or ROIs/ROI_MLthalamus_rh.mif -force # ventral posterolateral nucleus (VPL) + ventral posteromedial (VPM)
 
 		#mrcalc ../Segmentation/subcortical_nextbrain.nii.gz 1314 -eq ../Segmentation/subcortical_nextbrain.nii.gz 1350 -eq -or \
 				#../Segmentation/subcortical_nextbrain.nii.gz 1381 -eq -or ../Segmentation/subcortical_nextbrain.nii.gz 1382 -eq -or \
 				#ROIs/ROI_VL_rh.mif \
 				#-datatype uint8 -force  # ventral lateral nucleus
+				
+		mrcalc ../Segmentation/subcortical_nextbrain.nii.gz 1531 -eq ROIs/ROI_SCP_rh.mif -force -datatype uint8 -force
 				
 		mrconvert ../Segmentation/thalamus_mask_rh.nii.gz ROIs/ROI_thalamus_rh.mif -datatype uint8 -force
 		#mrcalc gmwmSeed_coreg_resampled.mif ROIs/ROI_DN_rh.mif -mult ROIs/intersect_seed_DN_rh.mif -force
@@ -193,6 +192,7 @@
 				-seed_image ROIs/ROI_DN_lh.mif \
 				-select 2400 \
 				-seeds 200M \
+				-include ROIs/ROI_SCP_lh.mif \
 				-include ROIs/ROI_RN_lh.mif \
 				-include ROIs/ROI_ndDRTTnucleus_lh.mif \
 				-exclude ROIs/ROI_WMf_rh.mif \
@@ -219,7 +219,7 @@
 				-force
 			mrcalc partials_ends_only.mif 5tt_coreg_thalamus.mif -mult ends_only.mif -force
 			rm partials_ends_only.mif
-						
+			
 			time tckgen  \
 				-act 5tt_coreg.mif \
 				-backtrack \
@@ -227,7 +227,7 @@
 				-select 2000 \
 				-seeds 50M \
 				-include ROIs/ROI_PL_lh.mif \
-				-include ROIs/ROI_PreCG_lh.mif \
+				-include ROIs/ROI_PMC_lh.mif \
 				-exclude ROIs/ROI_WMf_rh.mif \
 				-exclude ROIs/ROI_WMh_rh.mif \
 				-exclude ROIs/ROI_WMc_rh.mif \
@@ -262,6 +262,7 @@
 				-seed_image ROIs/ROI_DN_rh.mif \
 				-select 2400 \
 				-seeds 200M \
+				-include ROIs/ROI_SCP_rh.mif \
 				-include ROIs/ROI_RN_rh.mif \
 				-include ROIs/ROI_ndDRTTnucleus_rh.mif \
 				-exclude ROIs/ROI_WMf_lh.mif \
@@ -296,7 +297,7 @@
 				-select 2000 \
 				-seeds 50M \
 				-include ROIs/ROI_PL_rh.mif \
-				-include ROIs/ROI_PreCG_rh.mif \
+				-include ROIs/ROI_PMC_rh.mif \
 				-exclude ROIs/ROI_WMf_lh.mif \
 				-exclude ROIs/ROI_WMh_lh.mif \
 				-exclude ROIs/ROI_WMc_lh.mif \
@@ -343,6 +344,7 @@
 				-seed_image ROIs/ROI_DN_rh.mif \
 				-select 2400 \
 				-seeds 200M \
+				-include ROIs/ROI_SCP_rh.mif \
 				-include ROIs/ROI_RN_lh.mif \
 				-include ROIs/ROI_dDRTTnucleus_lh.mif \
 				-exclude ROIs/ROI_WMf_rh.mif \
@@ -377,7 +379,7 @@
 				-select 2000 \
 				-seeds 100M \
 				-include ROIs/ROI_PL_lh.mif \
-				-include ROIs/ROI_PreCG_lh.mif \
+				-include ROIs/ROI_PMC_lh.mif \
 				-exclude ROIs/ROI_WMf_rh.mif \
 				-exclude ROIs/ROI_WMh_rh.mif \
 				-exclude ROIs/ROI_WMc_rh.mif \
@@ -412,6 +414,7 @@
 				-seed_image ROIs/ROI_DN_lh.mif \
 				-select 2400 \
 				-seeds 200M \
+				-include ROIs/ROI_SCP_lh.mif \
 				-include ROIs/ROI_RN_rh.mif \
 				-include ROIs/ROI_dDRTTnucleus_rh.mif \
 				-exclude ROIs/ROI_WMf_lh.mif \
@@ -446,7 +449,7 @@
 				-select 2000 \
 				-seeds 100M \
 				-include ROIs/ROI_PL_rh.mif \
-				-include ROIs/ROI_PreCG_rh.mif \
+				-include ROIs/ROI_PMC_rh.mif \
 				-exclude ROIs/ROI_WMf_lh.mif \
 				-exclude ROIs/ROI_WMh_lh.mif \
 				-exclude ROIs/ROI_WMc_lh.mif \
@@ -498,13 +501,14 @@
 				-include ROIs/ROI_PL_lh.mif \
 				-include ROIs/ROI_CP_lh.mif \
 				-include ROIs/ROI_MO_lh.mif \
+				-exclude ROIs/ROI_MO_rh.mif \
 				-exclude ROIs/ROI_WMf_rh.mif \
 				-exclude ROIs/ROI_WMh_rh.mif \
 				-exclude ROIs/ROI_WMc_rh.mif \
 				-exclude ROIs/ROI_WMc_lh.mif \
 				-minlength 60 \
 				-angle 20 \
-				-cutoff 0.1 \
+				-cutoff 0.15 \
 				-step 1 \
 				-trials 2000 \
 				-max_attempts_per_seed 500 \
@@ -524,13 +528,14 @@
 				-include ROIs/ROI_CP_lh.mif \
 				-include ROIs/ROI_PL_lh.mif \
 				-include ROIs/ROI_PMC_lh.mif \
+				-exclude ROIs/ROI_MO_rh.mif \
 				-exclude ROIs/ROI_WMf_rh.mif \
 				-exclude ROIs/ROI_WMh_rh.mif \
 				-exclude ROIs/ROI_WMc_rh.mif \
 				-exclude ROIs/ROI_WMc_lh.mif \
 				-minlength 60 \
 				-angle 20 \
-				-cutoff 0.1 \
+				-cutoff 0.15 \
 				-step 1 \
 				-trials 2000 \
 				-max_attempts_per_seed 500 \
@@ -555,13 +560,14 @@
 				-include ROIs/ROI_PL_rh.mif \
 				-include ROIs/ROI_CP_rh.mif \
 				-include ROIs/ROI_MO_rh.mif \
+				-exclude ROIs/ROI_MO_lh.mif \
 				-exclude ROIs/ROI_WMf_lh.mif \
 				-exclude ROIs/ROI_WMh_lh.mif \
 				-exclude ROIs/ROI_WMc_lh.mif \
 				-exclude ROIs/ROI_WMc_rh.mif \
 				-minlength 60 \
 				-angle 20 \
-				-cutoff 0.1 \
+				-cutoff 0.15 \
 				-step 1 \
 				-trials 2000 \
 				-max_attempts_per_seed 500 \
@@ -581,13 +587,14 @@
 				-include ROIs/ROI_CP_rh.mif \
 				-include ROIs/ROI_PL_rh.mif \
 				-include ROIs/ROI_PMC_rh.mif \
+				-exclude ROIs/ROI_MO_lh.mif \
 				-exclude ROIs/ROI_WMf_lh.mif \
 				-exclude ROIs/ROI_WMh_lh.mif \
 				-exclude ROIs/ROI_WMc_lh.mif \
 				-exclude ROIs/ROI_WMc_rh.mif \
 				-minlength 60 \
 				-angle 20 \
-				-cutoff 0.1 \
+				-cutoff 0.15 \
 				-step 1 \
 				-trials 2000 \
 				-max_attempts_per_seed 500 \
@@ -620,7 +627,7 @@
 				-select 2400 \
 				-seeds 200M \
 				-include ROIs/ROI_ML_lh.mif \
-				-include ROIs/ROI_MLcortex_lh.mif \
+				-include ROIs/ROI_MLthalamus_lh.mif \
 				-exclude ROIs/ROI_WMf_rh.mif \
 				-exclude ROIs/ROI_WMh_rh.mif \
 				-exclude ROIs/ROI_WMc_rh.mif \
@@ -694,7 +701,7 @@
 				-select 2400 \
 				-seeds 200M \
 				-include ROIs/ROI_ML_rh.mif \
-				-include ROIs/ROI_MLcortex_rh.mif \
+				-include ROIs/ROI_MLthalamus_rh.mif \
 				-exclude ROIs/ROI_WMf_lh.mif \
 				-exclude ROIs/ROI_WMh_lh.mif \
 				-exclude ROIs/ROI_WMc_lh.mif \
@@ -816,6 +823,7 @@
 	    fi
 	  
 	    mrgrid ../Segmentation/mask_lesion_float.nii.gz regrid -template ../Segmentation/T1_upsampled.nii.gz mask_lesion_float_up.nii.gz -interp linear -force
+	    mrgrid ../Segmentation/mask_lesion_smoothed.nii.gz regrid -template ../Segmentation/T1_upsampled.nii.gz mask_lesion_smoothed_up.nii.gz -interp linear -force
 	    mrgrid ../Segmentation/Contrast_raw_coreg_24.nii.gz regrid -template ../Segmentation/T1_upsampled.nii.gz Contrast_raw_coreg_24_up.nii.gz -force
 	  	
 		flirt -in T1_raw.nii -ref ACPC/T1_raw_LPS_3D.nii -dof 6 -omat t12acpc.mat
@@ -831,6 +839,9 @@
 
 			mrtransform mask_lesion_float_up.nii.gz -linear t12acpc_mrtrix.txt ACPC/mask_lesion_float_up_ACPC.nii.gz -force
 			mrtransform ACPC/mask_lesion_float_up_ACPC.nii.gz -template ACPC/T1_raw_ACPC_aligned_up.nii ACPC/mask_lesion_float_up_ACPC_aligned.nii.gz -datatype float32 -force
+			
+			mrtransform mask_lesion_smoothed_up.nii.gz -linear t12acpc_mrtrix.txt ACPC/mask_lesion_smoothed_up_ACPC.nii.gz -force
+			mrtransform ACPC/mask_lesion_smoothed_up_ACPC.nii.gz -template ACPC/T1_raw_ACPC_aligned_up.nii ACPC/mask_lesion_smoothed_up_ACPC_aligned.nii.gz -datatype float32 -force
 
 			mrtransform track_ndDRTT_lh.nii.gz -linear t12acpc_mrtrix.txt ACPC/track_ndDRTT_lh_ACPC.nii.gz -force
 			mrtransform ACPC/track_ndDRTT_lh_ACPC.nii.gz -template ACPC/T1_raw_ACPC_aligned_up.nii ACPC/track_ndDRTT_lh_ACPC_aligned_temp.nii.gz -datatype float32 -force
@@ -859,6 +870,9 @@
 
 			mrtransform mask_lesion_float_up.nii.gz -linear t12acpc_mrtrix.txt ACPC/mask_lesion_float_up_ACPC.nii.gz -force
 			mrtransform ACPC/mask_lesion_float_up_ACPC.nii.gz -template ACPC/T1_raw_ACPC_aligned_up.nii ACPC/mask_lesion_float_up_ACPC_aligned.nii.gz -datatype float32 -force
+			
+			mrtransform mask_lesion_smoothed_up.nii.gz -linear t12acpc_mrtrix.txt ACPC/mask_lesion_smoothed_up_ACPC.nii.gz -force
+			mrtransform ACPC/mask_lesion_smoothed_up_ACPC.nii.gz -template ACPC/T1_raw_ACPC_aligned_up.nii ACPC/mask_lesion_smoothed_up_ACPC_aligned.nii.gz -datatype float32 -force
 
 			mrtransform track_ndDRTT_rh.nii.gz -linear t12acpc_mrtrix.txt ACPC/track_ndDRTT_rh_ACPC.nii.gz -force
 			mrtransform ACPC/track_ndDRTT_rh_ACPC.nii.gz -template ACPC/T1_raw_ACPC_aligned_up.nii ACPC/track_ndDRTT_rh_ACPC_aligned_temp.nii.gz -datatype float32 -force
@@ -894,7 +908,7 @@
     handleContour() {
       if [ $EXIST -eq 1 ]; then
 		mkdir -p Contour
-		python "$SCRIPT_DIR/Python/results.py"
+		python "$SCRIPT_DIR/Python/contour.py"
         
       else
         exit

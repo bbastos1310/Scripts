@@ -5,8 +5,9 @@
     FILE_1="$SUBJECTS_DIR/$PAT_NUM/scripts/recon-all.done"
     FILE_2="$OUT_PRE/Segmentation/thalamus_mask_lh.nii.gz"
     FILE_3="$OUT_PRE/Segmentation/Maps/FAmap_up.nii.gz"
-    FILE_4="$OUT_PRE/Segmentation/full_segmentation_colored.mif"
-    FILE_5="$OUT_PRE/Segmentation/Julich.csv"
+    FILE_4="$OUT_PRE/Segmentation/mask_lesion_expanded.nii.gz"
+    FILE_5="$OUT_PRE/Segmentation/full_segmentation_colored.mif"
+    FILE_6="$OUT_PRE/Segmentation/Julich.csv"
     FLAG=0
     FLAG_CONTINUE=1
     
@@ -22,16 +23,17 @@
           esac
         elif [[ -a $FILE && $yn == [Yy] ]]; then
           FLAG=1
+          EXIST=1
         else
           EXIST=1
         fi
       }
     
     #Functions
+    
     #1 
     handleReconstruction() {
         if [ $EXIST -eq 1 ]; then
-          
           (
           export SUBJECTS_DIR="$SUBJECTS_DIR"
 		  export FREESURFER_HOME="$FREESURFER_HOME_STAND" # Versão padrão do freesurfer
@@ -54,19 +56,19 @@
 		  mrconvert "$OUT_PRE/Raw/Contrast_raw.mif" Contrast.nii.gz -force
 		  flirt -in Contrast.nii.gz -ref T1_resampled.nii.gz -dof 6 -omat contrast2t1.mat
 		  transformconvert contrast2t1.mat Contrast.nii.gz T1_resampled.nii.gz flirt_import contrast2t1_mrtrix.txt -force
-		  mrtransform "$OUT_PRE/Raw/Contrast_raw.mif" -linear contrast2t1_mrtrix.txt Contrast_coreg.mif -force
+		  mrtransform "$OUT_PRE/Raw/Contrast_raw.mif" -stride -1,-2,3 -linear contrast2t1_mrtrix.txt Contrast_coreg.mif -force
 		  mrgrid Contrast_coreg.mif regrid -template T1_resampled.mif Contrast_coreg_resampled.mif -force
-		  mrconvert Contrast_coreg_resampled.mif Contrast_coreg_resampled.nii.gz -force          
+		  mrconvert Contrast_coreg_resampled.mif -stride -1,-2,3 Contrast_coreg_resampled.nii.gz -force          
 		  
-		  (
-		  export SUBJECTS_DIR="$SUBJECTS_DIR"
-		  export FREESURFER_HOME="$FREESURFER_HOME_DEV" # Versão dev do freesurfer
-		  source $FREESURFER_HOME/SetUpFreeSurfer.sh		  
-		  time mri_histo_atlas_segment_fast T2_raw_coreg.nii.gz "$HISTO_DIR" 0 -1
-		  )
+		  #(
+		  #export SUBJECTS_DIR="$SUBJECTS_DIR"
+		  #export FREESURFER_HOME="$FREESURFER_HOME_DEV" # Versão dev do freesurfer
+		  #source $FREESURFER_HOME/SetUpFreeSurfer.sh		  
+		  #time mri_histo_atlas_segment_fast T2_raw_coreg.nii.gz "$HISTO_DIR" 0 -1
+		  #)
 		  
-		  export FREESURFER_HOME="$FREESURFER_HOME_STAND" #versão padrão do freesurfer
-		  #source $FREESURFER_HOME/SetUpFreeSurfer.sh
+		  #export FREESURFER_HOME="$FREESURFER_HOME_STAND" #versão padrão do freesurfer
+		  ##source $FREESURFER_HOME/SetUpFreeSurfer.sh
 					   
 		  # Upsample da imagem T1 para usar como template (a imagem resultante da segmentação tem voxels de aproxidamente 0.4 mm, mas os dois hemisférios tem resoluções diferentes) 
 		  mrgrid T1_resampled.nii.gz regrid -voxel 0.4 T1_upsampled.nii.gz -force
@@ -74,7 +76,7 @@
 		  mrgrid "$HISTO_DIR/seg_right.nii.gz" regrid -interp nearest -template T1_upsampled.nii.gz -oversample 1,1,1 seg_right_resampled.nii.gz -force
 		  mrgrid "$HISTO_DIR/SynthSeg.mgz" regrid -interp nearest -template T1_upsampled.nii.gz -oversample 1,1,1 SynthSeg_resampled.nii.gz -force
 	  
-		  thalamus_labels=(218 219 220 221 222 223 224 225 252 253 254 274 282 283 284 285 286 303 312 313 314 350 378 379 380 381 382 394 395 396 397 398 399 423 424 425 426 441 442 443 454 458 478 479 484 492 504 508 512 517 519 578 811 813)
+		  thalamus_labels=(220 252 219 378 303 443 222 283 350 381 382 314 442 394 458 423 424 274 395 284 278 285 479 398 223 224 426 396 397 399 221 253 286 282 313 379 380 504 484 512 478 441 492 510 508 517 519 454 578 811 813 190 191 254)
 		  
 		  cmd_lh="mrcalc"
 		  cmd_rh="mrcalc"
@@ -105,7 +107,8 @@
 		  mrgrid thalamus_mask_lh.nii.gz regrid -template dwi_mask_up_reg.nii.gz thalamus_mask_dwi_lh.nii.gz -datatype bit -force
 		  mrgrid thalamus_mask_rh.nii.gz regrid -template dwi_mask_up_reg.nii.gz thalamus_mask_dwi_rh.nii.gz -datatype bit -force
 		  
-		  dDRTT_labels=(219 220 221 252 222 283 314 350 381 382)
+		  #dDRTT_labels=(274 314 350 381 382 442) VL + VM
+		  dDRTT_labels=(222 283 350 381 382 314 442 394 458 423 424 274 395) # núcleos ventrais
 				  
 		  cmd_lh="mrcalc"
 		  cmd_rh="mrcalc"
@@ -133,7 +136,8 @@
 		  echo "Executando: $cmd_rh"
 		  eval "$cmd_rh"
 
-		  ndDRTT_labels=(224 225 253 284 285 286 303 312 313 379 380 396 397 398 441 454 478 479 508 517 519 578 811 813)
+		  #ndDRTT_labels=(274 314 350 381 382 442) VL + VM
+		  ndDRTT_labels=(222 283 350 381 382 314 442 394 458 423 424 274 395) # núcleos ventrais
 				  
 		  cmd_lh="mrcalc"
 		  cmd_rh="mrcalc"
@@ -200,8 +204,24 @@
           exit
         fi
       }
+      
+    #4
+    handleLesion() {
+        if [ $EXIST -eq 1 ]; then
+        
+          mrcalc "$HISTO_DIR/seg_left.nii.gz" 314 -eq ROI_rostral_lh.mif -datatype bit -force
+          mrgrid ROI_rostral_lh.mif regrid -template Contrast_raw_coreg_24.nii.gz -datatype uint8 -oversample 1,1,1 ROI_rostral_lh_Contrast.nii.gz -force
+          mrcalc "$HISTO_DIR/seg_right.nii.gz" 314 -eq ROI_rostral_rh.mif -datatype bit -force
+          mrgrid ROI_rostral_rh.mif regrid -template Contrast_raw_coreg_24.nii.gz -datatype uint8 -oversample 1,1,1 ROI_rostral_rh_Contrast.nii.gz -force
+          
+          python "$SCRIPT_DIR/Python/lesion.py"
+          
+        else
+          exit
+        fi
+      }
      
-    #4  
+    #5
     handleLabel2Image() {
         if [ $EXIST -eq 1 ]; then
           
@@ -215,12 +235,6 @@
 		  )
 		  
 		  mrconvert output_freesurfer.mgz output_freesurfer.nii.gz -force
-	      
-          mrcalc "$HISTO_DIR/seg_left.nii.gz" 314 -eq ROI_rostral_lh.mif -datatype bit -force
-          mrgrid ROI_rostral_lh.mif regrid -template Contrast_raw_coreg_24.nii.gz -datatype uint8 -oversample 1,1,1 ROI_rostral_lh_Contrast.nii.gz -force
-          mrcalc "$HISTO_DIR/seg_right.nii.gz" 314 -eq ROI_rostral_rh.mif -datatype bit -force
-          mrgrid ROI_rostral_rh.mif regrid -template Contrast_raw_coreg_24.nii.gz -datatype uint8 -oversample 1,1,1 ROI_rostral_rh_Contrast.nii.gz -force
-          
           python "$SCRIPT_DIR/Python/main_segmentation.py"
           
           rm ROI_rostral_lh.mif ROI_rostral_rh.mif
@@ -304,7 +318,7 @@
       fi
       
       if [ $FLAG -eq 0 ]; then
-        read -p "Confirma o pré processamento completo? (y/n): " confirm
+        read -p "Confirma a segmentação completa? (y/n): " confirm
         case $confirm in
         
         [Yy])
@@ -328,8 +342,9 @@
         $'\n'"1.Reconstruction"\
         $'\n'"2.Subcortical segmentation"\
         $'\n'"3.Maps creation"\
-        $'\n'"4.Cortical segmentation"\
-        $'\n'"5.Connectivity matrix (tck2connectome-OPCIONAL)"
+        $'\n'"4.Lesion estimation"\
+        $'\n'"5.Cortical segmentation"\
+        $'\n'"6.Connectivity matrix (tck2connectome-OPCIONAL)"
         read -p "Opção: " step
         
           case $step in
@@ -347,13 +362,18 @@
           FILE=$FILE_3
           fileExistence
           handleMapscreation;;
-        
+          
           4)
           FILE=$FILE_4
           fileExistence
+          handleLesion;;
+        
+          5)
+          FILE=$FILE_5
+          fileExistence
           handleLabel2Image;;
           
-          5)
+          6)
           fileExistence
           handleTck2Connectome;;
         

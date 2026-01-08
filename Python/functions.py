@@ -4,7 +4,7 @@ import functions
 # External libraries
 import nibabel as nib
 import numpy as np
-from scipy.ndimage import binary_erosion
+from scipy.ndimage import generate_binary_structure, binary_dilation, center_of_mass
 from skimage.measure import label, regionprops
 from scipy.spatial import ConvexHull, Delaunay, KDTree
 from skimage.draw import polygon
@@ -17,6 +17,7 @@ import cv2
 def saveImage(data, image, name):
   data_nifti = nib.Nifti1Image(data, image.affine)
   nib.save(data_nifti, name + ".nii.gz")
+  print(f"image {name}.nii.gz saved")
 
 # Remove mask contour
 def removeContour(data, mask, n_iter):
@@ -306,3 +307,151 @@ def minDistance(mask_points, mask_target):
 	distances_array[tuple(coords_points.T)] = distances
 	
 	return distances_array	
+	
+def regionContrastgrowing(image_data, initial_mask, 
+                                  contrast_threshold=0.2,
+                                  contrast_type='relative',
+                                  connectivity=26,
+                                  max_iterations=1000,
+                                  use_adaptive_mean=False,
+                                  verbose=True):
+    """
+    Expande região baseada APENAS no contraste entre a região atual e os voxels vizinhos.
+   
+    """
+    
+     
+    # Estrutura de vizinhança
+    if connectivity == 6:
+        structure = generate_binary_structure(3, 1)  # 6-vizinhos
+    elif connectivity == 18:
+        structure = generate_binary_structure(3, 2)  # 18-vizinhos
+    else:  # 26
+        structure = generate_binary_structure(3, 3)  # 26-vizinhos
+    
+    # Inicialização
+    current_mask = initial_mask.copy().astype(bool)
+    previous_mask = np.zeros_like(current_mask)
+    iteration_count = 0
+    contrast_history = []
+    
+    # Média inicial da região
+    if use_adaptive_mean:
+        # Usa apenas os voxels da última iteração (inicialmente, voxels mais externos da máscara inicial)
+        eroded = binary_erosion(initial_mask, structure=structure)
+        boundary = initial_mask & ~eroded
+        current_mean = np.mean(image_data[boundary])
+        
+        # last_added_mask = initial_mask.copy()
+        # current_mean = np.mean(image_data[last_added_mask])
+    else:
+        # Usa todos os voxels acumulados
+        current_mean = np.mean(image_data[current_mask])
+    
+    # Pequeno epsilon para evitar divisão por zero
+    eps = 1e-6
+    
+    while iteration_count < max_iterations:
+        # Encontra fronteira da região atual
+        dilated = binary_dilation(current_mask, structure=structure)
+        border_mask = dilated & ~current_mask
+        
+        # Se não há fronteira, para
+        if not np.any(border_mask):
+            if verbose:
+                print(f"Iteração {iteration_count}: Sem fronteira para expandir")
+            break
+        
+        # Índices dos voxels da fronteira
+        border_indices = np.where(border_mask)
+        border_voxels = image_data[border_indices]
+        
+        # Calcula contraste com a região atual
+        if contrast_type == 'relative':
+            # Contraste relativo: |I - mean| / mean
+            contrast_values = np.abs(border_voxels - current_mean) / (current_mean + eps)
+        elif contrast_type == 'absolute':
+            # Contraste absoluto: |I - mean|
+            contrast_values = np.abs(border_voxels - current_mean)
+        else:
+            raise ValueError(f"Tipo de contraste desconhecido: {contrast_type}")
+        
+        # Seleciona voxels com contraste abaixo do limiar
+        meets_contrast = contrast_values <= contrast_threshold
+        
+        # Cria máscara dos novos voxels
+        new_voxels_mask = np.zeros_like(current_mask, dtype=bool)
+        new_voxels_mask[border_indices] = meets_contrast
+        
+        # Se nenhum voxel novo atende ao critério, para
+        if not np.any(new_voxels_mask):
+            if verbose:
+                print(f"Iteração {iteration_count}: Nenhum voxel novo atende ao critério de contraste")
+            break
+        
+        # Adiciona novos voxels à máscara atual
+        current_mask = current_mask | new_voxels_mask
+        
+        # Atualiza a média para próxima iteração
+        if use_adaptive_mean:
+            # Usa apenas os voxels recém-adicionados para calcular nova média
+            last_added_mask = new_voxels_mask.copy()
+            if np.any(last_added_mask):
+                current_mean = np.mean(image_data[last_added_mask])
+        else:
+            # Usa todos os voxels acumulados
+            current_mean = np.mean(image_data[current_mask])
+        
+        # Calcula estatísticas de contraste para histórico
+        if np.any(meets_contrast):
+            mean_contrast = np.mean(contrast_values[meets_contrast])
+            contrast_history.append(mean_contrast)
+        else:
+            contrast_history.append(0)
+        
+        # Verifica convergência (nenhuma mudança)
+        if np.array_equal(current_mask, previous_mask):
+            if verbose:
+                print(f"Iteração {iteration_count}: Convergência alcançada")
+            break
+        
+        # Prepara para próxima iteração
+        previous_mask = current_mask.copy()
+        iteration_count += 1
+        
+        # Feedback progressivo
+        if verbose and iteration_count % 10 == 0:
+            voxel_count = np.sum(current_mask)
+            added_count = np.sum(new_voxels_mask)
+            print(f"Iteração {iteration_count}: {voxel_count} voxels, adicionados {added_count}, contraste médio: {mean_contrast:.3f}")
+    
+    if iteration_count == max_iterations:
+        if verbose:
+            print(f"Atingiu máximo de {max_iterations} iterações")
+    
+    return current_mask
+	
+	
+    
+def sphereMask(mask, radius):
+    
+    # Cria uma máscara esférica a partir do centro de massa.
+    
+    mask_sphere = np.zeros(mask.shape, dtype = bool)
+    
+    center = center_of_mass(mask)
+    
+    # Criar grade de coordenadas 3D
+    i, j, k = np.mgrid[0:mask.shape[0], 
+                       0:mask.shape[1], 
+                       0:mask.shape[2]]
+    
+    # Calcular distâncias ao centroide
+    distances = np.sqrt((i - center[0])**2 + 
+                        (j - center[1])**2 + 
+                        (k - center[2])**2)
+    
+    # Criar máscara esférica (voxels dentro da esfera)
+    mask_sphere[distances <= radius] = 1
+
+    return mask_sphere

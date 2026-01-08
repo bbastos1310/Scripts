@@ -61,13 +61,17 @@
       echo "Qual das imagens deseja visualizar?:"\
       $'\n'"1.Tissues"\
       $'\n'"2.Alignment T1 and dwi"\
-      $'\n'"3.Alignment dwi and tissues"
+      $'\n'"3.Alignment dwi and tissues"\
+      $'\n'"4.Alignment T1 and T2"\
+      $'\n'"5.Alignment T1 and WMnull"
       read -p "Opção: " coreg
       
       case $coreg in
       1) mrview $OUT_PRE/Preprocess/5tt_coreg.mif -overlay.load $OUT_PRE/Raw/T1_raw.mif -overlay.opacity 0.5 -plane 2;;
       2) mrview dwi_den_unr_preproc_unb_reg.mif -overlay.load $OUT_PRE/Raw/T1_raw.mif -overlay.opacity 0.3 -plane 2;;
       3) mrview dwi_den_unr_preproc_unb_reg.mif -overlay.load $OUT_PRE/Preprocess/5tt_coreg.mif -overlay.colourmap 2 -overlay.opacity 0.3 -plane 1;;
+      4) mrview $OUT_PRE/Raw/T1_raw.mif -overlay.load ../Segmentation/T2_raw_coreg.mif -overlay.opacity 0.3 -plane 2;;
+      5) mrview $OUT_PRE/Raw/T1_raw.mif -overlay.load ../Segmentation/Contrast_raw_coreg_24.mif -overlay.opacity 0.3 -plane 2;;
       esac
     }
          
@@ -104,7 +108,21 @@
         esac
 	}
 	
-	# 4. Create annotation files
+	# 4. Lesion
+    handleLesion() { 
+		echo "Qual das imagens deseja visualizar?:"$'\n'\
+		"1.Diferença entre as imagens WMn"$'\n'\
+        "2.Estimativa inicial da lesão"$'\n'
+        read -p "Opção: " lesion
+        
+        case $lesion in
+        1) mrview Contrast_difference.nii.gz -colourmap 4 ;;
+        2) mrview Contrast_raw_coreg_24.mif -colourmap 1 -overlay.load mask_lesion_expanded.nii.gz -overlay.opacity 0.5 ;;
+                
+        esac
+	}
+	
+	# 5. Create annotation files
     handleAnnot() { 
 		echo "Qual das imagens deseja visualizar?:"$'\n'\
 		"1.Segmentação cortical (Julich atlas)"$'\n'\
@@ -163,7 +181,7 @@
 				  2) mrview ../Segmentation/Contrast_raw_coreg_24.mif -tractography.load track_dDRTT_lh.tck -plane 1	;;
 				  3) mrview ../Segmentation/Contrast_raw_coreg_24.mif -tractography.load track_CST_lh.tck  -plane 1 ;;
 				  4) mrview ../Segmentation/Contrast_raw_coreg_24.mif -tractography.load track_ML_lh.tck -plane 1 ;;
-				  5) mrview ../Segmentation/Contrast_raw_coreg_24.mif -tractography.load track_CST_lh.tck -tractography.load track_dDRTT_lh.tck -tractography.load track_ML_lh.tck -plane 1 ;;
+				  5) mrview ../Segmentation/Contrast_raw_coreg_24.mif -tractography.load track_CST_lh.tck -tractography.load track_dDRTT_lh.tck -tractography.load track_ndDRTT_lh.tck -tractography.load track_ML_lh.tck -plane 1 ;;
 				  esac 
 				  
 			  elif [[ "$hemisphere" == "right" ]]; then
@@ -225,7 +243,7 @@
          source "$FREESURFER_HOME/SetUpFreeSurfer.sh"
                   
 		 echo "Deseja visualizar qual contorno?:"\
-			  $'\n'"1.Axial"\
+			  $'\n'"1.AC/PC"\
 			  $'\n'"2.Coronal"
 			  read -p "Opção: " contour_view
 			  
@@ -343,7 +361,8 @@
           $'\n'"1.Imagem T2 processada pelo freesurfer"\
           $'\n'"2.Segmentação do atlas Nextbrain"\
           $'\n'"3.Visualização dos mapas de difusão"\
-          $'\n'"4.Visualização 3D da segmentação cortical (Julich atlas)"
+          $'\n'"4.Estimativa inicial da lesão"\
+          $'\n'"5.Segmentação cortical e ROIs"
                    			
           read -p "Opção: " segmentation
           
@@ -351,7 +370,8 @@
             1) handleT2freesurfer;;
             2) handleNextbrain;;
             3) handleMaps;;
-            4) handleAnnot;;
+            4) handleLesion;;
+            5) handleAnnot;;
             esac
             
       read -p "Deseja visualizar mais imagens da segmentação (y/n)? " option

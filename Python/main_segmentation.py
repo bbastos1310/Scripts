@@ -13,14 +13,9 @@ out_freesurfer = nib.load("output_freesurfer.nii.gz") # saída da segmentação 
 im_segleft = nib.load("seg_left_resampled.nii.gz") # saída da segmentação do mri_histo (hemisfério esquerdo)
 im_segright = nib.load("seg_right_resampled.nii.gz") # saída da segmentação do mri_histo (hemisfério direito)
 im_synthseg = nib.load("SynthSeg_resampled.nii.gz") # saída da segmentação do mri_histo (equivalente à segmentação subcortical do freesurfer)
-im_Contrast = nib.load("Contrast_raw_coreg_resampled.nii.gz") # Contrast gm/wm image before procedure
-im_Contrast_24 = nib.load("Contrast_raw_coreg_24.nii.gz") # Contrast gm/wm image after procedure
-im_rostral_lh = nib.load("ROI_rostral_lh_Contrast.nii.gz")
-im_rostral_rh = nib.load("ROI_rostral_rh_Contrast.nii.gz")
 im_thalamus_lh = nib.load("thalamus_mask_lh.nii.gz")
 im_thalamus_rh = nib.load("thalamus_mask_rh.nii.gz")
 im_FAmap = nib.load("Maps/FAmap_up.nii.gz")
-im_CLmap = nib.load("Maps/CLmap_up.nii.gz")
 print(".Files loaded")
 
 ## Extract data from image
@@ -28,14 +23,9 @@ data_freesurfer = out_freesurfer.get_fdata().astype(np.uint16) # (256x256x256)
 data_segleft = im_segleft.get_fdata().astype(np.uint16) # (640x640x640)
 data_segright = im_segright.get_fdata().astype(np.uint16) # (640x640x640)
 data_synthseg = im_synthseg.get_fdata().astype(np.uint16) # (640x640x640)
-data_Contrast = im_Contrast.get_fdata() # (560x641x71)
-data_Contrast_24 = im_Contrast_24.get_fdata() # (560x641x71)
-data_rostral_lh = im_rostral_lh.get_fdata().astype(bool) 
-data_rostral_rh = im_rostral_rh.get_fdata().astype(bool)  
 data_thalamus_lh = im_thalamus_lh.get_fdata().astype(bool) 
 data_thalamus_rh = im_thalamus_rh.get_fdata().astype(bool) 
 data_FAmap = im_FAmap.get_fdata().astype(np.uint8) 
-data_CLmap = im_CLmap.get_fdata().astype(np.uint8)
 print(".Data loaded")
 
 # Armazenar o affine das imagens para uso posterior
@@ -43,7 +33,7 @@ affine_segleft = im_segleft.affine
 affine_segright = im_segright.affine
 affine_synthseg = im_synthseg.affine
 
-del im_segleft, im_segright, im_synthseg, im_Contrast_24, im_CLmap # deletar as imagens da memória já que possuem resolução alta 
+del im_segleft, im_segright, im_synthseg # deletar as imagens da memória já que possuem resolução alta 
 
 # Matriz para armazenar as informações dos dois hemisférios juntos 
 data_seg = np.zeros(data_segleft.shape, dtype=np.uint16)
@@ -118,7 +108,7 @@ print(f"Brainstem (Right hemisphere)")
 print(f"{map_brainstem_rh[map_brainstem_rh == True].size} voxels.")
 
 ### Medial Lemniscus
-map_ML_rh = roi.handleMediallemniscus(data_seg,map_RN_rh,data_CLmap,"right")
+map_ML_rh = roi.handleMediallemniscus(data_seg,map_RN_rh,data_FAmap,"right")
 map_ML_rh_filtered = functions.connectedComponents(map_ML_rh)
 
 ### Cerebral Peduncle
@@ -188,7 +178,7 @@ print(f"Brainstem (Left hemisphere)")
 print(f"{map_brainstem_lh[map_brainstem_lh == True].size} voxels.")
 
 ### Medial Lemniscus
-map_ML_lh = roi.handleMediallemniscus(data_seg,map_RN_lh,data_CLmap,"left")
+map_ML_lh = roi.handleMediallemniscus(data_seg,map_RN_lh,data_FAmap,"left")
 map_ML_lh_filtered = functions.connectedComponents(map_ML_lh)
 
 ### Cerebral Peduncle
@@ -204,9 +194,6 @@ map_PSA_lh_filtered = functions.connectedComponents(map_PSA_lh)
 ### Posterior limb of internal capsule
 map_PostLimb_lh = roi.handlePosteriorLimb(data_seg,data_FAmap, data_thalamus_lh, "left")
 map_PostLimb_lh_filtered = functions.connectedComponents(map_PostLimb_lh)
-
-### Lesion's mask
-map_lesion_float, map_lesion_binary = roi.handleLesionmask(data_Contrast,data_Contrast_24,data_rostral_lh, data_rostral_rh,im_Contrast)
 
 # Matriz com as regiões de interesse 
 data_roi = np.zeros(data_segleft.shape, dtype=np.uint16)
