@@ -114,28 +114,31 @@ print(f"{hemisphere} hemisphere")
 ## Load files
 
 if (hemisphere == 'left'):
-	track_ndDRTT_ACPC = nib.load("ACPC/track_ndDRTT_lh_ACPC_aligned.nii.gz") 
-	track_DRTT_ACPC = nib.load("ACPC/track_dDRTT_lh_ACPC_aligned.nii.gz") 
-	track_CST_ACPC = nib.load("ACPC/track_CST_lh_ACPC_aligned.nii.gz") 
-	track_ML_ACPC = nib.load("ACPC/track_ML_lh_ACPC_aligned.nii.gz") 
+	lesion_ACPC = nib.load("ACPC/mask_zone2_ACPC.nii.gz") 
+	track_ndDRTT_ACPC = nib.load("ACPC/track_ndDRTT_lh_ACPC.nii.gz") 
+	track_DRTT_ACPC = nib.load("ACPC/track_dDRTT_lh_ACPC.nii.gz") 
+	track_CST_ACPC = nib.load("ACPC/track_CST_lh_ACPC.nii.gz") 
+	track_ML_ACPC = nib.load("ACPC/track_ML_lh_ACPC.nii.gz") 
 
 elif (hemisphere == 'right'):
-	track_ndDRTT_ACPC = nib.load("ACPC/track_ndDRTT_rh_ACPC_aligned.nii.gz") 
-	track_DRTT_ACPC = nib.load("ACPC/track_dDRTT_rh_ACPC_aligned.nii.gz") 
-	track_CST_ACPC = nib.load("ACPC/track_CST_rh_ACPC_aligned.nii.gz") 
-	track_ML_ACPC = nib.load("ACPC/track_ML_rh_ACPC_aligned.nii.gz") 
+	lesion_ACPC = nib.load("ACPC/mask_zone2_ACPC.nii.gz")
+	track_ndDRTT_ACPC = nib.load("ACPC/track_ndDRTT_rh_ACPC.nii.gz") 
+	track_DRTT_ACPC = nib.load("ACPC/track_dDRTT_rh_ACPC.nii.gz") 
+	track_CST_ACPC = nib.load("ACPC/track_CST_rh_ACPC.nii.gz") 
+	track_ML_ACPC = nib.load("ACPC/track_ML_rh_ACPC.nii.gz") 
 
 print(".Files loaded (ACPC)")
 
 ## Extract data from image
-data_ndDRTT_ACPC = track_ndDRTT_ACPC.get_fdata().astype(np.uint16) 
-data_DRTT_ACPC = track_DRTT_ACPC.get_fdata().astype(np.uint16) 
-data_CST_ACPC = track_CST_ACPC.get_fdata().astype(np.uint16) 
-data_ML_ACPC = track_ML_ACPC.get_fdata().astype(np.uint16) 
+mask_lesion_ACPC = lesion_ACPC.get_fdata().astype(np.uint8) 
+data_ndDRTT_ACPC = track_ndDRTT_ACPC.get_fdata().astype(np.uint8) 
+data_DRTT_ACPC = track_DRTT_ACPC.get_fdata().astype(np.uint8) 
+data_CST_ACPC = track_CST_ACPC.get_fdata().astype(np.uint8) 
+data_ML_ACPC = track_ML_ACPC.get_fdata().astype(np.uint8) 
 
 del track_ndDRTT_ACPC, track_DRTT_ACPC, track_CST_ACPC, track_ML_ACPC
 
 print(".Data loaded(ACPC)")
 
-handleAxialcontour(mask_lesion_ACPC, hemisphere, "acpc", mask_lesion_filtered_ACPC, data_ndDRTT_ACPC, data_DRTT_ACPC, data_CST_ACPC, data_ML_ACPC)
-handleCoronalcontour(mask_lesion_ACPC, hemisphere, mask_lesion_filtered_ACPC, data_ndDRTT_ACPC, data_DRTT_ACPC, data_CST_ACPC, data_ML_ACPC)
+handleAxialcontour(lesion_ACPC, hemisphere, "acpc", mask_lesion_ACPC, data_ndDRTT_ACPC, data_DRTT_ACPC, data_CST_ACPC, data_ML_ACPC)
+handleCoronalcontour(lesion_ACPC, hemisphere, mask_lesion_ACPC, data_ndDRTT_ACPC, data_DRTT_ACPC, data_CST_ACPC, data_ML_ACPC)
