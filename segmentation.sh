@@ -34,13 +34,13 @@
     #1 
     handleReconstruction() {
         if [ $EXIST -eq 1 ]; then
-          (
-          export SUBJECTS_DIR="$SUBJECTS_DIR"
-		  export FREESURFER_HOME="$FREESURFER_HOME_STAND" # Versão padrão do freesurfer
-          source "$FREESURFER_HOME/SetUpFreeSurfer.sh"
-          # Reconstruction
-          time recon-all -s "$PAT_NUM" -i "$OUT_PRE/Preprocess/T1_raw.nii.gz" -T2 "$OUT_PRE/Segmentation/T2_raw_coreg.nii.gz" -all -parallel -openmp 8
-          )
+          #(
+          #export SUBJECTS_DIR="$SUBJECTS_DIR"
+		  #export FREESURFER_HOME="$FREESURFER_HOME_STAND" # Versão padrão do freesurfer
+          #source "$FREESURFER_HOME/SetUpFreeSurfer.sh"
+          ## Reconstruction
+          #time recon-all -s "$PAT_NUM" -i "$OUT_PRE/Preprocess/T1_raw.nii.gz" -T2 "$OUT_PRE/Segmentation/T2_raw_coreg.nii.gz" -all -parallel -openmp 8
+          #)
           
           mrconvert "$SUBJECTS_DIR/$PAT_NUM/mri/T1.mgz" "$OUT_PRE/Segmentation/T1_resampled.mif" -force
           mrconvert T1_resampled.mif -stride -1,-2,3 T1_resampled.nii.gz -force
@@ -209,18 +209,18 @@
     handleLesion() {
         if [ $EXIST -eq 1 ]; then
         
-		  mrgrid ../Segmentation/T2_raw_coreg.nii.gz regrid -voxel 0.3 T2_raw_coreg_up.nii.gz -force
-		  mrgrid ../Segmentation/T2_raw_24_coreg.nii.gz regrid -template T2_raw_coreg_up.nii.gz T2_raw_24_coreg_resampled.nii.gz -force
+		  #mrgrid ../Segmentation/T2_raw_coreg.nii.gz regrid -voxel 0.3 T2_raw_coreg_up.nii.gz -force
+		  #mrgrid ../Segmentation/T2_raw_24_coreg.nii.gz regrid -template T2_raw_coreg_up.nii.gz T2_raw_24_coreg_resampled.nii.gz -force
 
-		  mrcalc "$HISTO_DIR/seg_left.nii.gz" 314 -eq ROI_rostral_lh.mif -datatype bit -force
-		  mrgrid ROI_rostral_lh.mif regrid -template T2_raw_coreg_up.nii.gz -datatype uint8 -oversample 1,1,1 ROI_rostral_lh_T2.nii.gz -force
-		  mrcalc "$HISTO_DIR/seg_right.nii.gz" 314 -eq ROI_rostral_rh.mif -datatype bit -force
-		  mrgrid ROI_rostral_rh.mif regrid -template T2_raw_coreg_up.nii.gz -datatype uint8 -oversample 1,1,1 ROI_rostral_rh_T2.nii.gz -force
+		  #mrcalc "$HISTO_DIR/seg_left.nii.gz" 314 -eq ROI_rostral_lh.mif -datatype bit -force
+		  #mrgrid ROI_rostral_lh.mif regrid -template T2_raw_coreg_up.nii.gz -datatype uint8 -oversample 1,1,1 ROI_rostral_lh_T2.nii.gz -force
+		  #mrcalc "$HISTO_DIR/seg_right.nii.gz" 314 -eq ROI_rostral_rh.mif -datatype bit -force
+		  #mrgrid ROI_rostral_rh.mif regrid -template T2_raw_coreg_up.nii.gz -datatype uint8 -oversample 1,1,1 ROI_rostral_rh_T2.nii.gz -force
 
-		  mrconvert ../Preprocess/5tt_coreg.mif -coord 3 3 -axes 0,1,2 5tt_coreg_csf.mif -force
-		  mrcalc 5tt_coreg_csf.mif 0.5 -gt 5tt_coreg_csf_bool.mif -force
-		  mrgrid 5tt_coreg_csf_bool.mif regrid -template T2_raw_coreg_up.nii.gz -datatype uint8 -oversample 1,1,1 5tt_coreg_csf_resampled.nii.gz -force
-		  rm 5tt_coreg_csf_bool.mif 
+		  #mrconvert ../Preprocess/5tt_coreg.mif -coord 3 3 -axes 0,1,2 5tt_coreg_csf.mif -force
+		  #mrcalc 5tt_coreg_csf.mif 0.5 -gt 5tt_coreg_csf_bool.mif -force
+		  #mrgrid 5tt_coreg_csf_bool.mif regrid -template T2_raw_coreg_up.nii.gz -datatype uint8 -oversample 1,1,1 5tt_coreg_csf_resampled.nii.gz -force
+		  #rm 5tt_coreg_csf_bool.mif 
           
           python "$SCRIPT_DIR/Python/lesion.py"
           

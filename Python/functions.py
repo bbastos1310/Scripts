@@ -4,7 +4,7 @@ import functions
 # External libraries
 import nibabel as nib
 import numpy as np
-from scipy.ndimage import generate_binary_structure, binary_dilation, center_of_mass
+from scipy.ndimage import generate_binary_structure, binary_dilation, binary_erosion, center_of_mass
 from skimage.measure import label, regionprops
 from scipy.spatial import ConvexHull, Delaunay, KDTree
 from skimage.draw import polygon

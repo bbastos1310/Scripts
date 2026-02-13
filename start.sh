@@ -1,7 +1,7 @@
 #!/bin/bash
     
-    BASE_DIR="/media/brunobastos/linux_storage/Mestrado/Dados"
-    SCRIPT_DIR="/media/brunobastos/linux_storage/Mestrado/Scripts"
+    BASE_DIR="/mnt/HD_shared/Dados/"
+    SCRIPT_DIR="/mnt/HD_shared/Scripts/"
     FREESURFER_HOME_DEV="/media/brunobastos/linux_storage/freesurfer_dev/7-dev/"
     FREESURFER_HOME_STAND="/usr/local/freesurfer/7.4.1"
     N_THREADS=20

@@ -52,22 +52,7 @@
       }
 
           
-    # 2.Mask between GM and WM
-    #handleFringe() {
-      #if [ $EXIST -eq 1 ]; then
-		
-        #export SUBJECTS_DIR="$SUBJECTS_DIR"
-		#export FREESURFER_HOME="$FREESURFER_HOME_STAND" # Versão padrão do freesurfer
-		#5ttgen freesurfer "$SUBJECTS_DIR/$PAT_NUM/mri/aparc+aseg.mgz" 5tt_coreg.mif -force
-        #5tt2gmwmi 5tt_coreg.mif gmwmSeed_coreg.mif -force        
-        #mrconvert 5tt_coreg.mif -coord 3 1 5tt_coreg_thalamus.mif -force
-        
-      #else
-        #exit
-      #fi
-    #}
-	
-	# 2.ROI extraction
+    # 2.ROI extraction
 	handleRoiextraction() {
       if [ $EXIST -eq 1 ]; then
       

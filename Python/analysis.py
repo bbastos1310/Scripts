@@ -138,9 +138,6 @@ try:
         writer = csv.DictWriter(file_stats, fieldnames=FIELDNAMES)
         writer.writeheader()
         writer.writerows(filtered_pat)
-        
-    print("Arquivo stats_result.csv criado!")
-    print(f"Removido paciente {pat_num}. Restam {len(filtered_pat)} pacientes.")
     
 except FileNotFoundError:
     # Criar arquivo e adicionar Pat549 (campos vazios)
@@ -180,6 +177,7 @@ with open(location, "a", newline='', encoding='utf-8') as file_stats:
     writer = csv.DictWriter(file_stats, fieldnames=FIELDNAMES)
     writer.writerow(new_patient)
 
+print("Arquivo stats.csv atualizado.")
 # with open(location, "r") as file_stats:
     # reader = csv.DictReader(file_stats)
     # for pat in reader:

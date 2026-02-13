@@ -117,7 +117,11 @@
         
         case $lesion in
         1) mrview Contrast_difference.nii.gz -colourmap 4 ;;
-        2) mrview Contrast_raw_coreg_24.mif -colourmap 1 -overlay.load mask_lesion_expanded.nii.gz -overlay.opacity 0.5 ;;
+        2) freeview -v Contrast_raw_coreg_24.nii.gz \
+					 -v mask_zone1.nii.gz:colormap=GE_Color \
+					 -v mask_zone2.nii.gz:colormap=Turbo \
+					 -v mask_zone3.nii.gz:colormap=PET \
+					 --viewport axial ;;
                 
         esac
 	}
@@ -231,7 +235,7 @@
       
       case $acpc_view in
       1) mrview ACPC/T1_raw_LPS_3D.nii ;;
-      2) mrview ACPC/Contrast_raw_coreg_24_up_ACPC_aligned.nii.gz ;;
+      2) mrview ACPC/T2_raw_24_coreg_ACPC.nii.gz ;;
       esac
     }
 	 
@@ -249,13 +253,13 @@
 			  
 			  if [[ "$hemisphere" == "left" ]]; then
 				  case $contour_view in
-				  1) freeview -v ACPC/Contrast_raw_coreg_24_up_ACPC_aligned.nii.gz \
+				  1) freeview -v ACPC/T2_raw_24_coreg_ACPC.nii.gz \
 					 -v Contour/acpc_contour_CST.nii.gz:colormap=LUT:lut="$ATLAS_DIR/LUT_tracks.txt" \
 					 -v Contour/acpc_contour_ML.nii.gz:colormap=LUT:lut="$ATLAS_DIR/LUT_tracks.txt" \
 					 -v Contour/acpc_contour_ndDRTT.nii.gz:colormap=LUT:lut="$ATLAS_DIR/LUT_tracks.txt" \
 					 -v Contour/acpc_contour_dDRTT.nii.gz:colormap=LUT:lut="$ATLAS_DIR/LUT_tracks.txt" \
 					 --viewport axial ;;
-				  2) freeview -v ACPC/Contrast_raw_coreg_24_up_ACPC_aligned.nii.gz \
+				  2) freeview -v ACPC/T2_raw_24_coreg_ACPC.nii.gz \
 					 -v Contour/coronal_contour_CST.nii.gz:colormap=LUT:lut="$ATLAS_DIR/LUT_tracks.txt" \
 					 -v Contour/coronal_contour_ML.nii.gz:colormap=LUT:lut="$ATLAS_DIR/LUT_tracks.txt" \
 					 -v Contour/coronal_contour_ndDRTT.nii.gz:colormap=LUT:lut="$ATLAS_DIR/LUT_tracks.txt" \
@@ -265,13 +269,13 @@
 				  
 			  elif [[ "$hemisphere" == "right" ]]; then
 				  case $contour_view in
-				  1) freeview -v ACPC/Contrast_raw_coreg_24_up_ACPC_aligned.nii.gz \
+				  1) freeview -v ACPC/T2_raw_24_coreg_ACPC.nii.gz \
 					 -v Contour/acpc_contour_CST.nii.gz:colormap=LUT:lut="$ATLAS_DIR/LUT_tracks.txt" \
 					 -v Contour/acpc_contour_ML.nii.gz:colormap=LUT:lut="$ATLAS_DIR/LUT_tracks.txt" \
 					 -v Contour/acpc_contour_ndDRTT.nii.gz:colormap=LUT:lut="$ATLAS_DIR/LUT_tracks.txt" \
 					 -v Contour/acpc_contour_dDRTT.nii.gz:colormap=LUT:lut="$ATLAS_DIR/LUT_tracks.txt" \
 					 --viewport axial ;;
-				  2) freeview -v ACPC/Contrast_raw_coreg_24_up_ACPC_aligned.nii.gz \
+				  2) freeview -v ACPC/T2_raw_24_coreg_ACPC.nii.gz \
 					 -v Contour/coronal_contour_CST.nii.gz:colormap=LUT:lut="$ATLAS_DIR/LUT_tracks.txt" \
 					 -v Contour/coronal_contour_ML.nii.gz:colormap=LUT:lut="$ATLAS_DIR/LUT_tracks.txt" \
 					 -v Contour/coronal_contour_ndDRTT.nii.gz:colormap=LUT:lut="$ATLAS_DIR/LUT_tracks.txt" \
