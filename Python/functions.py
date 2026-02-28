@@ -9,9 +9,9 @@ from skimage.measure import label, regionprops
 from scipy.spatial import ConvexHull, Delaunay, KDTree
 from skimage.draw import polygon
 #import pandas as pd
-import matplotlib.pyplot as plt
+#import matplotlib.pyplot as plt
 from skimage import measure
-import cv2
+# import cv2
 
 # save nifti image
 def saveImage(data, image, name):

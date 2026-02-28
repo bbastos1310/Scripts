@@ -117,7 +117,7 @@
         
         case $lesion in
         1) mrview Contrast_difference.nii.gz -colourmap 4 ;;
-        2) freeview -v Contrast_raw_coreg_24.nii.gz \
+        2) freeview -v T2_raw_24_coreg_resampled.nii.gz \
 					 -v mask_zone1.nii.gz:colormap=GE_Color \
 					 -v mask_zone2.nii.gz:colormap=Turbo \
 					 -v mask_zone3.nii.gz:colormap=PET \

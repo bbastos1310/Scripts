@@ -15,8 +15,8 @@
     FILE_4_rh="track_ML_rh.nii.gz"
     FILE_5_lh="ACPC/track_ML_lh_ACPC.nii.gz"
     FILE_5_rh="ACPC/track_ML_rh_ACPC.nii.gz"
-    FILE_6_lh="Contour/coronal_contour_CST.nii.gz"
-    FILE_6_rh="Contour/coronal_contour_CST.nii.gz"
+    FILE_6_lh="Contour/contour_CST_lh_coronal.nii.gz"
+    FILE_6_rh="Contour/contour_CST_rh_coronal.nii.gz"
     FLAG=0
     FLAG_CONTINUE=1
 
@@ -770,6 +770,74 @@
     # 4.Streamlines' filter
     handleStreamlinesfilter() {
       if [ $EXIST -eq 1 ]; then
+        if [[ "$hemisphere" == "left" ]]; then
+            ####ndDRTT
+            tcksift2 track_ndDRTT_lh.tck wmfod.mif weights_ndDRTT.txt -force
+
+            tckmap track_ndDRTT_lh.tck track_ndDRTT_lh_weighted.nii.gz \
+              -template ../Segmentation/thalamus_mask_lh.nii.gz \
+              -tck_weights_in weights_ndDRTT.txt -force
+
+            ####dDRTT
+
+            tcksift2 track_dDRTT_lh.tck wmfod.mif weights_dDRTT.txt -force
+
+            tckmap track_dDRTT_lh.tck track_dDRTT_lh_weighted.nii.gz \
+              -template ../Segmentation/thalamus_mask_lh.nii.gz \
+              -tck_weights_in weights_dDRTT.txt -force
+              
+            ####ML
+
+            tcksift2 track_ML_lh.tck wmfod.mif weights_ML.txt -force
+
+            tckmap track_ML_lh.tck track_ML_lh_weighted.nii.gz \
+              -template ../Segmentation/thalamus_mask_lh.nii.gz \
+              -tck_weights_in weights_ML.txt -force
+              
+            ####CST
+
+            tcksift2 track_CST_lh.tck wmfod.mif weights_CST.txt -force
+
+            tckmap track_CST_lh.tck track_CST_lh_weighted.nii.gz \
+              -template ../Segmentation/thalamus_mask_lh.nii.gz \
+              -tck_weights_in weights_CST.txt -force
+              
+        elif [[ "$hemisphere" == "right" ]]; then
+            ####ndDRTT
+            tcksift2 track_ndDRTT_rh.tck wmfod.mif weights_ndDRTT.txt -force
+
+            tckmap track_ndDRTT_rh.tck track_ndDRTT_rh_weighted.nii.gz \
+              -template ../Segmentation/thalamus_mask_rh.nii.gz \
+              -tck_weights_in weights_ndDRTT.txt -force
+
+            ####dDRTT
+
+            tcksift2 track_dDRTT_rh.tck wmfod.mif weights_dDRTT.txt -force
+
+            tckmap track_dDRTT_rh.tck track_dDRTT_rh_weighted.nii.gz \
+              -template ../Segmentation/thalamus_mask_rh.nii.gz \
+              -tck_weights_in weights_dDRTT.txt -force
+              
+            ####ML
+
+            tcksift2 track_ML_rh.tck wmfod.mif weights_ML.txt -force
+
+            tckmap track_ML_rh.tck track_ML_rh_weighted.nii.gz \
+              -template ../Segmentation/thalamus_mask_rh.nii.gz \
+              -tck_weights_in weights_ML.txt -force
+              
+            ####CST
+
+            tcksift2 track_CST_rh.tck wmfod.mif weights_CST.txt -force
+
+            tckmap track_CST_rh.tck track_CST_rh_weighted.nii.gz \
+              -template ../Segmentation/thalamus_mask_rh.nii.gz \
+              -tck_weights_in weights_CST.txt -force
+              
+        else
+	        echo hemisfério não definido
+	        exit	
+        fi
         python "$SCRIPT_DIR/Python/streamline_filter.py"
       else
         exit
@@ -844,48 +912,88 @@
 		
 		if [[ "$hemisphere" == "left" ]]; then				
 			
-			mrtransform track_ndDRTT_lh.nii.gz -linear t12acpc_mrtrix.txt ACPC/track_ndDRTT_lh_ACPC_temp.nii.gz -force
-			mrtransform ACPC/track_ndDRTT_lh_ACPC_temp.nii.gz -template ACPC/T1_raw_ACPC.nii ACPC/track_ndDRTT_lh_ACPC_float.nii.gz -force
-			mrcalc ACPC/track_ndDRTT_lh_ACPC_float.nii.gz 0.5 -gt ACPC/track_ndDRTT_lh_ACPC.nii.gz -datatype uint8 -force
-			rm ACPC/track_ndDRTT_lh_ACPC_temp.nii.gz ACPC/track_ndDRTT_lh_ACPC_float.nii.gz
+            # ndDRTT
+            mrtransform track_ndDRTT_lh_smoothed.nii.gz -linear t12acpc_mrtrix.txt ACPC/track_ndDRTT_lh_ACPC_temp.nii.gz -force
+            mrtransform ACPC/track_ndDRTT_lh_ACPC_temp.nii.gz -template ACPC/T1_raw_ACPC.nii -interp linear ACPC/track_ndDRTT_lh_ACPC.nii.gz -force
+            rm ACPC/track_ndDRTT_lh_ACPC_temp.nii.gz
 
-			mrtransform track_dDRTT_lh.nii.gz -linear t12acpc_mrtrix.txt ACPC/track_dDRTT_lh_ACPC_temp.nii.gz -force
-			mrtransform ACPC/track_dDRTT_lh_ACPC_temp.nii.gz -template ACPC/T1_raw_ACPC.nii ACPC/track_dDRTT_lh_ACPC_float.nii.gz -force
-			mrcalc ACPC/track_dDRTT_lh_ACPC_float.nii.gz 0.5 -gt ACPC/track_dDRTT_lh_ACPC.nii.gz -datatype uint8 -force
-			rm ACPC/track_dDRTT_lh_ACPC_temp.nii.gz ACPC/track_dDRTT_lh_ACPC_float.nii.gz
+            mrtransform track_ndDRTT_lh_core.nii.gz -linear t12acpc_mrtrix.txt ACPC/track_ndDRTT_lh_ACPC_temp.nii.gz -force
+            mrtransform ACPC/track_ndDRTT_lh_ACPC_temp.nii.gz -template ACPC/T1_raw_ACPC.nii -interp linear ACPC/track_ndDRTT_lh_ACPC_float.nii.gz -force
+            mrcalc ACPC/track_ndDRTT_lh_ACPC_float.nii.gz 0.5 -gt ACPC/track_ndDRTT_lh_ACPC_core.nii.gz -datatype uint8 -force
+            rm ACPC/track_ndDRTT_lh_ACPC_temp.nii.gz ACPC/track_ndDRTT_lh_ACPC_float.nii.gz
 
-			mrtransform track_CST_lh.nii.gz -linear t12acpc_mrtrix.txt ACPC/track_CST_lh_ACPC_temp.nii.gz -force
-			mrtransform ACPC/track_CST_lh_ACPC_temp.nii.gz -template ACPC/T1_raw_ACPC.nii ACPC/track_CST_lh_ACPC_float.nii.gz -force
-			mrcalc ACPC/track_CST_lh_ACPC_float.nii.gz 0.5 -gt ACPC/track_CST_lh_ACPC.nii.gz -datatype uint8 -force
-			rm ACPC/track_CST_lh_ACPC_temp.nii.gz ACPC/track_CST_lh_ACPC_float.nii.gz
+            # dDRTT
+            mrtransform track_dDRTT_lh_smoothed.nii.gz -linear t12acpc_mrtrix.txt ACPC/track_dDRTT_lh_ACPC_temp.nii.gz -force
+            mrtransform ACPC/track_dDRTT_lh_ACPC_temp.nii.gz -template ACPC/T1_raw_ACPC.nii -interp linear ACPC/track_dDRTT_lh_ACPC.nii.gz -force
+            rm ACPC/track_dDRTT_lh_ACPC_temp.nii.gz
 
-			mrtransform track_ML_lh.nii.gz -linear t12acpc_mrtrix.txt ACPC/track_ML_lh_ACPC_temp.nii.gz -force
-			mrtransform ACPC/track_ML_lh_ACPC_temp.nii.gz -template ACPC/T1_raw_ACPC.nii ACPC/track_ML_lh_ACPC_float.nii.gz -force
-			mrcalc ACPC/track_ML_lh_ACPC_float.nii.gz 0.5 -gt ACPC/track_ML_lh_ACPC.nii.gz -datatype uint8 -force
-			rm ACPC/track_ML_lh_ACPC_temp.nii.gz ACPC/track_ML_lh_ACPC_float.nii.gz
+            mrtransform track_dDRTT_lh_core.nii.gz -linear t12acpc_mrtrix.txt ACPC/track_dDRTT_lh_ACPC_temp.nii.gz -force
+            mrtransform ACPC/track_dDRTT_lh_ACPC_temp.nii.gz -template ACPC/T1_raw_ACPC.nii -interp linear ACPC/track_dDRTT_lh_ACPC_float.nii.gz -force
+            mrcalc ACPC/track_dDRTT_lh_ACPC_float.nii.gz 0.5 -gt ACPC/track_dDRTT_lh_ACPC_core.nii.gz -datatype uint8 -force
+            rm ACPC/track_dDRTT_lh_ACPC_temp.nii.gz ACPC/track_dDRTT_lh_ACPC_float.nii.gz
+
+            # CST
+            mrtransform track_CST_lh_smoothed.nii.gz -linear t12acpc_mrtrix.txt ACPC/track_CST_lh_ACPC_temp.nii.gz -force
+            mrtransform ACPC/track_CST_lh_ACPC_temp.nii.gz -template ACPC/T1_raw_ACPC.nii -interp linear ACPC/track_CST_lh_ACPC.nii.gz -force
+            rm ACPC/track_CST_lh_ACPC_temp.nii.gz
+
+            mrtransform track_CST_lh_core.nii.gz -linear t12acpc_mrtrix.txt ACPC/track_CST_lh_ACPC_temp.nii.gz -force
+            mrtransform ACPC/track_CST_lh_ACPC_temp.nii.gz -template ACPC/T1_raw_ACPC.nii -interp linear ACPC/track_CST_lh_ACPC_float.nii.gz -force
+            mrcalc ACPC/track_CST_lh_ACPC_float.nii.gz 0.5 -gt ACPC/track_CST_lh_ACPC_core.nii.gz -datatype uint8 -force
+            rm ACPC/track_CST_lh_ACPC_temp.nii.gz ACPC/track_CST_lh_ACPC_float.nii.gz
+
+            # ML
+            mrtransform track_ML_lh_smoothed.nii.gz -linear t12acpc_mrtrix.txt ACPC/track_ML_lh_ACPC_temp.nii.gz -force
+            mrtransform ACPC/track_ML_lh_ACPC_temp.nii.gz -template ACPC/T1_raw_ACPC.nii -interp linear ACPC/track_ML_lh_ACPC.nii.gz -force
+            rm ACPC/track_ML_lh_ACPC_temp.nii.gz
+
+            mrtransform track_ML_lh_core.nii.gz -linear t12acpc_mrtrix.txt ACPC/track_ML_lh_ACPC_temp.nii.gz -force
+            mrtransform ACPC/track_ML_lh_ACPC_temp.nii.gz -template ACPC/T1_raw_ACPC.nii -interp linear ACPC/track_ML_lh_ACPC_float.nii.gz -force
+            mrcalc ACPC/track_ML_lh_ACPC_float.nii.gz 0.5 -gt ACPC/track_ML_lh_ACPC_core.nii.gz -datatype uint8 -force
+            rm ACPC/track_ML_lh_ACPC_temp.nii.gz ACPC/track_ML_lh_ACPC_float.nii.gz
 
 	
 		elif [[ "$hemisphere" == "right" ]]; then
 		
-			mrtransform track_ndDRTT_rh.nii.gz -linear t12acpc_mrtrix.txt ACPC/track_ndDRTT_rh_ACPC_temp.nii.gz -force
-			mrtransform ACPC/track_ndDRTT_rh_ACPC_temp.nii.gz -template ACPC/T1_raw_ACPC.nii ACPC/track_ndDRTT_rh_ACPC_float.nii.gz -force
-			mrcalc ACPC/track_ndDRTT_rh_ACPC_float.nii.gz 0.5 -gt ACPC/track_ndDRTT_rh_ACPC.nii.gz -datatype uint8 -force
-			rm ACPC/track_ndDRTT_rh_ACPC_temp.nii.gz ACPC/track_ndDRTT_rh_ACPC_float.nii.gz
+            # ndDRTT
+            mrtransform track_ndDRTT_rh_smoothed.nii.gz -linear t12acpc_mrtrix.txt ACPC/track_ndDRTT_rh_ACPC_temp.nii.gz -force
+            mrtransform ACPC/track_ndDRTT_rh_ACPC_temp.nii.gz -template ACPC/T1_raw_ACPC.nii -interp linear ACPC/track_ndDRTT_rh_ACPC.nii.gz -force
+            rm ACPC/track_ndDRTT_rh_ACPC_temp.nii.gz
 
-			mrtransform track_dDRTT_rh.nii.gz -linear t12acpc_mrtrix.txt ACPC/track_dDRTT_rh_ACPC_temp.nii.gz -force
-			mrtransform ACPC/track_dDRTT_rh_ACPC_temp.nii.gz -template ACPC/T1_raw_ACPC.nii ACPC/track_dDRTT_rh_ACPC_float.nii.gz -force
-			mrcalc ACPC/track_dDRTT_rh_ACPC_float.nii.gz 0.5 -gt ACPC/track_dDRTT_rh_ACPC.nii.gz -datatype uint8 -force
-			rm ACPC/track_dDRTT_rh_ACPC_temp.nii.gz ACPC/track_dDRTT_rh_ACPC_float.nii.gz
+            mrtransform track_ndDRTT_rh_core.nii.gz -linear t12acpc_mrtrix.txt ACPC/track_ndDRTT_rh_ACPC_temp.nii.gz -force
+            mrtransform ACPC/track_ndDRTT_rh_ACPC_temp.nii.gz -template ACPC/T1_raw_ACPC.nii -interp linear ACPC/track_ndDRTT_rh_ACPC_float.nii.gz -force
+            mrcalc ACPC/track_ndDRTT_rh_ACPC_float.nii.gz 0.5 -gt ACPC/track_ndDRTT_rh_ACPC_core.nii.gz -datatype uint8 -force
+            rm ACPC/track_ndDRTT_rh_ACPC_temp.nii.gz ACPC/track_ndDRTT_rh_ACPC_float.nii.gz
 
-			mrtransform track_CST_rh.nii.gz -linear t12acpc_mrtrix.txt ACPC/track_CST_rh_ACPC_temp.nii.gz -force
-			mrtransform ACPC/track_CST_rh_ACPC_temp.nii.gz -template ACPC/T1_raw_ACPC.nii ACPC/track_CST_rh_ACPC_float.nii.gz -force
-			mrcalc ACPC/track_CST_rh_ACPC_float.nii.gz 0.5 -gt ACPC/track_CST_rh_ACPC.nii.gz -datatype uint8 -force
-			rm ACPC/track_CST_rh_ACPC_temp.nii.gz ACPC/track_CST_rh_ACPC_float.nii.gz
+            # dDRTT
+            mrtransform track_dDRTT_rh_smoothed.nii.gz -linear t12acpc_mrtrix.txt ACPC/track_dDRTT_rh_ACPC_temp.nii.gz -force
+            mrtransform ACPC/track_dDRTT_rh_ACPC_temp.nii.gz -template ACPC/T1_raw_ACPC.nii -interp linear ACPC/track_dDRTT_rh_ACPC.nii.gz -force
+            rm ACPC/track_dDRTT_rh_ACPC_temp.nii.gz
 
-			mrtransform track_ML_rh.nii.gz -linear t12acpc_mrtrix.txt ACPC/track_ML_rh_ACPC_temp.nii.gz -force
-			mrtransform ACPC/track_ML_rh_ACPC_temp.nii.gz -template ACPC/T1_raw_ACPC.nii ACPC/track_ML_rh_ACPC_float.nii.gz -force
-			mrcalc ACPC/track_ML_rh_ACPC_float.nii.gz 0.5 -gt ACPC/track_ML_rh_ACPC.nii.gz -datatype uint8 -force
-			rm ACPC/track_ML_rh_ACPC_temp.nii.gz ACPC/track_ML_rh_ACPC_float.nii.gz
+            mrtransform track_dDRTT_rh_core.nii.gz -linear t12acpc_mrtrix.txt ACPC/track_dDRTT_rh_ACPC_temp.nii.gz -force
+            mrtransform ACPC/track_dDRTT_rh_ACPC_temp.nii.gz -template ACPC/T1_raw_ACPC.nii -interp linear ACPC/track_dDRTT_rh_ACPC_float.nii.gz -force
+            mrcalc ACPC/track_dDRTT_rh_ACPC_float.nii.gz 0.5 -gt ACPC/track_dDRTT_rh_ACPC_core.nii.gz -datatype uint8 -force
+            rm ACPC/track_dDRTT_rh_ACPC_temp.nii.gz ACPC/track_dDRTT_rh_ACPC_float.nii.gz
+
+            # CST
+            mrtransform track_CST_rh_smoothed.nii.gz -linear t12acpc_mrtrix.txt ACPC/track_CST_rh_ACPC_temp.nii.gz -force
+            mrtransform ACPC/track_CST_rh_ACPC_temp.nii.gz -template ACPC/T1_raw_ACPC.nii -interp linear ACPC/track_CST_rh_ACPC.nii.gz -force
+            rm ACPC/track_CST_rh_ACPC_temp.nii.gz
+
+            mrtransform track_CST_rh_core.nii.gz -linear t12acpc_mrtrix.txt ACPC/track_CST_rh_ACPC_temp.nii.gz -force
+            mrtransform ACPC/track_CST_rh_ACPC_temp.nii.gz -template ACPC/T1_raw_ACPC.nii -interp linear ACPC/track_CST_rh_ACPC_float.nii.gz -force
+            mrcalc ACPC/track_CST_rh_ACPC_float.nii.gz 0.5 -gt ACPC/track_CST_rh_ACPC_core.nii.gz -datatype uint8 -force
+            rm ACPC/track_CST_rh_ACPC_temp.nii.gz ACPC/track_CST_rh_ACPC_float.nii.gz
+
+            # ML
+            mrtransform track_ML_rh_smoothed.nii.gz -linear t12acpc_mrtrix.txt ACPC/track_ML_rh_ACPC_temp.nii.gz -force
+            mrtransform ACPC/track_ML_rh_ACPC_temp.nii.gz -template ACPC/T1_raw_ACPC.nii -interp linear ACPC/track_ML_rh_ACPC.nii.gz -force
+            rm ACPC/track_ML_rh_ACPC_temp.nii.gz
+
+            mrtransform track_ML_rh_core.nii.gz -linear t12acpc_mrtrix.txt ACPC/track_ML_rh_ACPC_temp.nii.gz -force
+            mrtransform ACPC/track_ML_rh_ACPC_temp.nii.gz -template ACPC/T1_raw_ACPC.nii -interp linear ACPC/track_ML_rh_ACPC_float.nii.gz -force
+            mrcalc ACPC/track_ML_rh_ACPC_float.nii.gz 0.5 -gt ACPC/track_ML_rh_ACPC_core.nii.gz -datatype uint8 -force
+            rm ACPC/track_ML_rh_ACPC_temp.nii.gz ACPC/track_ML_rh_ACPC_float.nii.gz
 			
 		else
 			echo hemisfério não definido
