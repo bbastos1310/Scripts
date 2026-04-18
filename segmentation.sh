@@ -5,7 +5,7 @@
     FILE_1="$SUBJECTS_DIR/$PAT_NUM/scripts/recon-all.done"
     FILE_2="$OUT_PRE/Segmentation/thalamus_mask_lh.nii.gz"
     FILE_3="$OUT_PRE/Segmentation/Maps/FAmap_up.nii.gz"
-    FILE_4="$OUT_PRE/Segmentation/mask_lesion_expanded.nii.gz"
+    FILE_4="$OUT_PRE/Segmentation/mask_zone2.nii.gz"
     FILE_5="$OUT_PRE/Segmentation/full_segmentation_colored.mif"
     FILE_6="$OUT_PRE/Segmentation/Julich.csv"
     FLAG=0
@@ -226,7 +226,7 @@
           
           python "$SCRIPT_DIR/Python/lesion.py"
           
-          rm T2_raw_coreg_up.nii.gz T2_raw_24_coreg_resampled.nii.gz ROI_rostral_lh_T2.nii.gz ROI_rostral_rh_T2.nii.gz 5tt_coreg_csf.mif 5tt_coreg_csf_resampled.nii.gz
+          # rm T2_raw_coreg_up.nii.gz T2_raw_24_coreg_resampled.nii.gz ROI_rostral_lh_T2.nii.gz ROI_rostral_rh_T2.nii.gz 5tt_coreg_csf.mif 5tt_coreg_csf_resampled.nii.gz
           
         else
           exit

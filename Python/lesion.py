@@ -1,20 +1,17 @@
 # Local libraries
 import functions
-import roi_definition as roi
 
 # External libraries
 import nibabel as nib
 import numpy as np
-import pandas as pd
 import matplotlib.pyplot as plt
-from scipy.ndimage import correlate, binary_fill_holes, center_of_mass, generate_binary_structure, binary_dilation, binary_erosion
+from scipy.ndimage import correlate, binary_fill_holes, center_of_mass, generate_binary_structure, binary_dilation, binary_erosion, gaussian_filter, binary_closing
 from scipy.optimize import least_squares
-from skimage.morphology import footprint_rectangle, diamond, ball, closing, flood
-from skimage.segmentation import find_boundaries
+from skimage.morphology import footprint_rectangle, octahedron, diamond, ball, closing, flood
+from skimage.segmentation import find_boundaries, random_walker
 from skimage import measure
 from skimage import color
-from joblib import Parallel, delayed
-import os
+
 
 def handleLesionmask(data, data_rostral_lh, data_rostral_rh, Contrast):
 	print(f"Lesion's mask")
@@ -29,14 +26,12 @@ def handleLesionmask(data, data_rostral_lh, data_rostral_rh, Contrast):
 	kmin = np.where(data != 0)[2].min()
 	kmax = np.where(data != 0)[2].max()
 	
-	for k in range (kmin, kmax):
+	for k in range (kmin, kmax + 1):
 		mask_closed_temp = np.zeros(mask[:,:,k].shape, dtype=np.uint8)
 		mask_closed_temp = closing(mask[:,:,k])
 		mask_closed[:,:,k] = mask_closed_temp
 		#mask_closed[:,:,k] = functions.connectedComponents(mask_closed_temp)
-	
-	functions.saveImage(mask_closed.astype(np.uint8), Contrast, "mask_closed")
-	
+		
 	# Labels
 	label_mask, num_labels = measure.label(mask_closed, connectivity=1 ,return_num=True)
 	
@@ -49,7 +44,7 @@ def handleLesionmask(data, data_rostral_lh, data_rostral_rh, Contrast):
 		if region.area >= min_voxels:  # area retorna o número de voxels
 			labels_filtered[label_mask == region.label] = region.label
 	
-	plt.imshow(color.label2rgb(labels_filtered[:,:,265], bg_label=0))
+	plt.imshow(color.label2rgb(labels_filtered[:,:,262], bg_label=0))
 	plt.savefig("filtered_labels.png")  # Salva como arquivo PNG
 	plt.close
 	print("-Imagem filtered_labels.png salva")
@@ -121,9 +116,43 @@ def handleLesionmask(data, data_rostral_lh, data_rostral_rh, Contrast):
 	print(f"lesion_hemisphere = {lesion_hemisphere}")
 	
 	return lesion_data_float, lesion_data_binary.astype(bool)
+	
+def closeHoles(data, axis):
+    mask_closed = np.zeros(data.shape, dtype=bool)
+    dict_axis = axis
+    
+    for axis in range (len(dict_axis)):
+        if dict_axis[axis] == "i":
+            try: 
+                imin = np.where(data == 1)[0].min()
+                imax = np.where(data == 1)[0].max()
+                for i in range (imin, imax + 1):
+                    mask_closed[i,:,:] = binary_fill_holes(data[i,:,:])
+            except ValueError:
+                pass
+        
+        if dict_axis[axis] == "j":
+            try:		
+                jmin = np.where(data == 1)[1].min()
+                jmax = np.where(data == 1)[1].max()
+                for j in range (jmin, jmax + 1):
+                    mask_closed[:,j,:] = binary_fill_holes(data[:,j,:])
+            except ValueError:
+                pass
+                
+        if dict_axis[axis] == "k":
+            try:
+                kmin = np.where(data == 1)[2].min()
+                kmax = np.where(data == 1)[2].max()
+                for k in range (kmin, kmax + 1):
+                    mask_closed[:,:,k] = binary_fill_holes(data[:,:,k])
+            except ValueError:
+                pass
+                
+    return mask_closed
 
 
-def handleLesionzones(data_lesion_binary, data_T2_24, data_difference, image):
+def handleLesionzones(data_lesion_binary, image):
     mask_center = np.zeros(data_lesion_binary.shape, dtype=bool)
     mask_closed = np.zeros(data_lesion_binary.shape, dtype=bool)
     mask_zone1 = np.zeros(data_lesion_binary.shape, dtype=bool)
@@ -139,7 +168,7 @@ def handleLesionzones(data_lesion_binary, data_T2_24, data_difference, image):
     kmin = np.where(data_lesion_binary == 1)[2].min()
     kmax = np.where(data_lesion_binary == 1)[2].max()
 	
-    for k in range (kmin, kmax):
+    for k in range (kmin, kmax + 1):
         mask_correlate = np.zeros(data_lesion_binary[:,:,k].shape, dtype=bool)
         mask_border = np.zeros(data_lesion_binary[:,:,k].shape, dtype=bool)
         data_correlate[:,:,k] = correlate(data_lesion_binary[:,:,k].astype(np.uint16), kernel, mode = 'constant')
@@ -153,7 +182,7 @@ def handleLesionzones(data_lesion_binary, data_T2_24, data_difference, image):
             #mask_correlate = np.zeros(data_lesion_binary[:,:,k].shape, dtype=bool)
             jmin = np.where(data_lesion_binary[:,:,k] == 1)[1].min()
             jmax = np.where(data_lesion_binary[:,:,k] == 1)[1].max()
-            for j in range(jmin, jmax): #preenchimento de voxels entre os valores máximo e mínimo
+            for j in range(jmin, jmax + 1): #preenchimento de voxels entre os valores máximo e mínimo
 	            try:
 		            i_min = np.where(data_lesion_binary[:,j,k] == 1)[0].min()
 		            i_max = np.where(data_lesion_binary[:,j,k] == 1)[0].max()
@@ -169,229 +198,441 @@ def handleLesionzones(data_lesion_binary, data_T2_24, data_difference, image):
             mask_closed[:,:,k] = binary_fill_holes(mask_closed[:,:,k])
             data_correlate[:,:,k] = correlate(mask_closed[:,:,k].astype(np.uint16), kernel_border, mode = 'constant')
             mask_border[data_correlate[:,:,k] == 511] = 1
-            mask_zone1[:,:,k] = mask_closed[:,:,k] & ~data_lesion_binary[:,:,k] & mask_border
-            
-    functions.saveImage(mask_closed.astype(np.uint16), image, "mask_closed")
-    functions.saveImage(data_lesion_binary.astype(np.uint16), image, "data_lesion_binary")
-    #functions.saveImage(data_correlate.astype(np.uint16), image, "mask_correlate")
-    
-    # Stats
-    print(f"min = {np.min(data_difference[mask_closed])}")
-    print(f"percentil_5 = {np.percentile(data_difference[mask_closed], 5)}")
-    print(f"percentil_10 = {np.percentile(data_difference[mask_closed], 10)}")
-    print(f"percentil_15 = {np.percentile(data_difference[mask_closed], 15)}")
-    print(f"percentil_20 = {np.percentile(data_difference[mask_closed], 20)}")
-    
-    s = pd.Series(data_difference[mask_closed])
-    print(s.describe())
-    
-    threshold = np.percentile(data_difference[mask_closed], 15)
-            
-    mask_zone1[data_difference > threshold] = 0		
-    mask_zone1 = functions.connectedComponents(binary_fill_holes(mask_zone1))
-    mask_zone2 = mask_closed & ~mask_zone1
-    mask_zone2 = functions.connectedComponents(mask_zone2)
+            #mask_zone1[:,:,k] = mask_closed[:,:,k] & ~data_lesion_binary[:,:,k] & mask_border
+        elif num_labels > 1:
+            mask_closed[:,:,k] = np.zeros(data_lesion_binary[:,:,k].shape)
+			            
+    functions.saveImage(functions.connectedComponents(mask_closed).astype(np.uint16), image, "mask_closed")
+    return functions.connectedComponents(mask_closed)
+
+# def handleSliceinterval(data, value):
+      # kmin = np.where(data == value)[2].min()
+      # kmax = np.where(data == value)[2].max()
+      
+      # k_slice_min = int(np.round(kmin + (kmax - kmin)/5))
+      # k_slice_max = int(np.round(kmax - (kmax - kmin)/5))
+      
+      # return k_slice_min, k_slice_max
+
+def handleBackground(data):
+    mask = np.zeros(data.shape)
+    mask = data
+
+    for axial_slice in range (data.shape[2]):
+        for coronal_slice in range (data.shape[1]):
+            try:
+                vox_min = np.where(data[:,coronal_slice,axial_slice] == 1)[0].min()
+                vox_max = np.where(data[:,coronal_slice,axial_slice] == 1)[0].max()
+                mask[vox_min + 3:vox_max - 2, coronal_slice, axial_slice] = 0
+            except ValueError:
+                pass
+
+    for coronal_slice in range (data.shape[1]):
+        for axial_slice in range (data.shape[2]):
+            try:
+                vox_min = np.where(data[:,coronal_slice,axial_slice] == 1)[0].min()
+                vox_max = np.where(data[:,coronal_slice,axial_slice] == 1)[0].max()
+                mask[vox_min + 3:vox_max - 2, coronal_slice, axial_slice] = 0
+            except ValueError:
+                pass
+
+    for sagital_slice in range (data.shape[0]):
+        for axial_slice in range (data.shape[2]):
+            try:
+                vox_min = np.where(data[sagital_slice,:,axial_slice] == 1)[0].min()
+                vox_max = np.where(data[sagital_slice,:,axial_slice] == 1)[0].max()
+                mask[sagital_slice ,vox_min + 3:vox_max - 2, axial_slice] = 0
+            except ValueError:
+                pass
+	
+    return mask
+	
+def bbox_from_mask(mask, pad):
+    # mask: bool (z,y,x)
+    coords = np.array(np.where(mask))
+    z0,y0,x0 = coords.min(axis=1)
+    z1,y1,x1 = coords.max(axis=1) + 1
+    z0 = max(z0-pad, 0); y0 = max(y0-pad, 0); x0 = max(x0-pad, 0)
+    z1 = min(z1+pad, mask.shape[0]); y1 = min(y1+pad, mask.shape[1]); x1 = min(x1+pad, mask.shape[2])
+    return (slice(z0,z1), slice(y0,y1), slice(x0,x1))
 		
-    functions.saveImage(mask_zone1.astype(np.uint8), image, "mask_zone1")
-    functions.saveImage(mask_zone2.astype(np.uint8), image, "mask_zone2")
-    
-    print(f"zone1 = {mask_zone1[mask_zone1].size * 0.3**3}")
-    print(f"zone2 = {mask_zone2[mask_zone2].size * 0.3**3}")
-    
-    # Máscara do centro da lesão
-		
-    percentile_2 = np.percentile(data_T2_24[mask_zone1], 2)
-    mask_center = (data_T2_24 < percentile_2) & (mask_zone1 == 1)
-    mask_center = functions.connectedComponents(mask_center)
-	#print(f"Percentil = {percentile_2}")
-    functions.saveImage(mask_center.astype(np.uint8), image, "mask_center")
-    
-    # Preenchimento da zona 3
-    mask = np.zeros(data_difference.shape, dtype=bool)
-    mask_percentile = np.zeros(data_difference.shape, dtype=bool)
-    mask_distance = np.zeros(data_difference.shape, dtype=bool)
-    
-    mask_percentile = binary_dilation(mask_closed, iterations = 3) & ~mask_closed
-    
-    print(f"percentil_50 = {np.percentile(data_difference[mask_percentile], 25)}")
-    threshold_zone3 = np.percentile(data_difference[mask_percentile], 25)
-	
-    mask[data_difference > threshold_zone3] = 1
-    mask[:,:,:kmin - 5] = 0
-    mask[:,:,kmax + 4:] = 0
-    mask_distance = functions.sphereMask(mask_center, 30)
-    mask_zone3 = np.zeros(data_difference.shape)
-    mask_zone3 = functions.connectedComponents(mask)    
-    mask_zone3[mask_zone1 | mask_zone2 | ~mask_distance] = 0
-    functions.saveImage(mask_zone3.astype(np.uint8), image, "mask_zone3")
-	
-	
-	
-	
-	# for k in range(data_lesion_binary.shape[2]):
-	  # contornos = measure.find_contours(np.abs(data_lesion_binary[:,:,k]), level=0.5)
-	  # # Itera sobre cada contorno encontrado
-	  # for contorno in contornos:
-		  # # Obter as coordenadas dos contornos
-		  # i = contorno[:, 0].astype(int)
-		  # j = contorno[:, 1].astype(int)
-		  # mask_contour[i, j, k] = 1
-	  # mask_label[:,:,k], num_labels = measure.label(mask_contour[:,:,k], connectivity=2 ,return_num=True)
-	  
-	
-		
-	
-	# # Preenchimento da zona 2
-	# kmin = np.where(mask_label == 1)[2].min()
-	# kmax = np.where(mask_label == 1)[2].max()
-	# max_area = 0
-	
-	# for k in range (kmin, kmax):
-		# mask_left = np.zeros(data_lesion_binary[:,:,k].shape, dtype=bool)
-		# mask_right = np.zeros(data_lesion_binary[:,:,k].shape, dtype=bool)
-		# mask_temp = np.zeros(data_lesion_binary[:,:,k].shape, dtype=np.uint8)
-		# points = np.where(mask_label[:,:,k] == 1)
-		# len_contour = points[0].size
-		# for n in range (0, len_contour):
-			# i = points[0][n]
-			# j = points[1][n]
-			# mask_left[:i,j] = 1
-			# mask_right[i:,j] = 1
-		# mask_temp[mask_left & mask_right] = 1
-		# mask_filled[:,:,k] = mask_temp
-	
-	# # points = np.argwhere(mask_label[:,:,center_k] == 2)
-	
-	# # initial_values = np.array([1])
-	# # res = least_squares(handleResidualsradius, initial_values, args=(points,center_i, center_j))
-	# # radius_in = res.x[0]
-	
-	# # Preenchimento da zona 1
-	# kmin = np.where(mask_label == 2)[2].min()
-	# kmax = np.where(mask_label == 2)[2].max()
-		
-	# for k in range (kmin, kmax):
-		# mask_left = np.zeros(data_lesion_binary[:,:,k].shape, dtype=bool)
-		# mask_right = np.zeros(data_lesion_binary[:,:,k].shape, dtype=bool)
-		# mask_temp = np.zeros(data_lesion_binary[:,:,k].shape, dtype=np.uint8)
-		# points = np.where(mask_label[:,:,k] == 2)
-		# len_contour = points[0].size
-		# for n in range (0, len_contour):
-			# i = points[0][n]
-			# j = points[1][n]
-			# mask_left[:i,j] = 1
-			# mask_right[i:,j] = 1
-		# mask_temp[mask_left & mask_right] = 1
-		# mask_filled[:,:,k] = mask_filled[:,:,k] + mask_temp
-		
-	# kmin = np.where(mask_label > 2)[2].min()
-	# kmax = np.where(mask_label > 2)[2].max()
-		
-	# for k in range (kmin, kmax):
-		# mask_left = np.zeros(data_lesion_binary[:,:,k].shape, dtype=bool)
-		# mask_right = np.zeros(data_lesion_binary[:,:,k].shape, dtype=bool)
-		# mask_temp = np.zeros(data_lesion_binary[:,:,k].shape, dtype=np.uint8)
-		# points = np.where(mask_label[:,:,k] > 2)
-		# len_contour = points[0].size
-		# for n in range (0, len_contour):
-			# i = points[0][n]
-			# j = points[1][n]
-			# mask_left[:i,j] = 1
-			# mask_right[i:,j] = 1
-		# mask_temp[mask_left & mask_right] = 1
-		# mask_filled[:,:,k] = mask_filled[:,:,k] + mask_temp
-	
-	# mask_zone1 = functions.connectedComponents(mask_filled == 2)
-	# mask_zone2 = functions.connectedComponents(mask_filled == 1)
-		
-	# functions.saveImage(mask_label, image, "mask_label")
-	# functions.saveImage(mask_zone1.astype(np.uint8), image, "mask_zone1")
-	# functions.saveImage(mask_zone2.astype(np.uint8), image, "mask_zone2")
-		
-##### MAIN
-## Load files
+# ######################################### MAIN #######################################################
 
-im_Contrast = nib.load("T2_raw_coreg_up.nii.gz") # Contrast gm/wm image before procedure
-im_Contrast_24 = nib.load("T2_raw_24_coreg_resampled.nii.gz") # Contrast gm/wm image after procedure
-im_T2_24 = nib.load("T2_raw_24_coreg_resampled.nii.gz")
-im_csf = nib.load("5tt_coreg_csf_resampled.nii.gz") # CSF
-im_rostral_lh = nib.load("ROI_rostral_lh_T2.nii.gz")
-im_rostral_rh = nib.load("ROI_rostral_rh_T2.nii.gz")
+# ## Load Rostral e CSF
 
-print(".Files loaded")
-
-## Extract data from image
-data_Contrast = im_Contrast.get_fdata() 
-data_Contrast_24 = im_Contrast_24.get_fdata() 
-data_T2_24 = im_T2_24.get_fdata() 
-data_csf = im_csf.get_fdata().astype(bool)
-data_rostral_lh = im_rostral_lh.get_fdata().astype(bool) 
-data_rostral_rh = im_rostral_rh.get_fdata().astype(bool) 
- 
-print(".Data loaded")
-
-del im_Contrast_24, im_T2_24, im_csf, im_rostral_lh, im_rostral_rh # deletar as imagens da memória já que possuem resolução alta 
-
-# Normalização (o uso do percentil ao invés do valor máximo é para ignorar possíveis outliers)
-percentile_pre = np.percentile(data_Contrast, 99)
-data_preNorm = data_Contrast/percentile_pre
-mean_pre = np.mean(data_preNorm[data_csf])
-std_pre = np.std(data_preNorm[data_csf])
-
-percentile_24 = np.percentile(data_Contrast_24, 99)
-data_24 = data_Contrast_24/percentile_24
-mean_24 = np.mean(data_24[data_csf])
-std_24 = np.std(data_24[data_csf])
-
-data_24Norm = (data_24 - mean_24) * (std_pre/std_24) + mean_pre
-
-# Diferença entre as imagens
-data_difference = (data_24Norm - data_preNorm)**2
-
-# Salvar a subtração das imagens
-functions.saveImage(data_difference, im_Contrast, "Contrast_difference")
-
-# Máscara em torno da região rostral do núcleo VL para reduzir o tempo de processamento
-mask_sphere = np.zeros(data_Contrast.shape, dtype = bool)
-
-mask_sphere_lh = functions.sphereMask(data_rostral_lh, 40)
-mask_sphere_rh = functions.sphereMask(data_rostral_rh, 40)
-mask_sphere[mask_sphere_lh | mask_sphere_rh] = True
-
-### Centro da lesão
-data_difference[~mask_sphere] = 0
-mask_lesion_float_initial, mask_lesion_binary_initial = handleLesionmask(data_difference, data_rostral_lh, data_rostral_rh, im_Contrast)
-handleLesionzones(mask_lesion_binary_initial, data_T2_24, data_difference, im_Contrast)
-
-# ####################### TESTE
-
-# im_Contrast = nib.load("Contrast_difference.nii.gz")
-# im_lesion = nib.load("mask_lesion_binary_initial.nii.gz")
-# im_T2_24 = nib.load("T2_raw_24_coreg_resampled.nii.gz")
 # im_rostral_lh = nib.load("ROI_rostral_lh_T2.nii.gz")
 # im_rostral_rh = nib.load("ROI_rostral_rh_T2.nii.gz")
-# print(".Files loaded")
+# im_csf = nib.load("5tt_coreg_csf_resampled.nii.gz") # CSF
 
-# data_difference = im_Contrast.get_fdata() 
-# mask_lesion_binary_initial = im_lesion.get_fdata().astype(bool)  
-# data_T2_24 = im_T2_24.get_fdata() 
 # data_rostral_lh = im_rostral_lh.get_fdata().astype(bool) 
 # data_rostral_rh = im_rostral_rh.get_fdata().astype(bool) 
-# print(".Data loaded")
+# data_csf = im_csf.get_fdata().astype(bool)
+
+# print("Rostral loaded")
 
 # # Máscara em torno da região rostral do núcleo VL para reduzir o tempo de processamento
-# mask_sphere = np.zeros(data_difference.shape, dtype = bool)
+# mask_sphere = np.zeros(data_csf.shape, dtype = bool)
 
 # mask_sphere_lh = functions.sphereMask(data_rostral_lh, 40)
 # mask_sphere_rh = functions.sphereMask(data_rostral_rh, 40)
 # mask_sphere[mask_sphere_lh | mask_sphere_rh] = True
 
-# ### Centro da lesão
+# del im_csf, im_rostral_lh, im_rostral_rh
+
+# ## Load T2
+
+# im_T2 = nib.load("T2_raw_coreg_up.nii.gz") 
+# im_T2_24 = nib.load("T2_raw_24_coreg_resampled.nii.gz")
+
+# ## Extract data from image
+# data_T2 = im_T2.get_fdata() 
+# data_T2_24 = im_T2_24.get_fdata() 
+# data_T2_24 = im_T2_24.get_fdata() 
+ 
+# print(".Data loaded")
+
+# del im_T2_24
+
+# # Normalização (o uso do percentil ao invés do valor máximo é para ignorar possíveis outliers)
+# percentile_pre = np.percentile(data_T2, 99)
+# data_preNorm = data_T2/percentile_pre
+# mean_pre = np.mean(data_preNorm[data_csf])
+# std_pre = np.std(data_preNorm[data_csf])
+
+# percentile_24 = np.percentile(data_T2_24, 99)
+# data_24 = data_T2_24/percentile_24
+# mean_24 = np.mean(data_24[data_csf])
+# std_24 = np.std(data_24[data_csf])
+
+# data_24Norm = (data_24 - mean_24) * (std_pre/std_24) + mean_pre
+
+# # Diferença entre as imagens
+# data_difference = (data_24Norm - data_preNorm)**2
+
+# # Salvar a subtração das imagens
+# functions.saveImage(data_difference, im_T2, "T2_difference")
+
+# ### Estimativa do local e de voxels da lesão
 # data_difference[~mask_sphere] = 0
-# #mask_lesion_float_initial, mask_lesion_binary_initial = handleLesionmask(data_difference, data_rostral_lh, data_rostral_rh, im_Contrast)
-# handleLesionzones(mask_lesion_binary_initial, data_T2_24, data_difference, im_Contrast)
-# # print(f"mean_left = {np.mean(data_difference[mask_sphere_lh])}, std_left = {np.std(data_difference[mask_sphere_lh])}")
-# # print(f"mean_right = {np.mean(data_difference[mask_sphere_rh])}, std_right = {np.std(data_difference[mask_sphere_rh])}")
+# mask_lesion_float_initial, mask_lesion_binary_initial = handleLesionmask(data_difference, data_rostral_lh, data_rostral_rh, im_T2)
+
+# data_T2_smooth = gaussian_filter(data_T2_24, sigma=1.0)
+
+# im_WMnull = nib.load("Contrast_raw_coreg_24_resampled.nii.gz")
+# data_WMnull = gaussian_filter(im_WMnull.get_fdata(), sigma=1.0)
+
+# del im_WMnull
+
+# mask_roi = handleLesionzones(mask_lesion_binary_initial, im_T2)
+
+# with open('../Segmentation/hemisphere.txt', 'r', encoding='utf-8') as file_hemisphere:
+    # hemisphere = file_hemisphere.read()  
+# print(f"{hemisphere} hemisphere")
+
+# if (hemisphere == 'left'):
+	# data_T2_smooth[~mask_sphere_lh] = 0
+	# box_coord = bbox_from_mask(mask_sphere_lh, pad=0)
+	# mask_sphere = mask_sphere_lh
+# elif (hemisphere == 'right'):
+	# data_T2_smooth[~mask_sphere_rh] = 0
+	# box_coord = bbox_from_mask(mask_sphere_rh, pad=0)
+	# mask_sphere = mask_sphere_rh
+
+# ### BOX SPHERE
+# box_sphere = bbox_from_mask(mask_sphere, pad=0)
+	
+# kmin = np.where(mask_roi == 1)[2].min()
+# kmax = np.where(mask_roi == 1)[2].max()
+
+# mask_bg = binary_dilation(mask_roi, iterations = 5) & ~binary_dilation(mask_roi, iterations = 3)
+# mask_bg[:,:,:kmin] = 0
+# mask_bg[:,:,kmax:] = 0
+
+# functions.saveImage(mask_bg.astype(np.uint8), im_T2, "mask_bg")
+
+# ### CROP E MARKERS
+# data_T2_smooth_crop = data_T2_smooth[box_sphere].astype(np.float32, copy=False)
+# mask_lesion_crop = mask_lesion_binary_initial[box_sphere]
+# mask_bg_crop = mask_bg[box_sphere]
+# mask_sphere_crop = mask_sphere[box_sphere]
+
+# markers = np.zeros(data_T2_smooth_crop.shape, dtype=np.int16)
+# markers[mask_lesion_crop] = 1
+# markers[~mask_sphere_crop] = 2
+# markers[mask_bg_crop] = 2
+
+# mask_markers = np.zeros(data_T2_24.shape, dtype=np.int16)
+# mask_markers[box_sphere] = markers
+# functions.saveImage(mask_markers, im_T2, "mask_markers")
+
+# ### RANDOM WALKER T2
+# beta = 100 # diminuir o beta deixa menos restritivo, tende a aumentar a área delimitada da zona 1
+# labels_T2_crop = random_walker(data_T2_smooth_crop, markers, beta=beta, mode="cg_mg", tol=1e-6, return_full_prob=True)
+
+# labels_T2 = np.zeros(data_T2_24.shape)
+# labels_T2[box_sphere] = labels_T2_crop[0]
+# # functions.saveImage(labels_T2, im_T2, "teste_random_T2")
+# # functions.saveImage(mask_zone2_T2.astype(np.uint8), im_T2, "mask_zone2_T2")
+
+# ### RANDOM WALKER WMnull
+# data_WMnull_crop = data_WMnull[box_sphere].astype(np.float32, copy=False)
+# labels_WMnull_crop = random_walker(data_WMnull_crop, markers, beta=beta, mode="cg_mg", tol=1e-6, return_full_prob=True)
+
+# ### ESTIMATIVA INICIAL ZONA 2
+# labels_WMnull = np.zeros(data_T2_24.shape)
+# labels_WMnull[box_sphere] = labels_WMnull_crop[0]
+# # functions.saveImage(labels_WMnull, im_T2, "teste_random_WMnull")
+# # functions.saveImage(mask_zone2_WMnull.astype(np.uint8), im_T2, "mask_zone2_WMnull")
+
+# labels_sum = labels_T2 + labels_WMnull
+# functions.saveImage(labels_sum ,im_T2, "labels_sum")
+
+# ### ESTIMATIVA INICIAL ZONA 1
+# mask_zone1_initial = np.zeros(data_T2_24.shape)
+# k_slice_1 = int(np.round(kmin + (kmin - kmax)/3))
+# k_slice_2 = int(np.round(kmax - (kmin - kmax)/3))
+
+# mask_zone1_initial[:,:,k_slice_1:k_slice_2] = mask_roi[:,:,k_slice_1:k_slice_2] & ~mask_lesion_binary_initial[:,:,k_slice_1:k_slice_2]
+# mask_zone1_initial = binary_erosion(functions.connectedComponents(mask_zone1_initial))
+# functions.saveImage(mask_zone1_initial.astype(np.uint8) ,im_T2, "mask_zone1_initial")
+
+# ### CROP
+# box_zone2 = bbox_from_mask(labels_sum, pad=3)
+# data_WMnull_crop = data_WMnull[box_zone2].astype(np.float32, copy=False)
+# labels_sum_crop = labels_sum[box_zone2]
+# mask_zone1_initial_crop = mask_zone1_initial[box_zone2]
+
+# ### MARKER ZONA 1
+# markers_2 = np.zeros(data_WMnull_crop.shape, dtype=np.int16)
+# markers_2 = np.where(labels_sum_crop > 1.99, 2, 0)
+# markers_2 = np.where(mask_zone1_initial_crop == 1, 1, markers_2)
+
+# # mask_marker = np.zeros(data_T2_24.shape)
+# # mask_marker[box_zone2] = markers_2
+# # functions.saveImage(mask_marker, im_T2, "markers_2")
+
+# ### RANDOM WALKER ZONA 1
+# labels_zone1_crop = random_walker(data_WMnull_crop, markers_2, beta=beta, mode="cg_mg", tol=1e-6, return_full_prob=True)
+
+# labels_zone1 = np.zeros(data_T2_24.shape)
+# labels_zone1[box_zone2] = labels_zone1_crop[0]
+# mask_zone1 = binary_closing(np.where(labels_zone1 > 0.1, 1, 0).astype(bool), structure=ball(3))
+# functions.saveImage(functions.connectedComponents(mask_zone1).astype(np.uint8), im_T2, "mask_zone1")
+# print(np.count_nonzero(mask_zone1))
+
+# mask_zone2_closed = closeHoles(labels_sum > 0.9)
+# mask_zone2 = functions.connectedComponents(mask_zone2_closed & ~mask_zone1)
+# functions.saveImage(mask_zone2.astype(np.uint8), im_T2, "mask_zone2")
+# print(np.count_nonzero(mask_zone2))
+
+####################################### TESTE ###########################################
+im_rostral_lh = nib.load("ROI_rostral_lh_T2.nii.gz")
+im_rostral_rh = nib.load("ROI_rostral_rh_T2.nii.gz")
+im_csf = nib.load("5tt_coreg_csf_resampled.nii.gz") # CSF
+
+data_rostral_lh = im_rostral_lh.get_fdata().astype(bool) 
+data_rostral_rh = im_rostral_rh.get_fdata().astype(bool) 
+data_csf = im_csf.get_fdata().astype(bool)
+
+print("Rostral loaded")
+
+# Máscara em torno da região rostral do núcleo VL para reduzir o tempo de processamento
+mask_sphere = np.zeros(data_csf.shape, dtype = bool)
+
+mask_sphere_lh = functions.sphereMask(data_rostral_lh, 40)
+mask_sphere_rh = functions.sphereMask(data_rostral_rh, 40)
+mask_sphere[mask_sphere_lh | mask_sphere_rh] = True
+
+del im_csf, im_rostral_lh, im_rostral_rh
+
+im_T2 = nib.load("T2_raw_24_coreg_resampled.nii.gz")
+data_T2_24 = im_T2.get_fdata()
+
+im_mask_lesion = nib.load("mask_lesion_binary_initial.nii.gz")
+mask_lesion_binary_initial = im_mask_lesion.get_fdata().astype(bool)
+
+del im_mask_lesion
+
+data_T2_smooth = gaussian_filter(data_T2_24, sigma=1.0)
+# data_T2_smooth = data_T2_24
+
+im_WMnull = nib.load("Contrast_raw_coreg_24_resampled.nii.gz")
+data_WMnull = gaussian_filter(im_WMnull.get_fdata(), sigma=1.0)
+# data_WMnull = im_WMnull.get_fdata()
+
+del im_WMnull
+
+# mask_roi = handleLesionzones(mask_lesion_binary_initial, im_T2)
+mask_roi = closeHoles(mask_lesion_binary_initial, ["k"])
+functions.saveImage(mask_roi.astype(np.uint8), im_T2, "mask_closed")
+
+with open('../Segmentation/hemisphere.txt', 'r', encoding='utf-8') as file_hemisphere:
+    hemisphere = file_hemisphere.read()  
+print(f"{hemisphere} hemisphere")
+
+if (hemisphere == 'left'):
+	data_T2_smooth[~mask_sphere_lh] = 0
+	box_coord = bbox_from_mask(mask_sphere_lh, pad=0)
+	mask_sphere = mask_sphere_lh
+elif (hemisphere == 'right'):
+	data_T2_smooth[~mask_sphere_rh] = 0
+	box_coord = bbox_from_mask(mask_sphere_rh, pad=0)
+	mask_sphere = mask_sphere_rh
+
+### BOX SPHERE
+box_sphere = bbox_from_mask(mask_sphere, pad=0)
+
+mask_bg = binary_dilation(mask_roi, iterations = 5) & ~binary_dilation(mask_roi, iterations = 3)
+
+# functions.saveImage(mask_bg.astype(np.uint8), im_T2, "mask_teste")
+
+### CROP E MARCADORES	
+data_T2_smooth_crop_sphere = data_T2_smooth[box_sphere].astype(np.float32, copy=False)
+data_WMnull_crop_sphere = data_WMnull[box_sphere].astype(np.float32, copy=False)
+
+mask_lesion_crop = mask_lesion_binary_initial[box_sphere]
+mask_bg_crop = mask_bg[box_sphere]
+mask_bg_crop = handleBackground(mask_bg_crop)
+mask_sphere_crop = mask_sphere[box_sphere]
+
+markers = np.zeros(data_T2_smooth_crop_sphere.shape, dtype=np.int16)
+markers[mask_lesion_crop] = 1    # seleciona os voxels da estimativa inicial da lesão
+markers[~mask_sphere_crop] = 2   # seleciona os voxels fora da esfera
+markers[mask_bg_crop] = 2        # seleciona alguns voxels externos à lesão
+
+mask_markers = np.zeros(data_T2_24.shape, dtype=np.int16)
+mask_markers[box_sphere] = markers
+functions.saveImage(mask_markers, im_T2, "mask_markers")
+
+######## RANDOM WALKER - ZONA 2 INICIAL ##################
+beta = 50 # diminuir o beta deixa menos restritivo, tende a aumentar a área delimitada 
+tol = 1e-3
+
+labels_T2_crop_sphere = random_walker(data_T2_smooth_crop_sphere, markers, beta=beta, mode="cg_mg", tol=tol, return_full_prob=True)
+labels_WMnull_crop_sphere = random_walker(data_WMnull_crop_sphere, markers, beta=beta, mode="cg_mg", tol=tol, return_full_prob=True)
+
+labels_prob_initial = np.zeros(data_T2_24.shape)
+labels_prob_initial[box_sphere] = (3*labels_T2_crop_sphere[0] + labels_WMnull_crop_sphere[0])/4
+
+functions.saveImage(labels_prob_initial ,im_T2, "labels_prob_initial")
+
+############ DEFINIÇÕES PARA ESTIMATIVA DA ZONA 1 #################
+mask_zone1_initial = np.zeros(data_T2_24.shape)
+
+# print(f"k_slice_1 = {k_min}, k_slice_2={k_max}")
+
+# mask_zone1_initial[:,:,k_min:k_max] = mask_roi[:,:,k_min:k_max] & ~mask_lesion_binary_initial[:,:,k_min:k_max]
+mask_closed = closeHoles(labels_prob_initial > 0.9, ["k"])
+mask_zone1_initial = mask_closed & ~(labels_prob_initial > 0.9)
+
+# mask_zone1_initial = mask_zone1_initial & np.where(labels_prob_initial < np.median(labels_prob_initial[mask_zone1_initial]), 1, 0)
+percentile_prob = np.percentile(labels_prob_initial[mask_zone1_initial], 40)
+print(f"percentil = {percentile_prob}")
+mask_zone1_initial = mask_zone1_initial & (labels_prob_initial < percentile_prob)
+mask_zone1_initial = closeHoles(mask_zone1_initial, ["k"])
+voxels_dif = 1000
+iterations = 0
+print(f"mask_size={np.count_nonzero(mask_zone1_initial)}")
+for i in range (1,10):
+    mask_zone1_temp = np.zeros(data_T2_24.shape)
+    # mask_zone1_temp = binary_erosion(functions.connectedComponents(mask_zone1_initial), iterations=i, structure=np.ones((2,2,2))) # seleciona voxels mais centrais da lesão
+    # mask_zone1_temp = binary_erosion(mask_zone1_initial, iterations=i, structure=np.ones((2,2,2))) # seleciona voxels mais centrais da lesão
+    mask_zone1_temp = binary_erosion(mask_zone1_initial, iterations=i) # seleciona voxels mais centrais da lesão
+    mask_size = np.count_nonzero(mask_zone1_temp)
+    print(f"mask_size={mask_size}")
+    if (np.abs(mask_size - 50) < voxels_dif) & (mask_size > 20):
+        voxels_dif = np.abs(mask_size - 50)
+        iterations = i
+    elif mask_size == 0:
+        break
+    else:
+        pass
+		
+if iterations == 0:
+	# mask_zone1_initial = functions.connectedComponents(mask_zone1_initial)
+	pass
+else:
+	# mask_zone1_initial = binary_erosion(functions.connectedComponents(mask_zone1_initial), iterations=iterations)
+    mask_zone1_initial = binary_erosion(mask_zone1_initial, iterations=iterations, structure=np.ones((2,2,2)))
+    mask_zone1_initial = closeHoles(mask_zone1_initial, ["k"])
+print(f"iterations={iterations}")
+	
+functions.saveImage(mask_zone1_initial.astype(np.uint8) ,im_T2, "mask_zone1_initial")
+
+### CROP
+box_zone2 = bbox_from_mask(labels_prob_initial > 1e-10, pad=3)  # delimita a região no entorno da zona 2
+data_WMnull_crop_zone2 = data_WMnull[box_zone2].astype(np.float32, copy=False)
+data_T2_smooth_crop_zone2 = data_T2_smooth[box_zone2].astype(np.float32, copy=False)
+labels_sum_crop_zone2 = labels_prob_initial[box_zone2]
+mask_zone1_initial_crop = mask_zone1_initial[box_zone2]
+
+### MARCADORES ZONA 1
+markers_zone1 = np.zeros(data_T2_smooth_crop_zone2.shape, dtype=np.int16) 
+markers_zone1 = np.where(labels_sum_crop_zone2 > 0.9, 2, 0) # seleciona voxels com alta probabilidade como zona 2 (background da zona 1)
+markers_zone1 = np.where(mask_zone1_initial_crop == 1, 1, markers_zone1) # seleciona voxels da zona 1
+
+mask_marker = np.zeros(data_T2_24.shape)
+mask_marker[box_zone2] = markers_zone1
+functions.saveImage(mask_marker, im_T2, "markers_zone1")
+
+### RANDOM WALKER ZONA 1
+labels_zone1_crop_T2 = random_walker(data_T2_smooth_crop_zone2, markers_zone1, beta=beta, mode="cg_mg", tol=tol, return_full_prob=True)
+labels_zone1_crop_Wmnull = random_walker(data_WMnull_crop_zone2, markers_zone1, beta=beta, mode="cg_mg", tol=tol, return_full_prob=True)
+
+labels_zone1 = np.zeros(data_T2_24.shape)
+labels_zone1[box_zone2] = (3*labels_zone1_crop_T2[0] + labels_zone1_crop_Wmnull[0])/4
+mask_zone1 = np.where(labels_zone1 > 0.8, 1, 0).astype(bool)
+mask_zone1 = closeHoles(mask_zone1, ["i","j","k"])
+# mask_zone1_connected = binary_closing(functions.connectedComponents(mask_zone1), structure=ball(3))
+mask_zone1_connected = functions.connectedComponents(mask_zone1)
+functions.saveImage(labels_zone1, im_T2, "labels_zone1")
+functions.saveImage(mask_zone1_connected.astype(np.uint8), im_T2, "mask_zone1_connected")
+
+
+############ DEFINIÇÕES PARA ESTIMATIVA DA ZONA 2 #################
+mask_zone2_initial = binary_dilation(mask_zone1_connected[box_sphere], iterations = 4) & ~binary_dilation(mask_zone1_connected[box_sphere], iterations = 3) 
+markers_zone2 = np.zeros(data_T2_smooth_crop_sphere.shape, dtype=np.int16)
+markers_zone2[mask_zone2_initial] = 1    # seleciona os voxels da estimativa inicial da zona 2
+
+#### background
+markers_zone2[~mask_sphere_crop] = 2   # seleciona os voxels fora da esfera
+
+# mask_
+# mask_bg_zone2 = binary_dilation(labels_prob_initial[box_sphere] > 0.95, iterations = 5) & ~binary_dilation(labels_prob_initial[box_sphere], iterations = 3)
+# mask_bg_zone2 = handleBackground(mask_bg_zone2)
+# markers_zone2[mask_bg_zone2] = 2        # seleciona alguns voxels externos à lesão
+
+mask_zone1_initial_sphere = mask_zone1_initial[box_sphere]
+markers_zone2[mask_zone1_initial_sphere] = 2
+
+mask_markers_zone2 = np.zeros(data_T2_24.shape)
+mask_markers_zone2[box_sphere] = markers_zone2
+functions.saveImage(mask_markers_zone2, im_T2, "markers_zone2") 
+
+labels_zone2_crop_sphere_T2 = random_walker(data_T2_smooth_crop_sphere, markers_zone2, beta=beta, mode="cg_mg", tol=tol, return_full_prob=True)
+labels_zone2_crop_sphere_WMnull = random_walker(data_WMnull_crop_sphere, markers_zone2, beta=beta, mode="cg_mg", tol=tol, return_full_prob=True)
+
+labels_zone2 = np.zeros(data_T2_24.shape)
+labels_zone2[box_sphere] = (3*labels_zone2_crop_sphere_T2[0] + labels_zone2_crop_sphere_WMnull[0])/4
+mask_zone2 = np.where(labels_zone2 > 0.9, 1, 0).astype(bool)
+
+mask_zone1_connected = np.where(labels_zone2 > 0.9, 0, mask_zone1_connected)
+mask_zone1_connected = closeHoles(mask_zone1_connected, ["i","j","k"])
+mask_zone1_connected = functions.connectedComponents(mask_zone1_connected)
+
+mask_zone2 = closeHoles(mask_zone2, ["i","j","k"])
+mask_zone2_connected = binary_closing(functions.connectedComponents(mask_zone2), structure=ball(3))
+mask_zone2 = mask_zone2_connected & ~mask_zone1_connected
+
+functions.saveImage(mask_zone1_connected.astype(np.uint8), im_T2, "mask_zone1")
+functions.saveImage(labels_zone2, im_T2, "labels_zone2") 
+functions.saveImage(mask_zone2.astype(np.uint8), im_T2, "mask_zone2")
+print(f"zone_1 = {np.count_nonzero(mask_zone1_connected)}")
+print(f"zone_2 = {np.count_nonzero(mask_zone2)}")
+
+ 
+
+
 
 
 

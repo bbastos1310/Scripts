@@ -890,6 +890,14 @@
 		mrtransform ACPC/T2_raw_coreg_ACPC_temp.nii.gz -template ACPC/T1_raw_ACPC.nii ACPC/T2_raw_coreg_ACPC.nii.gz -force
 		rm ACPC/T2_raw_coreg_ACPC_temp.nii.gz 
 		
+		mrtransform ../Segmentation/Contrast_raw_coreg.nii.gz -linear t12acpc_mrtrix.txt ACPC/Contrast_raw_coreg_ACPC_temp.nii.gz -force
+		mrtransform ACPC/Contrast_raw_coreg_ACPC_temp.nii.gz -template ACPC/T1_raw_ACPC.nii ACPC/Contrast_raw_coreg_ACPC.nii.gz -force
+		rm ACPC/Contrast_raw_coreg_ACPC_temp.nii.gz 
+		
+		mrtransform ../Segmentation/Contrast_raw_coreg_24.nii.gz -linear t12acpc_mrtrix.txt ACPC/Contrast_raw_coreg_24_ACPC_temp.nii.gz -force
+		mrtransform ACPC/Contrast_raw_coreg_24_ACPC_temp.nii.gz -template ACPC/T1_raw_ACPC.nii ACPC/Contrast_raw_coreg_24_ACPC.nii.gz -force
+		rm ACPC/Contrast_raw_coreg_24_ACPC_temp.nii.gz
+		
 		mrtransform ../Segmentation/mask_zone1.nii.gz -linear t12acpc_mrtrix.txt ACPC/mask_zone1_ACPC_temp.nii.gz -force
 		mrtransform ACPC/mask_zone1_ACPC_temp.nii.gz -template ACPC/T1_raw_ACPC.nii ACPC/mask_zone1_ACPC_float.nii.gz -force
 		mrcalc ACPC/mask_zone1_ACPC_float.nii.gz 0.5 -gt ACPC/mask_zone1_ACPC.nii.gz -datatype uint8 -force
@@ -900,15 +908,10 @@
 		mrcalc ACPC/mask_zone2_ACPC_float.nii.gz 0.5 -gt ACPC/mask_zone2_ACPC.nii.gz -datatype uint8 -force
 		rm ACPC/mask_zone2_ACPC_temp.nii.gz ACPC/mask_zone2_ACPC_float.nii.gz
 
-		mrtransform ../Segmentation/mask_zone3.nii.gz -linear t12acpc_mrtrix.txt ACPC/mask_zone3_ACPC_temp.nii.gz -force
-		mrtransform ACPC/mask_zone3_ACPC_temp.nii.gz -template ACPC/T1_raw_ACPC.nii ACPC/mask_zone3_ACPC_float.nii.gz -force
-		mrcalc ACPC/mask_zone3_ACPC_float.nii.gz 0.5 -gt ACPC/mask_zone3_ACPC.nii.gz -datatype uint8 -force
-		rm ACPC/mask_zone3_ACPC_temp.nii.gz ACPC/mask_zone3_ACPC_float.nii.gz
-		
-		mrtransform ../Segmentation/mask_center.nii.gz -linear t12acpc_mrtrix.txt ACPC/mask_center_ACPC_temp.nii.gz -force
-		mrtransform ACPC/mask_center_ACPC_temp.nii.gz -template ACPC/T1_raw_ACPC.nii ACPC/mask_center_ACPC_float.nii.gz -force
-		mrcalc ACPC/mask_center_ACPC_float.nii.gz 0.5 -gt ACPC/mask_center_ACPC.nii.gz -datatype uint8 -force
-		rm ACPC/mask_center_ACPC_temp.nii.gz ACPC/mask_center_ACPC_float.nii.gz
+		#mrtransform ../Segmentation/mask_center.nii.gz -linear t12acpc_mrtrix.txt ACPC/mask_center_ACPC_temp.nii.gz -force
+		#mrtransform ACPC/mask_center_ACPC_temp.nii.gz -template ACPC/T1_raw_ACPC.nii ACPC/mask_center_ACPC_float.nii.gz -force
+		#mrcalc ACPC/mask_center_ACPC_float.nii.gz 0.5 -gt ACPC/mask_center_ACPC.nii.gz -datatype uint8 -force
+		#rm ACPC/mask_center_ACPC_temp.nii.gz ACPC/mask_center_ACPC_float.nii.gz
 		
 		if [[ "$hemisphere" == "left" ]]; then				
 			

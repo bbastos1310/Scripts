@@ -34,6 +34,17 @@
           exit
         fi
       }
+      
+      handleResults() {
+        if [ $EXIST -eq 1 ]; then
+        
+          export PAT_NUM BASE_DIR 
+          python "$SCRIPT_DIR/Python/rascunho.py"
+          
+        else
+          exit
+        fi
+      }
 
           
     

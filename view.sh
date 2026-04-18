@@ -120,7 +120,6 @@
         2) freeview -v T2_raw_24_coreg_resampled.nii.gz \
 					 -v mask_zone1.nii.gz:colormap=GE_Color \
 					 -v mask_zone2.nii.gz:colormap=Turbo \
-					 -v mask_zone3.nii.gz:colormap=PET \
 					 --viewport axial ;;
                 
         esac
@@ -270,10 +269,10 @@
 			  elif [[ "$hemisphere" == "right" ]]; then
 				  case $contour_view in
 				  1) freeview -v ACPC/T2_raw_24_coreg_ACPC.nii.gz \
-					 -v Contour/acpc_contour_CST.nii.gz:colormap=LUT:lut="$ATLAS_DIR/LUT_tracks.txt" \
-					 -v Contour/acpc_contour_ML.nii.gz:colormap=LUT:lut="$ATLAS_DIR/LUT_tracks.txt" \
-					 -v Contour/acpc_contour_ndDRTT.nii.gz:colormap=LUT:lut="$ATLAS_DIR/LUT_tracks.txt" \
-					 -v Contour/acpc_contour_dDRTT.nii.gz:colormap=LUT:lut="$ATLAS_DIR/LUT_tracks.txt" \
+					 -v Contour/contour_ndDRTT_rh_acpc.nii.gz:colormap=LUT:lut="$ATLAS_DIR/LUT_tracks.txt" \
+					 -v Contour/contour_dDRTT_rh_acpc.nii.gz:colormap=LUT:lut="$ATLAS_DIR/LUT_tracks.txt" \
+					 -v Contour/contour_CST_rh_acpc.nii.gz:colormap=LUT:lut="$ATLAS_DIR/LUT_tracks.txt" \
+					 -v Contour/contour_ML_rh_acpc.nii.gz:colormap=LUT:lut="$ATLAS_DIR/LUT_tracks.txt" \
 					 --viewport axial ;;
 				  2) freeview -v ACPC/T2_raw_24_coreg_ACPC.nii.gz \
 					 -v Contour/coronal_contour_CST.nii.gz:colormap=LUT:lut="$ATLAS_DIR/LUT_tracks.txt" \
