@@ -1,9 +1,9 @@
 #!/bin/bash
     
-    BASE_DIR="/mnt/HD_shared/Dados/"
-    SCRIPT_DIR="/mnt/HD_shared/Scripts/"
-    FREESURFER_HOME_DEV="/media/brunobastos/linux_storage/freesurfer_dev/7-dev/"
-    FREESURFER_HOME_STAND="/usr/local/freesurfer/7.4.1"
+    BASE_DIR="/home/brunobastos/Mestrado/Dados/"
+    SCRIPT_DIR="/home/brunobastos/Mestrado/Scripts/"
+    FREESURFER_HOME_DEV="/home/brunobastos/Software/freesurfer-dev/7-dev/"
+    FREESURFER_HOME_STAND="/home/brunobastos/Software/freesurfer/7.4.1/"
     N_THREADS=20
     SUBJECTS_DIR="$BASE_DIR/fs_subjects"
     ATLAS_DIR="$BASE_DIR/Atlas" 
@@ -17,7 +17,8 @@
     FILE_5="tract.sh"
     FILE_6="view.sh"
     FLAG_SCRIPT=6
-      
+
+          
     # Verification of the scripts folder
     cd "$SCRIPT_DIR"
     for file in $FILE_1 $FILE_2 $FILE_3 $FILE_4 $FILE_5 $FILE_6; do
@@ -28,42 +29,42 @@
     done  
     
     if [ $FLAG_SCRIPT -ne 0 ]; then
-        echo "Verifique a pasta dos scripts, na pasta definida atualmente estão faltanto $FLAG_SCRIPT arquivos .sh"
+        echo "Please check the scripts directory. The folder currently configured is missing $FLAG_SCRIPT .sh files."
         exit
     fi
     
     # Definition of the databases folder
     if [ -d "$BASE_DIR" ]; then
-        echo "Pasta de dados atual: $BASE_DIR"
-        read -p "Confirma o uso dessa pasta?(y/n) " BASE
+        echo "Current data directory: $BASE_DIR"
+        read -p "Can you confirm that this directory is the one that should be used?(y/n) " BASE
         
         case $BASE in
             # Complete preprocessing
             [Yy])
-            echo "Endereço da pasta de dados: $BASE_DIR";;
+            echo "Data's directory location: $BASE_DIR";;
 
             [Nn])
-            read -p "Digite o endereço completo da pasta de dados: " NEW_BASE
+            read -p "Enter the full path to the data directory: " NEW_BASE
                      
             if [ -d "$NEW_BASE" ]; then
                 BASE_DIR=$NEW_BASE
-                echo "Endereço da Pasta de dados: $BASE_DIR"
+                echo "Data's directory location: $BASE_DIR"
             else
-                echo "Pasta inválida, abra o programa novamente ou mude a pasta base no script"
+                echo "Invalid directory. Please restart the program or change the base directory in the script."
                 exit
             fi;;
             
-            *) echo "Opção inválida, abra o programa novamente"
+            *) echo "Invalid option. Please restart the script."
                exit;;
         esac
     else
-        echo "A pasta de dados registrada no script é inválida"
-        read -p "Digit o endereço completo da pasta de dados: " NEW_BASE
+        echo "The data directory specified in the script is invalid."
+        read -p "Enter the full path to the data directory:" NEW_BASE
         if [ -d "$NEW_BASE" ]; then
                 BASE_DIR=$NEW_BASE
-                echo "Endereço da Pasta de dados: $BASE_DIR"
+                echo "Data's directory location: $BASE_DIR"
             else
-                echo "Pasta inválida, abra o programa novamente ou mude a pasta base no script"
+                echo "Invalid directory. Please restart the script and change the base directory."
                 exit
         fi
     fi
@@ -91,13 +92,26 @@
       OUT_24="${PAT_DIR_24}/Output_tract"
       PAT_NUM="Pat$pat"
       
+      # raw_files
+      FILE_RAW_1="$OUT_PRE/Raw/T1_raw.mif"
+      FILE_RAW_2="$OUT_PRE/Raw/T2_raw.mif"
+      FILE_RAW_3="$OUT_PRE/Raw/Contrast_raw.mif"
+      FILE_RAW_4="$OUT_PRE/Raw/dwi_raw.mif"
+      FILE_RAW_5="$OUT_PRE/Raw/dwi_PA_raw.mif"
+      FILE_RAW_6="$OUT_24/Raw/T1_raw.mif"
+      FILE_RAW_7="$OUT_24/Raw/T2_raw.mif"
+      FILE_RAW_8="$OUT_24/Raw/Contrast_raw.mif"
+      FILE_RAW_9="$OUT_24/Raw/dwi_raw.mif"
+      FILE_RAW_10="$OUT_24/Raw/dwi_PA_raw.mif"
+      FLAG_RAW=10
+      
       if [[ ! -d "$PAT_DIR_PRE" && ! -d "$PAT_DIR_24" ]]; then
         echo "Error: Directory of patient not found"
         exit
       fi
       
 
-      echo "Deseja realizar a análise para os dados pré procedimento ou 24 horas após o procedimento?: "\
+      echo "Would you like to perform the analysis on the pre-procedure data or on the data collected 24 hours after the procedure? "\
       $'\n'"1. PRE"\
       $'\n'"2. 24H"
       read -p "Opção " moment
@@ -107,8 +121,8 @@
           if [[ -d "$PAT_DIR_PRE" && -d "$OUT_PRE" ]]; then
                 cd "$OUT_PRE"
           elif [[ -d "$PAT_DIR_PRE" && ! -d "$OUT_PRE" ]]; then
-                echo "É necessário fazer o tratamento de dados"
-                read -p "Deseja continuar?(y/n): " yn
+                echo "Data processing is required"
+                read -p "Do you like to continue?(y/n): " yn
                 
                 case $yn in
                 [yY])
@@ -116,7 +130,7 @@
                    cd "$OUT_PRE";;
                    
                 [nN]) 
-                   echo "Programa finalizado"
+                   echo "Program terminated."
                    exit;;
                 
                 *)
