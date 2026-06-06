@@ -2,8 +2,8 @@
     
     BASE_DIR="/home/brunobastos/Mestrado/Dados/"
     SCRIPT_DIR="/home/brunobastos/Mestrado/Scripts/"
-    FREESURFER_HOME_DEV="/home/brunobastos/Software/freesurfer-dev/7-dev/"
-    FREESURFER_HOME_STAND="/home/brunobastos/Software/freesurfer/7.4.1/"
+    FREESURFER_HOME_DEV="/home/brunobastos/Software/freesurfer-dev/"
+    FREESURFER_HOME_STAND="/home/brunobastos/Software/freesurfer-7.4.1/"
     N_THREADS=20
     SUBJECTS_DIR="$BASE_DIR/fs_subjects"
     ATLAS_DIR="$BASE_DIR/Atlas" 

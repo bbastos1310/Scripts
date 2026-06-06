@@ -13,7 +13,7 @@ if [[ -d "$PAT_DIR_PRE" && ! -d "$OUT_PRE" ]]; then
 					mv "$FILENAME" "${FILENAME//./_}.dcm";
 				fi
 			done
-			image_PRE=$(python $SCRIPT_DIR/Python/rascunho_rename.py)
+			image_PRE=$(python $SCRIPT_DIR/Python/rename.py)
 			
 			case $image_PRE in
 			
@@ -58,7 +58,7 @@ if [[ -d "$PAT_DIR_24" && ! -d "$OUT_24" ]]; then
 					mv "$FILENAME" "${FILENAME//./_}.dcm";
 				fi
 			done
-			image_24=$(python $SCRIPT_DIR/Python/rascunho_rename.py)
+			image_24=$(python $SCRIPT_DIR/Python/rename.py)
 			
 			case $image_24 in
 			

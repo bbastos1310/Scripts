@@ -185,7 +185,7 @@
           #mrtransform "$OUT_24/Raw/Contrast_raw.mif" -linear Contrast2t1_24_mrtrix.txt Contrast_raw_coreg_24.mif -force
           #mrconvert Contrast_raw_coreg_24.mif Contrast_raw_coreg_24.nii.gz -force      
           
-          mrgrid Contrast_raw_coreg.nii.gz regrid -template Contrast_raw_coreg_24.nii.gz Contrast_raw_coreg_resampled.nii.gz -force     
+          #mrgrid Contrast_raw_coreg.nii.gz regrid -template Contrast_raw_coreg_24.nii.gz Contrast_raw_coreg_resampled.nii.gz -force     
           cd ../Preprocess      
       else
         exit

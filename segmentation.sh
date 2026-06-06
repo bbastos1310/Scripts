@@ -1,6 +1,7 @@
    
     SUBJECTS_DIR="$BASE_DIR/fs_subjects"
     HISTO_DIR="$SUBJECTS_DIR/$PAT_NUM/next_brain_segmentation"
+    MRI_FS_DIR="$SUBJECTS_DIR/$PAT_NUM/mri/"
     ATLAS_DIR="$BASE_DIR/Atlas" 
     FILE_1="$SUBJECTS_DIR/$PAT_NUM/scripts/recon-all.done"
     FILE_2="$OUT_PRE/Segmentation/thalamus_mask_lh.nii.gz"
@@ -34,13 +35,13 @@
     #1 
     handleReconstruction() {
         if [ $EXIST -eq 1 ]; then
-          #(
-          #export SUBJECTS_DIR="$SUBJECTS_DIR"
-		  #export FREESURFER_HOME="$FREESURFER_HOME_STAND" # Versão padrão do freesurfer
-          #source "$FREESURFER_HOME/SetUpFreeSurfer.sh"
-          ## Reconstruction
-          #time recon-all -s "$PAT_NUM" -i "$OUT_PRE/Preprocess/T1_raw.nii.gz" -T2 "$OUT_PRE/Segmentation/T2_raw_coreg.nii.gz" -all -parallel -openmp 8
-          #)
+          (
+          export SUBJECTS_DIR="$SUBJECTS_DIR"
+		  export FREESURFER_HOME="$FREESURFER_HOME_STAND" # Versão padrão do freesurfer
+          source "$FREESURFER_HOME/SetUpFreeSurfer.sh"
+          # Reconstruction
+          time recon-all -s "$PAT_NUM" -i "$OUT_PRE/Preprocess/T1_raw.nii.gz" -T2 "$OUT_PRE/Segmentation/T2_raw_coreg.nii.gz" -all -parallel -openmp 8
+          )
           
           mrconvert "$SUBJECTS_DIR/$PAT_NUM/mri/T1.mgz" "$OUT_PRE/Segmentation/T1_resampled.mif" -force
           mrconvert T1_resampled.mif -stride -1,-2,3 T1_resampled.nii.gz -force
@@ -60,21 +61,24 @@
 		  mrgrid Contrast_coreg.mif regrid -template T1_resampled.mif Contrast_coreg_resampled.mif -force
 		  mrconvert Contrast_coreg_resampled.mif -stride -1,-2,3 Contrast_coreg_resampled.nii.gz -force          
 		  
-		  #(
-		  #export SUBJECTS_DIR="$SUBJECTS_DIR"
-		  #export FREESURFER_HOME="$FREESURFER_HOME_DEV" # Versão dev do freesurfer
-		  #source $FREESURFER_HOME/SetUpFreeSurfer.sh		  
-		  #time mri_histo_atlas_segment_fast T2_raw_coreg.nii.gz "$HISTO_DIR" 0 -1
-		  #)
+		  (
+		  export SUBJECTS_DIR="$SUBJECTS_DIR"
+		  export FREESURFER_HOME="$FREESURFER_HOME_DEV" # Versão dev do freesurfer
+		  source $FREESURFER_HOME/SetUpFreeSurfer.sh		  
+		  time mri_histo_atlas_segment_fireants --i T2_raw_coreg.nii.gz --o "$HISTO_DIR" --device cpu --mode invivo --side left
+		  mv "$HISTO_DIR/seg.left.nii.gz" "$HISTO_DIR/seg_left.nii.gz"
+		  time mri_histo_atlas_segment_fireants --i T2_raw_coreg.nii.gz --o "$HISTO_DIR" --device cpu --mode invivo --side right
+		  mv "$HISTO_DIR/seg.right.nii.gz" "$HISTO_DIR/seg_right.nii.gz"
+		  )
 		  
-		  #export FREESURFER_HOME="$FREESURFER_HOME_STAND" #versão padrão do freesurfer
-		  ##source $FREESURFER_HOME/SetUpFreeSurfer.sh
+		  export FREESURFER_HOME="$FREESURFER_HOME_STAND" #versão padrão do freesurfer
+		  source $FREESURFER_HOME/SetUpFreeSurfer.sh
 					   
 		  # Upsample da imagem T1 para usar como template (a imagem resultante da segmentação tem voxels de aproxidamente 0.4 mm, mas os dois hemisférios tem resoluções diferentes) 
 		  mrgrid T1_resampled.nii.gz regrid -voxel 0.4 T1_upsampled.nii.gz -force
 		  mrgrid "$HISTO_DIR/seg_left.nii.gz" regrid -template T1_upsampled.nii.gz -interp nearest -oversample 1,1,1 seg_left_resampled.nii.gz -force
 		  mrgrid "$HISTO_DIR/seg_right.nii.gz" regrid -interp nearest -template T1_upsampled.nii.gz -oversample 1,1,1 seg_right_resampled.nii.gz -force
-		  mrgrid "$HISTO_DIR/SynthSeg.mgz" regrid -interp nearest -template T1_upsampled.nii.gz -oversample 1,1,1 SynthSeg_resampled.nii.gz -force
+		  mrgrid "$MRI_FS_DIR/aseg.mgz" regrid -interp nearest -template T1_upsampled.nii.gz -oversample 1,1,1 SynthSeg_resampled.nii.gz -force
 	  
 		  thalamus_labels=(220 252 219 378 303 443 222 283 350 381 382 314 442 394 458 423 424 274 395 284 278 285 479 398 223 224 426 396 397 399 221 253 286 282 313 379 380 504 484 512 478 441 492 510 508 517 519 454 578 811 813 190 191 254)
 		  
@@ -223,10 +227,11 @@
 		  rm 5tt_coreg_csf_bool.mif 
 		  
 		  mrgrid ../Segmentation/Contrast_raw_coreg_24.nii.gz regrid -template T2_raw_coreg_up.nii.gz Contrast_raw_coreg_24_resampled.nii.gz -force
+		  mrgrid ../Segmentation/Contrast_raw_coreg.nii.gz regrid -template T2_raw_coreg_up.nii.gz Contrast_raw_coreg_resampled.nii.gz -force
           
           python "$SCRIPT_DIR/Python/lesion.py"
           
-          # rm T2_raw_coreg_up.nii.gz T2_raw_24_coreg_resampled.nii.gz ROI_rostral_lh_T2.nii.gz ROI_rostral_rh_T2.nii.gz 5tt_coreg_csf.mif 5tt_coreg_csf_resampled.nii.gz
+          rm T2_raw_coreg_up.nii.gz T2_raw_24_coreg_resampled.nii.gz ROI_rostral_lh_T2.nii.gz ROI_rostral_rh_T2.nii.gz 5tt_coreg_csf.mif 5tt_coreg_csf_resampled.nii.gz
           
         else
           exit
